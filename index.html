@@ -200,10 +200,9 @@
         }
 
         /* ════════════════════════════════════════
-           SCANNER STYLES
+            SCANNER STYLES
         ════════════════════════════════════════ */
 
-        /* wrapper กล้อง */
         .scanner-wrapper {
             position: relative;
             width: 100%;
@@ -215,7 +214,6 @@
             justify-content: center;
         }
 
-        /* video element */
         #scannerVideo {
             width: 100%;
             height: 100%;
@@ -224,7 +222,6 @@
             min-height: 340px;
         }
 
-        /* overlay มืดรอบกรอบ */
         .scan-overlay {
             position: absolute;
             inset: 0;
@@ -232,7 +229,6 @@
             z-index: 9;
         }
 
-        /* กรอบเล็ง 4 มุม */
         .scan-frame {
             position: absolute;
             top: 50%;
@@ -245,7 +241,6 @@
             z-index: 10;
         }
 
-        /* มุมบนซ้าย */
         .scan-frame::before {
             content: '';
             position: absolute;
@@ -256,7 +251,6 @@
             border-radius: 4px 0 0 0;
         }
 
-        /* มุมบนขวา */
         .scan-frame::after {
             content: '';
             position: absolute;
@@ -267,7 +261,6 @@
             border-radius: 0 4px 0 0;
         }
 
-        /* มุมล่างขวา */
         .scan-frame .corner-br {
             position: absolute;
             bottom: 0; right: 0;
@@ -277,7 +270,6 @@
             border-radius: 0 0 4px 0;
         }
 
-        /* มุมล่างซ้าย */
         .scan-frame .corner-bl {
             position: absolute;
             bottom: 0; left: 0;
@@ -287,7 +279,6 @@
             border-radius: 0 0 0 4px;
         }
 
-        /* เส้นกวาด */
         .scan-line {
             position: absolute;
             left: 0; right: 0;
@@ -304,7 +295,6 @@
             100% { top: 8px;  opacity: 1; }
         }
 
-        /* flash เขียวเมื่อสแกนเจอ */
         #scanFlash {
             position: absolute;
             inset: 0;
@@ -322,7 +312,6 @@
             animation: flashGreen 0.5s ease-out forwards;
         }
 
-        /* แถบสถานะด้านล่างกล้อง */
         .scanner-status {
             position: absolute;
             bottom: 14px;
@@ -340,7 +329,6 @@
             font-family: 'Kanit', sans-serif;
         }
 
-        /* ปุ่มไฟฉาย */
         .torch-btn {
             position: absolute;
             top: 14px; right: 14px;
@@ -360,7 +348,6 @@
         .torch-btn.on { background: rgba(251, 191, 36, 0.85); color: #000; }
         .torch-btn:active { transform: scale(0.88); }
 
-        /* ปุ่มสลับกล้อง */
         .flip-btn {
             position: absolute;
             top: 14px; left: 14px;
@@ -395,11 +382,6 @@
     </div>
     <h2 class="brand-name-text text-2xl font-black text-slate-800 mb-2 tracking-wide" style="font-family:'Pacifico',cursive;">Vespa Stock</h2>
     <p class="text-slate-400 font-medium" id="loaderText">กำลังโหลดระบบ...</p>
-    <button onclick="document.getElementById('loader').style.display='none'"
-            id="forceCloseBtn"
-            class="hidden mt-10 px-8 py-3 bg-slate-100 text-slate-500 rounded-full text-xs font-bold hover:bg-slate-200 transition-all">
-        เข้าใช้งานแบบ Offline
-    </button>
 </div>
 
 <!-- ออก loader ทันที ไม่รอ JS ใดๆ -->
@@ -411,9 +393,7 @@
         if (loader) loader.classList.add('hidden');
         if (login)  login.classList.remove('hidden');
     }
-    // ออกใน 800ms (แค่แสดง animation loader สั้นๆ)
     setTimeout(exitLoader, 800);
-    // กันสุด: ออกทันทีที่ DOM พร้อม
     if (document.readyState === 'complete') {
         setTimeout(exitLoader, 800);
     } else {
@@ -456,10 +436,8 @@
                 <span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>
             </button>
         </form>
-        <p class="mt-8 text-center text-xs text-slate-400">Default: admin / 1234 &nbsp;|&nbsp; staff / 1234</p>
     </div>
 </div>
-
 
 <!-- ═══════════════════════════════════════════════
      MAIN APPLICATION
@@ -869,7 +847,8 @@
                     <!-- Photo -->
                     <div class="space-y-2">
                         <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">รูปถ่ายสินค้า (Photo)</label>
-                        <input type="file" id="PhotoInput" accept="image/*" class="hidden" onchange="previewImage(event)">
+                        <!-- แก้ไขบรรทัดนี้: ใส่ capture="environment" เพื่อบังคับเปิดกล้องบนมือถือ -->
+                        <input type="file" id="PhotoInput" accept="image/*" capture="environment" class="hidden" onchange="previewImage(event)">
                         <div onclick="document.getElementById('PhotoInput').click()"
                             class="w-full h-44 border-2 border-dashed border-slate-200 rounded-[32px] flex flex-col items-center justify-center text-slate-300 cursor-pointer overflow-hidden relative group hover:border-red-300 transition-all">
                             <div id="photoPlaceholder" class="flex flex-col items-center">
@@ -1217,14 +1196,7 @@
 
 
 <!-- ═══════════════════════════════════════════════
-     SCANNER MODAL (Native BarcodeDetector)
-═══════════════════════════════════════════════ -->
-<!-- ═══════════════════════════════════════════════
-     SCANNER WAITING MODAL
-     แสดงขณะรอ popup scanner ส่งค่ากลับมา
-═══════════════════════════════════════════════ -->
-<!-- ═══════════════════════════════════════════════
-     SCANNER MODAL — inline camera (iOS/Android/Desktop)
+     SCANNER MODAL
 ═══════════════════════════════════════════════ -->
 <div id="scannerModal" class="modal-overlay">
     <div class="bg-white w-full max-w-md mx-auto h-full md:h-auto md:rounded-[40px] flex flex-col overflow-hidden shadow-2xl" style="max-height:92vh;">
@@ -1255,7 +1227,6 @@
                     <span class="text-xs text-slate-300">(iPhone: เลือก "Allow" เมื่อ popup ถามสิทธิ์)</span>
                 </p>
             </div>
-            <!-- ปุ่มนี้ต้องให้ user กดโดยตรง (iOS ต้องการ user gesture) -->
             <button onclick="requestCameraAndScan()"
                 class="w-full py-4 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-2xl font-black text-lg shadow-xl shadow-red-200 active:scale-[0.97] transition-all flex items-center justify-center gap-3">
                 <i class="fas fa-camera text-xl"></i>
@@ -1279,7 +1250,6 @@
         <div id="scanStateCamera" class="hidden scanner-wrapper flex-1" style="min-height:300px;">
             <video id="scannerVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;display:block;"></video>
 
-            <!-- overlay มืดรอบกรอบ -->
             <svg class="scan-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <mask id="holeMask">
@@ -1290,24 +1260,18 @@
                 <rect width="100" height="100" fill="rgba(0,0,0,0.52)" mask="url(#holeMask)"/>
             </svg>
 
-            <!-- กรอบเล็ง 4 มุม -->
             <div class="scan-frame">
                 <span class="corner-br"></span>
                 <span class="corner-bl"></span>
                 <div class="scan-line"></div>
             </div>
 
-            <!-- Flash เขียวเมื่อสแกนเจอ -->
             <div id="scanFlash"></div>
-
-            <!-- สถานะ -->
             <div id="scannerStatus" class="scanner-status">หันกล้องไปที่บาร์โค้ด</div>
 
-            <!-- ปุ่มไฟฉาย -->
             <button id="torchBtn" class="torch-btn hidden" onclick="toggleTorch()">
                 <i class="fas fa-bolt"></i>
             </button>
-            <!-- ปุ่มสลับกล้อง -->
             <button class="flip-btn" onclick="flipCamera()">
                 <i class="fas fa-sync-alt"></i>
             </button>
@@ -1324,37 +1288,28 @@
                 <p class="text-[10px] text-slate-300">GAS iframe จำกัดการใช้กล้อง — ใช้วิธีถ่ายรูปแทนได้เลย</p>
             </div>
 
-            <!-- ปุ่มหลัก: ถ่ายรูปบาร์โค้ดด้วยกล้อง -->
-            <input type="file" id="scanCaptureInput" accept="image/*" capture="environment"
-                class="hidden" onchange="scanFromPhoto(event)">
+            <input type="file" id="scanCaptureInput" accept="image/*" capture="environment" class="hidden" onchange="scanFromPhoto(event)">
             <button onclick="document.getElementById('scanCaptureInput').click()"
                 class="w-full py-4 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-2xl font-black text-base shadow-xl shadow-red-200 active:scale-[0.97] transition-all flex items-center justify-center gap-3">
-                <i class="fas fa-camera text-xl"></i>
-                ถ่ายรูปบาร์โค้ด / QR Code
+                <i class="fas fa-camera text-xl"></i> ถ่ายรูปบาร์โค้ด / QR Code
             </button>
 
-            <!-- ปุ่มรอง: เลือกรูปจากคลัง -->
-            <input type="file" id="scanGalleryInput2" accept="image/*"
-                class="hidden" onchange="scanFromPhoto(event)">
+            <input type="file" id="scanGalleryInput2" accept="image/*" class="hidden" onchange="scanFromPhoto(event)">
             <button onclick="document.getElementById('scanGalleryInput2').click()"
                 class="w-full py-3 bg-white border-2 border-slate-200 text-slate-600 rounded-2xl font-bold text-sm active:scale-[0.97] transition-all flex items-center justify-center gap-2">
-                <i class="fas fa-images text-slate-400"></i>
-                เลือกรูปจากคลังภาพ
+                <i class="fas fa-images text-slate-400"></i> เลือกรูปจากคลังภาพ
             </button>
 
-            <!-- spinner วิเคราะห์รูป -->
             <div id="scanPhotoProcessing" class="hidden items-center gap-2 text-slate-500 text-sm font-bold">
                 <i class="fas fa-circle-notch fa-spin text-red-500"></i> กำลังวิเคราะห์...
             </div>
 
-            <!-- ลองใหม่ด้วย live camera -->
             <button onclick="showScanState('permission')"
                 class="text-xs text-slate-300 hover:text-slate-500 transition-colors py-1 flex items-center gap-1">
                 <i class="fas fa-redo text-[10px]"></i> ลองเปิดกล้อง live อีกครั้ง
             </button>
         </div>
 
-        <!-- Footer -->
         <div class="p-4 bg-white border-t border-slate-100 flex-shrink-0 text-center">
             <p class="text-[9px] text-slate-300 font-bold uppercase tracking-wider">
                 ระบบสแกนอัตโนมัติ — ไม่ต้องกดปุ่มหลังเปิดกล้อง
@@ -1424,7 +1379,6 @@
     </div>
 </div>
 
-<!-- Hidden PDF container -->
 <div id="pdf-container"></div>
 
 <script>
@@ -1439,7 +1393,6 @@ let currentPhotoBase64  = '';
 let currentItemForEdit  = null;
 let currentUser         = null;
 
-// Brand
 let globalAppLogo = '';
 let globalAppName = 'Vespa Stock';
 try {
@@ -1447,42 +1400,21 @@ try {
     globalAppName = localStorage.getItem('vespaAppName') || 'Vespa Stock';
 } catch(e) {}
 
-// Users (fallback mock)
 let appUsers = [
-    {
-        username: 'admin', password: '1234', name: 'Admin', role: 'admin',
-        empId: 'EMP8855', email: 'admin@vespa.co.th', phone: '081-123-4567',
-        position: 'System Administrator', avatar: ''
-    },
-    {
-        username: 'staff', password: '1234', name: 'Staff A', role: 'user',
-        empId: 'EMP9901', email: 'staff.a@vespa.co.th', phone: '089-987-6543',
-        position: 'Inventory Staff', avatar: ''
-    }
+    { username: 'admin', password: '1234', name: 'Admin', role: 'admin', empId: 'EMP8855', email: 'admin@vespa.co.th', phone: '081-123-4567', position: 'System Administrator', avatar: '' },
+    { username: 'staff', password: '1234', name: 'Staff A', role: 'user', empId: 'EMP9901', email: 'staff.a@vespa.co.th', phone: '089-987-6543', position: 'Inventory Staff', avatar: '' }
 ];
 
-
-// ═══════════════════════════════════════════════════════════════
-//  APP INIT
-// ═══════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════
 //  GAS API CONFIG
-//  ใส่ URL ของ GAS Web App ที่ deploy แล้วตรงนี้
 // ═══════════════════════════════════════════════════════════════
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxAur8Y2RLdxjJ1KllnxN1lUAkz6MEYDurJfs0NhrIjweXkgV2DNVOLPjl_q9ud4jihZA/exec';
-// ตัวอย่าง: 'https://script.google.com/macros/s/AKfy.../exec'
 
-/**
- * เรียก GAS REST API (แทน google.script.run)
- * @param {string} action - ชื่อ action ใน doPost
- * @param {object} params - parameters เพิ่มเติม
- * @returns {Promise<any>} - ผลลัพธ์จาก GAS
- */
 async function gasCall(action, params) {
     const body = Object.assign({ action }, params || {});
     const res  = await fetch(GAS_URL, {
         method : 'POST',
-        headers: { 'Content-Type': 'text/plain' }, // ต้องใช้ text/plain เพื่อหลีก CORS preflight
+        headers: { 'Content-Type': 'text/plain' },
         body   : JSON.stringify(body)
     });
     const text = await res.text();
@@ -1492,37 +1424,25 @@ async function gasCall(action, params) {
 window.onload = initApp;
 
 function initApp() {
-    if (typeof ChartDataLabels !== 'undefined') {
-        Chart.register(ChartDataLabels);
-    }
-
+    if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
     updateBrandUI();
     setInterval(updateAppTime, 1000);
     updateAppTime();
-
-    // ออก loader ทันที — ไม่รอ GAS เลย
     forceExitLoader();
-
-    // โหลดข้อมูลจาก GAS แบบ background (ไม่บล็อก UI)
     loadDataInBackground();
 }
 
-// ออก loader → แสดง login
 function forceExitLoader() {
     document.getElementById('loader').classList.add('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
 }
 
-// โหลด users + settings ใน background หลัง UI แสดงแล้ว
 async function loadDataInBackground() {
     try {
-        // โหลด users
         const users = await gasCall('getAppUsers');
         if (Array.isArray(users) && users.length > 0) appUsers = users;
     } catch(e) {}
-
     try {
-        // โหลด settings
         const settings = await gasCall('getAppSettings');
         if (settings && typeof settings === 'object') {
             if (settings.logoBase64 !== undefined) {
@@ -1541,31 +1461,20 @@ async function loadDataInBackground() {
 // ═══════════════════════════════════════════════════════════════
 //  BRAND / SETTINGS
 // ═══════════════════════════════════════════════════════════════
-function loadGlobalSettings() {
-    loadDataInBackground();
-}
-
 function updateBrandUI() {
     const name   = globalAppName || 'Vespa Stock';
     const hasLogo = globalAppLogo && globalAppLogo.length > 0;
 
-    // อัปเดตชื่อแบรนด์ทุกจุด
     document.querySelectorAll('.brand-name-text').forEach(el => {
         if (el.tagName !== 'INPUT') el.innerText = name;
     });
     const nameInput = document.getElementById('settingAppName');
     if (nameInput) nameInput.value = name;
 
-    // อัปเดตโลโก้ทุกจุด
     document.querySelectorAll('.brand-logo-img').forEach(el => {
-        if (el.id === 'adminLogoPreview') return; // จัดการแยก
-        if (hasLogo) {
-            el.src = globalAppLogo;
-            el.classList.remove('hidden');
-        } else {
-            el.src = '';
-            el.classList.add('hidden');
-        }
+        if (el.id === 'adminLogoPreview') return;
+        if (hasLogo) { el.src = globalAppLogo; el.classList.remove('hidden'); }
+        else { el.src = ''; el.classList.add('hidden'); }
     });
 
     document.querySelectorAll('.brand-default-icon').forEach(el => {
@@ -1573,19 +1482,16 @@ function updateBrandUI() {
         else         el.classList.remove('hidden');
     });
 
-    // Admin logo preview
     const adminPrev  = document.getElementById('adminLogoPreview');
     const adminPlace = document.getElementById('adminLogoPlaceholder');
     const removeBtn  = document.getElementById('removeLogoBtn');
     if (adminPrev) {
         if (hasLogo) {
-            adminPrev.src = globalAppLogo;
-            adminPrev.classList.remove('hidden');
+            adminPrev.src = globalAppLogo; adminPrev.classList.remove('hidden');
             if (adminPlace) adminPlace.classList.add('hidden');
             if (removeBtn)  removeBtn.classList.remove('hidden');
         } else {
-            adminPrev.src = '';
-            adminPrev.classList.add('hidden');
+            adminPrev.src = ''; adminPrev.classList.add('hidden');
             if (adminPlace) adminPlace.classList.remove('hidden');
             if (removeBtn)  removeBtn.classList.add('hidden');
         }
@@ -1595,7 +1501,6 @@ function updateBrandUI() {
 function handleAppLogoChange(event) {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = e => {
         const img = new Image();
@@ -1604,8 +1509,7 @@ function handleAppLogoChange(event) {
             let w = img.width, h = img.height;
             const MAX = 300;
             if (w > MAX) { h *= MAX / w; w = MAX; }
-            canvas.width  = w;
-            canvas.height = h;
+            canvas.width  = w; canvas.height = h;
             canvas.getContext('2d').drawImage(img, 0, 0, w, h);
             globalAppLogo = canvas.toDataURL('image/jpeg', 0.6);
             updateBrandUI();
@@ -1623,31 +1527,16 @@ function removeAppLogo() {
 
 function saveAllSettings() {
     const newName = document.getElementById('settingAppName').value.trim();
-    if (!newName) {
-        Swal.fire({ icon: 'warning', title: 'กรุณาระบุชื่อระบบ', customClass: { popup: 'rounded-[32px]' } });
-        return;
-    }
+    if (!newName) { Swal.fire({ icon: 'warning', title: 'กรุณาระบุชื่อระบบ', customClass: { popup: 'rounded-[32px]' } }); return; }
 
     globalAppName = newName;
     updateBrandUI();
-    try {
-        localStorage.setItem('vespaAppLogo', globalAppLogo);
-        localStorage.setItem('vespaAppName', globalAppName);
-    } catch(e) {}
+    try { localStorage.setItem('vespaAppLogo', globalAppLogo); localStorage.setItem('vespaAppName', globalAppName); } catch(e) {}
 
     const btn      = document.querySelector('button[onclick="saveAllSettings()"]');
     const origHtml = btn.innerHTML;
     btn.innerHTML  = '<i class="fas fa-circle-notch fa-spin text-xl"></i> กำลังบันทึก...';
     btn.disabled   = true;
-
-    if (typeof google === 'undefined' || !google.script) {
-        setTimeout(() => {
-            Swal.fire({ icon: 'success', title: 'บันทึกแล้ว (Mock)', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
-            btn.innerHTML = origHtml;
-            btn.disabled  = false;
-        }, 800);
-        return;
-    }
 
     gasCall('saveAppSettings', { settings: { logoBase64: globalAppLogo, appName: globalAppName } })
         .then(() => {
@@ -1665,68 +1554,40 @@ function saveAllSettings() {
 // ═══════════════════════════════════════════════════════════════
 function handleLogin(event) {
     event.preventDefault();
-
     const u = document.getElementById('loginUser').value.trim().toLowerCase();
     const p = document.getElementById('loginPass').value.trim();
+    const btn = event.target.querySelector('button[type=submit]');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังโหลด...'; }
 
-    // ถ้า appUsers ยังว่าง (GAS โหลดไม่เสร็จ) ให้ลองดึงก่อน แล้วค่อย login ใหม่
-    if (appUsers.length === 0 && typeof google !== 'undefined' && google.script) {
-        const btn = event.target.querySelector('button[type=submit]');
-        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังโหลด...'; }
-
-        gasCall('getAppUsers')
-            .then(res => {
-                if (btn) { btn.disabled = false; btn.innerHTML = '<span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>'; }
-                if (Array.isArray(res) && res.length > 0) appUsers = res;
-                doLogin(u, p);
-            })
-            .catch(() => {
-                if (btn) { btn.disabled = false; btn.innerHTML = '<span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>'; }
-                doLogin(u, p);
-            });
-        return;
-    }
-
-    doLogin(u, p);
+    // ดึงผู้ใช้จริงเสมอ (ตัด Mock Mode ออก)
+    gasCall('getAppUsers')
+        .then(res => {
+            if (btn) { btn.disabled = false; btn.innerHTML = '<span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>'; }
+            if (Array.isArray(res) && res.length > 0) appUsers = res;
+            doLogin(u, p);
+        })
+        .catch(() => {
+            if (btn) { btn.disabled = false; btn.innerHTML = '<span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>'; }
+            doLogin(u, p);
+        });
 }
 
 function doLogin(u, p) {
-    const user = appUsers.find(x =>
-        String(x.username || '').toLowerCase() === u &&
-        String(x.password || '') === p
-    );
-
+    const user = appUsers.find(x => String(x.username || '').toLowerCase() === u && String(x.password || '') === p);
     if (user) {
-        try {
-            currentUser = user;
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-
-            document.getElementById('dashNameDisplay').innerText   = user.name || '';
-            document.getElementById('sideUserName').innerText      = user.name || '';
-            document.getElementById('mobileWelcomeName').innerText = user.name || '';
-            document.getElementById('roleBadge').innerText         = (user.role || 'user').toUpperCase();
-
-            updateAvatarDisplays();
-
-            const adminMenu = document.getElementById('side-users');
-            if (adminMenu) {
-                if (user.role === 'admin') adminMenu.classList.remove('hidden');
-                else adminMenu.classList.add('hidden');
-            }
-
-            switchView('dashboard');
-        } catch(err) {
-            console.error('Login render error:', err);
-            alert('เกิดข้อผิดพลาดหลัง login: ' + err.message);
-        }
+        currentUser = user;
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+        document.getElementById('dashNameDisplay').innerText   = user.name || '';
+        document.getElementById('sideUserName').innerText      = user.name || '';
+        document.getElementById('mobileWelcomeName').innerText = user.name || '';
+        document.getElementById('roleBadge').innerText         = (user.role || 'user').toUpperCase();
+        updateAvatarDisplays();
+        const adminMenu = document.getElementById('side-users');
+        if (adminMenu) adminMenu.classList.toggle('hidden', user.role !== 'admin');
+        switchView('dashboard');
     } else {
-        Swal.fire({
-            icon: 'error',
-            title: 'Login Failed',
-            text: 'Username หรือ Password ไม่ถูกต้อง',
-            customClass: { popup: 'rounded-[32px]' }
-        });
+        Swal.fire({ icon: 'error', title: 'Login Failed', text: 'Username หรือ Password ไม่ถูกต้อง', customClass: { popup: 'rounded-[32px]' } });
     }
 }
 
@@ -1739,11 +1600,8 @@ function handleLogout() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  SCANNER — Inline camera with permission button
-//  iOS ต้องการ user gesture จึงมีปุ่ม "เปิดกล้องสแกน" ก่อนเสมอ
-//  ใช้ BarcodeDetector API + requestAnimationFrame loop
+//  SCANNER
 // ═══════════════════════════════════════════════════════════════
-
 let scannerStream    = null;
 let scannerRAF       = null;
 let scannerActive    = false;
@@ -1754,257 +1612,129 @@ let useFrontCamera   = false;
 let barcodeDetector  = null;
 let lastDetectedTime = 0;
 
-const SCAN_FORMATS = [
-    'qr_code','code_128','code_39','ean_13','ean_8',
-    'data_matrix','pdf417','aztec','itf','upc_a','upc_e','codabar'
-];
+const SCAN_FORMATS = ['qr_code','code_128','code_39','ean_13','ean_8','data_matrix','pdf417','aztec','itf','upc_a','upc_e','codabar'];
 
-// ── helper: สลับ state UI ──────────────────────────────────────
 function showScanState(state) {
-    // states: 'permission' | 'loading' | 'camera' | 'error'
-    const states = ['permission','loading','camera','error'];
-    states.forEach(s => {
+    ['permission','loading','camera','error'].forEach(s => {
         const el = document.getElementById('scanState' + s.charAt(0).toUpperCase() + s.slice(1));
         if (!el) return;
-        if (s === state) {
-            el.classList.remove('hidden');
-            el.classList.add('flex');
-        } else {
-            el.classList.add('hidden');
-            el.classList.remove('flex');
-        }
+        if (s === state) { el.classList.remove('hidden'); el.classList.add('flex'); }
+        else             { el.classList.add('hidden'); el.classList.remove('flex'); }
     });
 }
 
-// ── เริ่มเปิด modal (แสดงปุ่มขออนุญาตก่อน) ──────────────────
 function startScanner(target) {
     currentScanTarget = target;
-
-    const labelMap = {
-        Location      : 'Location (ที่เก็บ)',
-        Item          : 'Item Code (รหัสสินค้า)',
-        LicensePlate  : 'License Plate (เลขตัวถัง)',
-        searchInput   : 'ค้นหาสินค้า',
-        histFilterItem: 'Item / LPN',
-        histFilterLoc : 'Location'
-    };
+    const labelMap = { Location: 'Location', Item: 'Item Code', LicensePlate: 'License Plate', searchInput: 'ค้นหาสินค้า', histFilterItem: 'Item / LPN', histFilterLoc: 'Location' };
     document.getElementById('scanTargetLabel').innerText = labelMap[target] || target;
-
-    // แสดง state permission ก่อนเสมอ (ต้องการ user tap บน iOS)
     showScanState('permission');
     document.getElementById('scannerModal').classList.add('active');
 }
 
-// ── ปุ่ม "เปิดกล้องสแกน" กดแล้วจะขอสิทธิ์ทันที ──────────────
-// ฟังก์ชันนี้ถูกเรียกจาก user gesture โดยตรง → iOS อนุญาต
 async function requestCameraAndScan() {
     showScanState('loading');
-
-    // Init BarcodeDetector (ถ้าไม่มีให้ใช้ jsQR แทน)
-    const hasBD = await initBarcodeDetector();
-    // hasBD = false → ใช้ jsQR fallback, ไม่ error
-
-    // ขอสิทธิ์กล้อง
+    await initBarcodeDetector();
     try {
-        const constraints = {
-            video: {
-                facingMode: useFrontCamera ? 'user' : { ideal: 'environment' },
-                width:  { ideal: 1280 },
-                height: { ideal: 720 }
-            }
-        };
+        const constraints = { video: { facingMode: useFrontCamera ? 'user' : { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } };
         scannerStream = await navigator.mediaDevices.getUserMedia(constraints);
-
         const video = document.getElementById('scannerVideo');
         video.srcObject = scannerStream;
 
-        // รอ video พร้อม
         await new Promise((resolve, reject) => {
-            video.oncanplay = resolve;
-            video.onerror   = reject;
-            setTimeout(reject, 8000); // timeout 8 วิ
+            video.oncanplay = resolve; video.onerror = reject; setTimeout(reject, 8000);
         });
         await video.play();
-
         scannerActive = true;
 
-        // torch support
         torchTrack = scannerStream.getVideoTracks()[0];
         const caps = torchTrack.getCapabilities ? torchTrack.getCapabilities() : {};
         document.getElementById('torchBtn').classList.toggle('hidden', !caps.torch);
-
-        document.getElementById('scannerStatus').innerText =
-            barcodeDetector ? 'หันกล้องไปที่บาร์โค้ด' : 'หันกล้อง — รองรับ QR Code เท่านั้น (jsQR mode)';
+        document.getElementById('scannerStatus').innerText = barcodeDetector ? 'หันกล้องไปที่บาร์โค้ด' : 'หันกล้อง — รองรับ QR Code (jsQR mode)';
         showScanState('camera');
-
-        // เริ่ม scan loop
         scanLoopBD(video);
-
     } catch(err) {
-        console.error('Camera error:', err);
-        let msg = '';
-
-        // Permissions Policy — GAS iframe บล็อกกล้อง
-        if (err.message && err.message.toLowerCase().includes('permission')) {
-            msg = 'GAS iframe บล็อกการใช้กล้อง live<br>กรุณาใช้ปุ่มถ่ายรูปด้านล่างแทน';
-        } else if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            msg = 'Environment นี้ไม่รองรับ Camera API';
-        } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-            msg = 'กล้องถูกบล็อกโดย browser policy<br>กรุณาใช้ปุ่มถ่ายรูปด้านล่างแทน';
-        } else if (err.name === 'NotFoundError') {
-            msg = 'ไม่พบกล้องในอุปกรณ์นี้';
-        } else if (err.name === 'NotReadableError' || err.name === 'AbortError') {
-            msg = 'กล้องถูกใช้งานโดย app อื่น';
-        } else {
-            msg = err.message || 'ไม่สามารถเปิดกล้องได้';
-        }
+        let msg = (err.message && err.message.toLowerCase().includes('permission')) ? 'GAS iframe บล็อกกล้อง<br>ใช้ปุ่มถ่ายรูปแทน' : err.message || 'ไม่สามารถเปิดกล้องได้';
         showScanError(msg);
     }
 }
 
 function showScanError(msg) {
-    document.getElementById('scanErrorMsg').innerHTML = msg || '';
-    showScanState('error');
+    document.getElementById('scanErrorMsg').innerHTML = msg || ''; showScanState('error');
 }
 
-// ── สแกนจากรูปที่ถ่าย/เลือก (ทำงานได้ใน GAS iframe) ──────────
 async function scanFromPhoto(event) {
     const file = event.target.files[0];
     if (!file) return;
     event.target.value = '';
-
     const processing = document.getElementById('scanPhotoProcessing');
     if (processing) { processing.classList.remove('hidden'); processing.classList.add('flex'); }
 
     try {
-        // ใช้ jsQR วิเคราะห์รูป
         if (typeof jsQR === 'undefined') throw new Error('jsQR ไม่โหลด');
-
         const bitmap = await createImageBitmap(file);
         const canvas = document.createElement('canvas');
-        canvas.width  = bitmap.width;
-        canvas.height = bitmap.height;
+        canvas.width = bitmap.width; canvas.height = bitmap.height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(bitmap, 0, 0);
         bitmap.close();
 
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {
-            inversionAttempts: 'attemptBoth'
-        });
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
 
         if (processing) { processing.classList.add('hidden'); processing.classList.remove('flex'); }
 
         if (code && code.data) {
-            stopScanner();
-            const val = code.data.trim();
-            const elem = document.getElementById(currentScanTarget);
-            if (elem) {
-                elem.value = val;
-                elem.dispatchEvent(new Event('input',  { bubbles: true }));
-                elem.dispatchEvent(new Event('change', { bubbles: true }));
-                elem.style.transition = 'box-shadow 0.2s';
-                elem.style.boxShadow  = '0 0 0 3px rgba(16,185,129,0.45)';
-                setTimeout(() => { elem.style.boxShadow = ''; }, 1200);
-            }
-            if (currentScanTarget === 'Item')          checkItemInfo(val);
-            if (currentScanTarget === 'LicensePlate')  document.getElementById('charCount').innerText = val.length;
-            if (currentScanTarget === 'searchInput')   filterItems();
-            if (currentScanTarget === 'histFilterItem' || currentScanTarget === 'histFilterLoc') filterHistoryLogs();
+            onScanSuccess(code.data);
         } else {
-            Swal.fire({
-                icon: 'warning',
-                title: 'ไม่พบ QR Code ในรูป',
-                text: 'กรุณาถ่ายรูปใหม่ให้ QR Code อยู่ตรงกลางและชัดเจน',
-                confirmButtonColor: '#e63946',
-                customClass: { popup: 'rounded-[32px]' }
-            });
+            Swal.fire({ icon: 'warning', title: 'ไม่พบ QR Code ในรูป', text: 'กรุณาถ่ายให้เห็น QR ตรงกลางชัดเจน', customClass: { popup: 'rounded-[32px]' } });
         }
     } catch(err) {
         if (processing) { processing.classList.add('hidden'); processing.classList.remove('flex'); }
-        console.error('scanFromPhoto error:', err);
-        Swal.fire({
-            icon: 'error',
-            title: 'วิเคราะห์รูปไม่สำเร็จ',
-            text: 'กรุณาถ่ายรูปใหม่ให้ชัดขึ้น',
-            confirmButtonColor: '#e63946',
-            customClass: { popup: 'rounded-[32px]' }
-        });
+        Swal.fire({ icon: 'error', title: 'วิเคราะห์รูปไม่สำเร็จ', customClass: { popup: 'rounded-[32px]' } });
     }
 }
 
-// ── BarcodeDetector init (ถ้าไม่มีจะใช้ jsQR แทน) ──────────
 async function initBarcodeDetector() {
     if (barcodeDetector) return true;
-    if (!('BarcodeDetector' in window)) {
-        // ไม่มี BarcodeDetector → jsQR จะทำงานแทนใน scanLoopBD
-        console.log('BarcodeDetector ไม่รองรับ → ใช้ jsQR แทน');
-        return false;
-    }
+    if (!('BarcodeDetector' in window)) return false;
     try {
         const supported = await BarcodeDetector.getSupportedFormats().catch(() => SCAN_FORMATS);
         const formats   = SCAN_FORMATS.filter(f => supported.includes(f));
         barcodeDetector = new BarcodeDetector({ formats: formats.length ? formats : SCAN_FORMATS });
         return true;
-    } catch(e) {
-        return false;
-    }
+    } catch(e) { return false; }
 }
 
-// ── Scan loop — รองรับทั้ง BarcodeDetector และ jsQR ───────────
 async function scanLoopBD(video) {
     if (!scannerActive) return;
-    if (video.readyState < 2) {
-        scannerRAF = requestAnimationFrame(() => scanLoopBD(video));
-        return;
-    }
+    if (video.readyState < 2) { scannerRAF = requestAnimationFrame(() => scanLoopBD(video)); return; }
 
     try {
         if (barcodeDetector) {
-            // ── วิธีที่ 1: BarcodeDetector API (Android Chrome, Safari 17+)
             const barcodes = await barcodeDetector.detect(video);
             if (barcodes.length > 0) {
                 const now = Date.now();
-                if (now - lastDetectedTime > 1500) {
-                    lastDetectedTime = now;
-                    onScanSuccess(barcodes[0].rawValue);
-                    return;
-                }
+                if (now - lastDetectedTime > 1500) { lastDetectedTime = now; onScanSuccess(barcodes[0].rawValue); return; }
             }
         } else if (typeof jsQR !== 'undefined') {
-            // ── วิธีที่ 2: jsQR fallback (ทุก browser รองรับ)
-            const canvas  = document.createElement('canvas');
-            canvas.width  = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx     = canvas.getContext('2d');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code      = jsQR(imageData.data, imageData.width, imageData.height, {
-                inversionAttempts: 'dontInvert'
-            });
+            const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
             if (code && code.data) {
                 const now = Date.now();
-                if (now - lastDetectedTime > 1500) {
-                    lastDetectedTime = now;
-                    onScanSuccess(code.data);
-                    return;
-                }
+                if (now - lastDetectedTime > 1500) { lastDetectedTime = now; onScanSuccess(code.data); return; }
             }
         }
     } catch(e) {}
-
     scannerRAF = requestAnimationFrame(() => scanLoopBD(video));
 }
 
-// ── สแกนเจอ ───────────────────────────────────────────────────
 function onScanSuccess(text) {
-    // Flash เขียว
     const flash = document.getElementById('scanFlash');
-    if (flash) {
-        flash.classList.add('scan-success-flash');
-        setTimeout(() => flash.classList.remove('scan-success-flash'), 500);
-    }
-    // Beep
+    if (flash) { flash.classList.add('scan-success-flash'); setTimeout(() => flash.classList.remove('scan-success-flash'), 500); }
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator(), gain = ctx.createGain();
@@ -2016,18 +1746,14 @@ function onScanSuccess(text) {
     } catch(e) {}
 
     document.getElementById('scannerStatus').innerText = '✅ สแกนเจอแล้ว!';
-
     setTimeout(() => {
         stopScanner();
         const val = text.trim();
         const elem = document.getElementById(currentScanTarget);
         if (elem) {
             elem.value = val;
-            elem.dispatchEvent(new Event('input',  { bubbles: true }));
-            elem.dispatchEvent(new Event('change', { bubbles: true }));
-            // flash ขอบ input สีเขียว
-            elem.style.transition  = 'box-shadow 0.2s';
-            elem.style.boxShadow   = '0 0 0 3px rgba(16,185,129,0.45)';
+            elem.dispatchEvent(new Event('input', { bubbles: true })); elem.dispatchEvent(new Event('change', { bubbles: true }));
+            elem.style.transition = 'box-shadow 0.2s'; elem.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.45)';
             setTimeout(() => { elem.style.boxShadow = ''; }, 1200);
         }
         if (currentScanTarget === 'Item')          checkItemInfo(val);
@@ -2037,75 +1763,31 @@ function onScanSuccess(text) {
     }, 400);
 }
 
-// ── หยุดกล้องและปิด modal ─────────────────────────────────────
 async function stopScannerStream() {
     scannerActive = false;
     if (scannerRAF) { cancelAnimationFrame(scannerRAF); scannerRAF = null; }
-    if (torchOn && torchTrack) {
-        try { await torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch(e) {}
-        torchOn = false;
-        const tb = document.getElementById('torchBtn');
-        if (tb) tb.classList.remove('on');
-    }
-    if (scannerStream) {
-        scannerStream.getTracks().forEach(t => t.stop());
-        scannerStream = null;
-    }
-    const video = document.getElementById('scannerVideo');
-    if (video) video.srcObject = null;
+    if (torchOn && torchTrack) { try { await torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch(e){} torchOn = false; const tb = document.getElementById('torchBtn'); if (tb) tb.classList.remove('on'); }
+    if (scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream = null; }
+    const video = document.getElementById('scannerVideo'); if (video) video.srcObject = null;
 }
-
-function stopScanner() {
-    document.getElementById('scannerModal').classList.remove('active');
-    stopScannerStream();
-}
-
-// ── Torch ─────────────────────────────────────────────────────
+function stopScanner() { document.getElementById('scannerModal').classList.remove('active'); stopScannerStream(); }
 async function toggleTorch() {
     if (!torchTrack) return;
-    try {
-        torchOn = !torchOn;
-        await torchTrack.applyConstraints({ advanced: [{ torch: torchOn }] });
-        document.getElementById('torchBtn').classList.toggle('on', torchOn);
-    } catch(e) { console.warn('Torch error:', e); }
+    try { torchOn = !torchOn; await torchTrack.applyConstraints({ advanced: [{ torch: torchOn }] }); document.getElementById('torchBtn').classList.toggle('on', torchOn); } catch(e) {}
 }
-
-// ── สลับกล้องหน้า/หลัง ────────────────────────────────────────
-async function flipCamera() {
-    useFrontCamera = !useFrontCamera;
-    if (scannerActive) {
-        await stopScannerStream();
-        await requestCameraAndScan();
-    }
-}
+async function flipCamera() { useFrontCamera = !useFrontCamera; if (scannerActive) { await stopScannerStream(); await requestCameraAndScan(); } }
 
 // ═══════════════════════════════════════════════════════════════
 //  CLOCK & GREETING
 // ═══════════════════════════════════════════════════════════════
 function updateAppTime() {
     const now = new Date();
-
-    if (document.getElementById('clockTime')) {
-        document.getElementById('clockTime').innerText =
-            now.toLocaleTimeString('th-TH', { hour12: false });
-    }
-    if (document.getElementById('currentDateDisplay')) {
-        document.getElementById('currentDateDisplay').innerText =
-            now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    }
-
+    if (document.getElementById('clockTime')) document.getElementById('clockTime').innerText = now.toLocaleTimeString('th-TH', { hour12: false });
+    if (document.getElementById('currentDateDisplay')) document.getElementById('currentDateDisplay').innerText = now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const h = now.getHours();
-    let greetText = 'สวัสดีตอนเช้า';
-    let iconClass = 'fas fa-sun animate-spin-slow text-yellow-500';
-
-    if (h >= 12 && h < 17) {
-        greetText = 'สวัสดีตอนบ่าย';
-        iconClass = 'fas fa-cloud-sun text-orange-500';
-    } else if (h >= 17 || h < 5) {
-        greetText = 'สวัสดีตอนเย็น';
-        iconClass = 'fas fa-moon text-indigo-500';
-    }
-
+    let greetText = 'สวัสดีตอนเช้า', iconClass = 'fas fa-sun animate-spin-slow text-yellow-500';
+    if (h >= 12 && h < 17) { greetText = 'สวัสดีตอนบ่าย'; iconClass = 'fas fa-cloud-sun text-orange-500'; }
+    else if (h >= 17 || h < 5) { greetText = 'สวัสดีตอนเย็น'; iconClass = 'fas fa-moon text-indigo-500'; }
     if (document.getElementById('greetingText')) document.getElementById('greetingText').innerText = greetText;
     if (document.getElementById('greetingIcon')) document.getElementById('greetingIcon').className  = iconClass;
 }
@@ -2114,132 +1796,62 @@ function updateAppTime() {
 //  VIEW MANAGEMENT
 // ═══════════════════════════════════════════════════════════════
 function switchView(view) {
-    try {
-        if (view === 'users' && (!currentUser || currentUser.role !== 'admin')) return;
+    if (view === 'users' && (!currentUser || currentUser.role !== 'admin')) return;
+    ['dashboard', 'inventory', 'report', 'users', 'history', 'profile'].forEach(v => {
+        const ve = document.getElementById('view-' + v), se = document.getElementById('side-' + v), ne = document.getElementById('nav-' + v);
+        if (ve) ve.classList.add('hidden'); if (se) se.classList.remove('active'); if (ne) ne.classList.remove('active');
+    });
+    const target = document.getElementById('view-' + view); if (!target) return;
+    target.classList.remove('hidden');
+    const sideEl = document.getElementById('side-' + view), navEl = document.getElementById('nav-' + view);
+    if (sideEl) sideEl.classList.add('active'); if (navEl) navEl.classList.add('active');
 
-        const views = ['dashboard', 'inventory', 'report', 'users', 'history', 'profile'];
-        views.forEach(v => {
-            const ve = document.getElementById('view-' + v);
-            const se = document.getElementById('side-' + v);
-            const ne = document.getElementById('nav-'  + v);
-            if (ve) ve.classList.add('hidden');
-            if (se) se.classList.remove('active');
-            if (ne) ne.classList.remove('active');
-        });
-
-        const target = document.getElementById('view-' + view);
-        if (!target) { console.warn('view not found:', view); return; }
-        target.classList.remove('hidden');
-
-        const sideEl = document.getElementById('side-' + view);
-        const navEl  = document.getElementById('nav-'  + view);
-        if (sideEl) sideEl.classList.add('active');
-        if (navEl)  navEl.classList.add('active');
-
-        if (view === 'dashboard' || view === 'report') loadRealData();
-        if (view === 'inventory' && !currentItemForEdit) resetForm();
-        if (view === 'users')   { renderUserTable(); updateBrandUI(); }
-        if (view === 'history')  renderHistoryLogs();
-        if (view === 'profile')  loadProfileData();
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch(err) {
-        console.error('switchView error:', err);
-    }
+    if (view === 'dashboard' || view === 'report') loadRealData();
+    if (view === 'inventory' && !currentItemForEdit) resetForm();
+    if (view === 'users')   { renderUserTable(); updateBrandUI(); }
+    if (view === 'history')  renderHistoryLogs();
+    if (view === 'profile')  loadProfileData();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
 function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('-translate-x-full');
     const overlay = document.getElementById('sidebarOverlay');
-    overlay.classList.toggle('hidden');
-    setTimeout(() => overlay.classList.toggle('opacity-0'), 10);
+    overlay.classList.toggle('hidden'); setTimeout(() => overlay.classList.toggle('opacity-0'), 10);
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  DATA LOADING
+//  DATA LOADING (ตัด Mock ทิ้ง โหลด API เสมอ)
 // ═══════════════════════════════════════════════════════════════
 function loadRealData() {
-    // Mock mode
-    if (typeof google === 'undefined' || !google.script) {
-        const mockImg = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAATUlEQVR4nGNkYGD4z8DAAMJkYGBgAABgAAH//wMIgAAAAABJRU5ErkJggg==';
-        inventoryData = [{
-            Location: 'A-01-01', Item: '1B000000', Description: 'Sample Item 1', Type: 'Part',
-            OH: 10, InventoryStatus: 'Good', Solution: 'มีในระบบ', LicensePlate: 'RP81234567890',
-            Name: 'Admin', Remark: 'สินค้าปกติ', Photo: mockImg,
-            Timestamp: '27/10/2023 10:00:00', ActualDate: '2023-10-27T10:00:00.000Z', OnOffStatus: 'ON'
-        }];
-        transactionLogs = [{
-            Timestamp: '27/10/2023 10:00:00', User: 'Admin', Action: 'ADD',
-            Item: '1B000000', Location: 'A-01-01', Details: 'Initial Entry'
-        }];
-
-        renderData(inventoryData);
-        updateCharts(inventoryData);
-        updateActionList(inventoryData);
-        updateDashboardStats(inventoryData);
-        updateUserFilterDropdown();
-        renderHistoryLogs();
-
-        // Remark dropdown
-        const remarks = ['สินค้าปกติ', 'มีรอยขีดข่วน', 'กล่องแตก', 'รอตรวจสอบ'];
-        const rSel = document.getElementById('RemarkSelect');
-        rSel.innerHTML = remarks.map(r => `<option value="${r}">${r}</option>`).join('');
-        document.getElementById('Remark').value = rSel.value;
-
-        // Name dropdown
-        const names = ['Admin', 'Staff A'];
-        const nSel = document.getElementById('NameSelect');
-        nSel.innerHTML = names.map(n => `<option value="${n}">${n}</option>`).join('');
-        if (currentUser && !names.includes(currentUser.name)) {
-            nSel.add(new Option(currentUser.name, currentUser.name));
-        }
-        if (currentUser) nSel.value = currentUser.name;
-        document.getElementById('Name').value = nSel.value;
-        return;
-    }
-
-    // GAS REST API mode
     gasCall('getInventoryData').then(data => {
-        try {
-            inventoryData = typeof data === 'string' ? JSON.parse(data) : data;
-            if (!Array.isArray(inventoryData)) inventoryData = [];
-        } catch(e) { inventoryData = []; }
-        renderData(inventoryData);
-        updateCharts(inventoryData);
-        updateActionList(inventoryData);
-        updateDashboardStats(inventoryData);
+        try { inventoryData = typeof data === 'string' ? JSON.parse(data) : data; if (!Array.isArray(inventoryData)) inventoryData = []; } catch(e) { inventoryData = []; }
+        renderData(inventoryData); updateCharts(inventoryData); updateActionList(inventoryData); updateDashboardStats(inventoryData);
     }).catch(e => console.warn(e));
 
     gasCall('getRemarkOptions').then(remarks => {
         if (!Array.isArray(remarks)) return;
-        const sel = document.getElementById('RemarkSelect');
-        if (!sel) return;
+        const sel = document.getElementById('RemarkSelect'); if (!sel) return;
         sel.innerHTML = remarks.map(r => '<option value="' + r + '">' + r + '</option>').join('');
         if (remarks.length) document.getElementById('Remark').value = sel.value;
     }).catch(() => {});
 
     gasCall('getRecorderOptions').then(names => {
         if (!Array.isArray(names)) return;
-        const sel = document.getElementById('NameSelect');
-        if (!sel) return;
+        const sel = document.getElementById('NameSelect'); if (!sel) return;
         sel.innerHTML = names.map(n => '<option value="' + n + '">' + n + '</option>').join('');
         if (currentUser) {
             if (!names.includes(currentUser.name)) sel.add(new Option(currentUser.name, currentUser.name));
             sel.value = currentUser.name;
         }
-        const nameEl = document.getElementById('Name');
-        if (nameEl) nameEl.value = sel.value;
+        if (document.getElementById('Name')) document.getElementById('Name').value = sel.value;
         updateUserFilterDropdown(names);
     }).catch(() => {});
 }
 
 function updateUserFilterDropdown(names) {
     const list = names || appUsers.map(u => u.name);
-    document.getElementById('histFilterUser').innerHTML =
-        `<option value="All">ทั้งหมด (All Users)</option>` +
-        list.map(n => `<option value="${n}">${n}</option>`).join('');
+    document.getElementById('histFilterUser').innerHTML = `<option value="All">ทั้งหมด (All Users)</option>` + list.map(n => `<option value="${n}">${n}</option>`).join('');
 }
-
 function updateDashboardStats(data) {
     if (!data) return;
     document.getElementById('statLoc').innerText  = new Set(data.map(i => i.Location).filter(Boolean)).size;
@@ -2252,32 +1864,15 @@ function updateDashboardStats(data) {
 // ═══════════════════════════════════════════════════════════════
 function renderData(data) {
     const container = document.getElementById('itemsContainer');
-    if (!data || !data.length) {
-        container.innerHTML = `
-            <div class="col-span-full py-20 text-center opacity-30">
-                <i class="fas fa-box-open text-6xl mb-4"></i>
-                <p class="font-bold uppercase tracking-widest">ยังไม่พบข้อมูล</p>
-            </div>`;
-        return;
-    }
-
+    if (!data || !data.length) { container.innerHTML = `<div class="col-span-full py-20 text-center opacity-30"><i class="fas fa-box-open text-6xl mb-4"></i><p class="font-bold uppercase tracking-widest">ยังไม่พบข้อมูล</p></div>`; return; }
     container.innerHTML = data.map((item, index) => {
-        const sCls = item.InventoryStatus === 'Good'   ? 'bg-green-100 text-green-600' :
-                     item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600'    :
-                                                          'bg-yellow-100 text-yellow-600';
-        const hasPhoto   = item.Photo && item.Photo !== '';
-        const deleteBtn  = (currentUser && currentUser.role === 'admin')
-            ? `<button onclick="confirmDeleteItem(${index}, event)"
-                class="mt-3 w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
-                <i class="fas fa-trash-alt text-[10px]"></i>
-               </button>` : '';
-
+        const sCls = item.InventoryStatus === 'Good' ? 'bg-green-100 text-green-600' : item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-600';
+        const hasPhoto = item.Photo && item.Photo !== '';
+        const deleteBtn = (currentUser && currentUser.role === 'admin') ? `<button onclick="confirmDeleteItem(${index}, event)" class="mt-3 w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-trash-alt text-[10px]"></i></button>` : '';
         return `
         <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center gap-5 cursor-pointer hover:shadow-xl transition-all active:scale-[0.98]">
             <div onclick="showDetail(${index})" class="w-20 h-20 rounded-2xl bg-slate-50 overflow-hidden flex-shrink-0 border border-slate-100">
-                ${hasPhoto
-                    ? `<img src="${item.Photo}" class="w-full h-full object-cover">`
-                    : `<div class="w-full h-full flex items-center justify-center text-slate-200"><i class="fas fa-camera text-2xl"></i></div>`}
+                ${hasPhoto ? `<img src="${item.Photo}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-slate-200"><i class="fas fa-camera text-2xl"></i></div>`}
             </div>
             <div onclick="showDetail(${index})" class="flex-1 min-w-0">
                 <div class="flex gap-2 mb-1.5">
@@ -2288,111 +1883,47 @@ function renderData(data) {
                 <p class="text-[11px] text-slate-400 font-mono font-bold truncate">${item.LicensePlate || '-'}</p>
             </div>
             <div class="text-right">
-                <div class="text-3xl font-black text-slate-700 leading-none">${item.OH}</div>
-                <p class="text-[8px] font-black text-slate-300 uppercase mt-1">Pcs</p>
-                ${deleteBtn}
+                <div class="text-3xl font-black text-slate-700 leading-none">${item.OH}</div><p class="text-[8px] font-black text-slate-300 uppercase mt-1">Pcs</p>${deleteBtn}
             </div>
         </div>`;
     }).join('');
 }
 
 function showDetail(index) {
-    currentItemForEdit = inventoryData[index];
-    const item = currentItemForEdit;
-    if (!item) return;
-
-    document.getElementById('mItemCode').innerText = item.Item          || '-';
-    document.getElementById('mLoc').innerText      = item.Location      || '-';
-    document.getElementById('mLP').innerText       = item.LicensePlate  || '-';
-    document.getElementById('mStatus').innerText   = item.InventoryStatus || '-';
-
+    currentItemForEdit = inventoryData[index]; const item = currentItemForEdit; if (!item) return;
+    document.getElementById('mItemCode').innerText = item.Item || '-'; document.getElementById('mLoc').innerText = item.Location || '-';
+    document.getElementById('mLP').innerText = item.LicensePlate || '-'; document.getElementById('mStatus').innerText = item.InventoryStatus || '-';
     document.getElementById('mMoreInfo').innerHTML = `
-        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-50 shadow-sm">
-            <span class="text-slate-400 font-black uppercase text-[10px]">Description</span>
-            <span class="font-bold text-slate-700">${item.Description || '-'}</span>
-        </div>
-        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-50 shadow-sm">
-            <span class="text-slate-400 font-black uppercase text-[10px]">Type</span>
-            <span class="font-bold text-slate-700">${item.Type || '-'}</span>
-        </div>
-        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-50 shadow-sm">
-            <span class="text-slate-400 font-black uppercase text-[10px]">Remark</span>
-            <span class="font-bold text-slate-700">${item.Remark || '-'}</span>
-        </div>
-        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-50 shadow-sm">
-            <span class="text-slate-400 font-black uppercase text-[10px]">Recorder</span>
-            <span class="font-bold text-slate-700">${item.Name || '-'}</span>
-        </div>
-        <div class="text-[9px] text-slate-300 font-bold uppercase text-center mt-4">
-            Updated: ${item.Timestamp}
-        </div>`;
-
-    // Photo
-    const pArea = document.getElementById('mPhotoArea');
-    const pImg  = document.getElementById('mPhoto');
-    if (item.Photo && item.Photo !== '') {
-        pImg.src = item.Photo;
-        pArea.classList.remove('hidden');
-    } else {
-        pArea.classList.add('hidden');
-    }
-
-    // Delete button (admin only)
+        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-50 shadow-sm"><span class="text-slate-400 font-black uppercase text-[10px]">Description</span><span class="font-bold text-slate-700">${item.Description || '-'}</span></div>
+        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-50 shadow-sm"><span class="text-slate-400 font-black uppercase text-[10px]">Type</span><span class="font-bold text-slate-700">${item.Type || '-'}</span></div>
+        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-50 shadow-sm"><span class="text-slate-400 font-black uppercase text-[10px]">Remark</span><span class="font-bold text-slate-700">${item.Remark || '-'}</span></div>
+        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-50 shadow-sm"><span class="text-slate-400 font-black uppercase text-[10px]">Recorder</span><span class="font-bold text-slate-700">${item.Name || '-'}</span></div>
+        <div class="text-[9px] text-slate-300 font-bold uppercase text-center mt-4">Updated: ${item.Timestamp}</div>`;
+    const pArea = document.getElementById('mPhotoArea'), pImg = document.getElementById('mPhoto');
+    if (item.Photo && item.Photo !== '') { pImg.src = item.Photo; pArea.classList.remove('hidden'); } else { pArea.classList.add('hidden'); }
     const delBtn = document.getElementById('modalDeleteIcon');
-    if (currentUser && currentUser.role === 'admin') delBtn.classList.remove('hidden');
-    else delBtn.classList.add('hidden');
-
+    if (currentUser && currentUser.role === 'admin') delBtn.classList.remove('hidden'); else delBtn.classList.add('hidden');
     document.getElementById('detailModal').classList.add('active');
 }
 
-function filterActionTable() {
-    updateActionList(inventoryData);
-}
-
+function filterActionTable() { updateActionList(inventoryData); }
 function updateActionList(data) {
-    const container = document.getElementById('actionList');
-    if (!container) return;
-
-    const filterVal = document.getElementById('actionFilter')
-        ? document.getElementById('actionFilter').value : 'Issue';
-
+    const container = document.getElementById('actionList'); if (!container) return;
+    const filterVal = document.getElementById('actionFilter') ? document.getElementById('actionFilter').value : 'Issue';
     let filtered;
-    if      (filterVal === 'Issue') filtered = data.filter(i => i.InventoryStatus === 'Damage' || i.InventoryStatus === 'QC');
-    else if (filterVal === 'All')   filtered = [...data];
-    else                            filtered = data.filter(i => i.InventoryStatus === filterVal);
-
-    if (!filtered.length) {
-        container.innerHTML = `<tr><td colspan="5" class="py-16 text-center opacity-30 font-black uppercase tracking-[0.2em]">ไม่พบข้อมูลในสถานะที่เลือก</td></tr>`;
-        return;
-    }
-
+    if (filterVal === 'Issue') filtered = data.filter(i => i.InventoryStatus === 'Damage' || i.InventoryStatus === 'QC');
+    else if (filterVal === 'All') filtered = [...data];
+    else filtered = data.filter(i => i.InventoryStatus === filterVal);
+    if (!filtered.length) { container.innerHTML = `<tr><td colspan="5" class="py-16 text-center opacity-30 font-black uppercase tracking-[0.2em]">ไม่พบข้อมูลในสถานะที่เลือก</td></tr>`; return; }
     container.innerHTML = filtered.slice(0, 50).map(item => {
-        const badge = item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600' :
-                      item.InventoryStatus === 'QC'     ? 'bg-yellow-100 text-yellow-600' :
-                                                          'bg-green-100 text-green-600';
+        const badge = item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600' : item.InventoryStatus === 'QC' ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-600';
         return `
         <tr class="hover:bg-slate-50 transition-colors">
-            <td class="py-4 text-center">
-                ${item.Photo
-                    ? `<img src="${item.Photo}" class="w-12 h-12 rounded-xl object-cover border mx-auto shadow-sm">`
-                    : `<div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-300 mx-auto"><i class="fas fa-camera"></i></div>`}
-            </td>
-            <td class="py-4 px-4">
-                <div class="font-black text-slate-700">${item.Item}</div>
-                <div class="text-[10px] text-slate-400 font-bold">${item.LicensePlate || '-'}</div>
-            </td>
-            <td class="py-4">
-                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${badge}">
-                    ${item.InventoryStatus}
-                </span>
-            </td>
+            <td class="py-4 text-center">${item.Photo ? `<img src="${item.Photo}" class="w-12 h-12 rounded-xl object-cover border mx-auto shadow-sm">` : `<div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-300 mx-auto"><i class="fas fa-camera"></i></div>`}</td>
+            <td class="py-4 px-4"><div class="font-black text-slate-700">${item.Item}</div><div class="text-[10px] text-slate-400 font-bold">${item.LicensePlate || '-'}</div></td>
+            <td class="py-4"><span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${badge}">${item.InventoryStatus}</span></td>
             <td class="py-4 text-xs font-mono font-bold text-slate-500">${item.Location}</td>
-            <td class="py-4 text-right pr-4">
-                <button onclick="showDetail(${inventoryData.indexOf(item)})"
-                    class="w-9 h-9 rounded-full border border-slate-200 text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-                    <i class="fas fa-search"></i>
-                </button>
-            </td>
+            <td class="py-4 text-right pr-4"><button onclick="showDetail(${inventoryData.indexOf(item)})" class="w-9 h-9 rounded-full border border-slate-200 text-slate-400 hover:bg-slate-800 hover:text-white transition-all"><i class="fas fa-search"></i></button></td>
         </tr>`;
     }).join('');
 }
@@ -2401,216 +1932,66 @@ function updateActionList(data) {
 //  CHARTS
 // ═══════════════════════════════════════════════════════════════
 function updateCharts(data) {
-    // Status donut
     const ctxStatus = document.getElementById('statusChart');
     if (ctxStatus) {
-        const s = { Good: 0, Damage: 0, QC: 0 };
-        data.forEach(d => { if (s[d.InventoryStatus] !== undefined) s[d.InventoryStatus]++; });
-
+        const s = { Good: 0, Damage: 0, QC: 0 }; data.forEach(d => { if (s[d.InventoryStatus] !== undefined) s[d.InventoryStatus]++; });
         if (statusChart) statusChart.destroy();
         statusChart = new Chart(ctxStatus, {
-            type: 'doughnut',
-            data: {
-                labels: ['GOOD', 'DAMAGE', 'QC'],
-                datasets: [{
-                    data: [s.Good, s.Damage, s.QC],
-                    backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
-                    borderWidth: 4,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '72%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } } },
-                    datalabels: {
-                        color: '#fff',
-                        font: { weight: 'black', size: 10 },
-                        formatter: (v, ctx) => {
-                            const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                            return v > 0 ? `${v}\n(${((v * 100) / sum).toFixed(0)}%)` : '';
-                        },
-                        textAlign: 'center'
-                    }
-                }
-            }
+            type: 'doughnut', data: { labels: ['GOOD', 'DAMAGE', 'QC'], datasets: [{ data: [s.Good, s.Damage, s.QC], backgroundColor: ['#10b981', '#ef4444', '#f59e0b'], borderWidth: 4, borderColor: '#ffffff' }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } } }, datalabels: { color: '#fff', font: { weight: 'black', size: 10 }, formatter: (v, ctx) => { const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0); return v > 0 ? `${v}\n(${((v * 100) / sum).toFixed(0)}%)` : ''; }, textAlign: 'center' } }
         });
     }
-
-    // Type donut
     const ctxType = document.getElementById('typeChart');
     if (ctxType) {
-        const typeMap = {};
-        data.forEach(d => {
-            const t = d.Type || 'อื่นๆ';
-            typeMap[t] = (typeMap[t] || 0) + 1;
-        });
-
+        const typeMap = {}; data.forEach(d => { const t = d.Type || 'อื่นๆ'; typeMap[t] = (typeMap[t] || 0) + 1; });
         if (typeChart) typeChart.destroy();
         typeChart = new Chart(ctxType, {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(typeMap),
-                datasets: [{
-                    data: Object.values(typeMap),
-                    backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#6366f1', '#14b8a6'],
-                    borderWidth: 4,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '72%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 9 } } },
-                    datalabels: {
-                        color: '#fff',
-                        font: { weight: 'black', size: 10 },
-                        formatter: v => v > 0 ? v : '',
-                        textAlign: 'center'
-                    }
-                }
-            }
+            type: 'doughnut', data: { labels: Object.keys(typeMap), datasets: [{ data: Object.values(typeMap), backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#6366f1', '#14b8a6'], borderWidth: 4, borderColor: '#ffffff' }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 9 } } }, datalabels: { color: '#fff', font: { weight: 'black', size: 10 }, formatter: v => v > 0 ? v : '', textAlign: 'center' } } }
         });
     }
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  HISTORY / TRANSACTION LOGS
+//  HISTORY
 // ═══════════════════════════════════════════════════════════════
 function logTransaction(action, itemCode, location, user, details) {
-    transactionLogs.unshift({
-        Timestamp : new Date().toLocaleString('th-TH'),
-        User      : user,
-        Action    : action,
-        Item      : itemCode,
-        Location  : location,
-        Details   : details
-    });
+    transactionLogs.unshift({ Timestamp: new Date().toLocaleString('th-TH'), User: user, Action: action, Item: itemCode, Location: location, Details: details });
     renderHistoryLogs();
 }
-
 function renderHistoryLogs() {
-    const container = document.getElementById('historyTableBody');
-    if (!container) return;
-
-    const fUser = document.getElementById('histFilterUser').value;
-    const fItem = document.getElementById('histFilterItem').value.toLowerCase();
-    const fLoc  = document.getElementById('histFilterLoc').value.toLowerCase();
-
-    const filtered = transactionLogs.filter(log =>
-        (fUser === 'All' || log.User === fUser) &&
-        (!fItem || log.Item.toLowerCase().includes(fItem)) &&
-        (!fLoc  || log.Location.toLowerCase().includes(fLoc))
-    );
-
-    if (!filtered.length) {
-        container.innerHTML = `<tr><td colspan="5" class="py-10 text-center opacity-40 font-bold">ไม่พบประวัติการทำรายการ</td></tr>`;
-        return;
-    }
-
+    const container = document.getElementById('historyTableBody'); if (!container) return;
+    const fUser = document.getElementById('histFilterUser').value, fItem = document.getElementById('histFilterItem').value.toLowerCase(), fLoc = document.getElementById('histFilterLoc').value.toLowerCase();
+    const filtered = transactionLogs.filter(log => (fUser === 'All' || log.User === fUser) && (!fItem || log.Item.toLowerCase().includes(fItem)) && (!fLoc || log.Location.toLowerCase().includes(fLoc)));
+    if (!filtered.length) { container.innerHTML = `<tr><td colspan="5" class="py-10 text-center opacity-40 font-bold">ไม่พบประวัติการทำรายการ</td></tr>`; return; }
     container.innerHTML = filtered.map(log => {
-        const badge = log.Action === 'ADD'    ? 'badge-add'    :
-                      log.Action === 'EDIT'   ? 'badge-edit'   :
-                      log.Action === 'DELETE' ? 'badge-delete' : 'bg-slate-100 text-slate-500';
+        const badge = log.Action === 'ADD' ? 'badge-add' : log.Action === 'EDIT' ? 'badge-edit' : log.Action === 'DELETE' ? 'badge-delete' : 'bg-slate-100 text-slate-500';
         const parts = log.Timestamp.split(' ');
-        return `
-        <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50">
-            <td class="py-4 pl-4 text-xs font-mono text-slate-400">
-                ${parts[1] || ''}<br>
-                <span class="text-[9px]">${parts[0] || ''}</span>
-            </td>
-            <td class="py-4 px-2 font-bold text-slate-700">${log.User}</td>
-            <td class="py-4 px-2">
-                <span class="px-2 py-1 rounded text-[10px] font-black uppercase ${badge}">${log.Action}</span>
-            </td>
-            <td class="py-4 px-2">
-                <div class="font-bold text-slate-700 text-xs">${log.Item}</div>
-                <div class="text-[9px] text-slate-400 font-mono">${log.Location}</div>
-            </td>
-            <td class="py-4 px-2 text-xs text-slate-500 max-w-[150px] truncate">${log.Details}</td>
-        </tr>`;
+        return `<tr class="hover:bg-slate-50 transition-colors border-b border-slate-50"><td class="py-4 pl-4 text-xs font-mono text-slate-400">${parts[1] || ''}<br><span class="text-[9px]">${parts[0] || ''}</span></td><td class="py-4 px-2 font-bold text-slate-700">${log.User}</td><td class="py-4 px-2"><span class="px-2 py-1 rounded text-[10px] font-black uppercase ${badge}">${log.Action}</span></td><td class="py-4 px-2"><div class="font-bold text-slate-700 text-xs">${log.Item}</div><div class="text-[9px] text-slate-400 font-mono">${log.Location}</div></td><td class="py-4 px-2 text-xs text-slate-500 max-w-[150px] truncate">${log.Details}</td></tr>`;
     }).join('');
 }
-
-function filterHistoryLogs() {
-    renderHistoryLogs();
-}
+function filterHistoryLogs() { renderHistoryLogs(); }
 
 // ═══════════════════════════════════════════════════════════════
 //  USER MANAGEMENT
 // ═══════════════════════════════════════════════════════════════
 function renderUserTable() {
-    document.getElementById('userTableBody').innerHTML = appUsers.map(u => `
-        <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50">
-            <td class="py-4 px-4 font-bold text-slate-700">${u.username}</td>
-            <td class="py-4 px-4 text-slate-500">${u.name}</td>
-            <td class="py-4 px-4">
-                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${u.role === 'admin' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}">
-                    ${u.role}
-                </span>
-            </td>
-            <td class="py-4 text-right pr-4">
-                ${u.username !== 'admin'
-                    ? `<button onclick="deleteUser('${u.username}')"
-                        class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:bg-red-500 hover:text-white transition-all">
-                        <i class="fas fa-trash-alt text-[10px]"></i>
-                       </button>`
-                    : '<span class="text-[10px] text-slate-300 font-bold uppercase">Locked</span>'}
-            </td>
-        </tr>`).join('');
+    document.getElementById('userTableBody').innerHTML = appUsers.map(u => `<tr class="hover:bg-slate-50 transition-colors border-b border-slate-50"><td class="py-4 px-4 font-bold text-slate-700">${u.username}</td><td class="py-4 px-4 text-slate-500">${u.name}</td><td class="py-4 px-4"><span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${u.role === 'admin' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}">${u.role}</span></td><td class="py-4 text-right pr-4">${u.username !== 'admin' ? `<button onclick="deleteUser('${u.username}')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-trash-alt text-[10px]"></i></button>` : '<span class="text-[10px] text-slate-300 font-bold uppercase">Locked</span>'}</td></tr>`).join('');
 }
-
 function openAddUserModal() {
-    Swal.fire({
-        title: 'เพิ่มผู้ใช้งานใหม่',
-        html: `
-            <input id="new-user" class="swal2-input" placeholder="Username">
-            <input id="new-pass" class="swal2-input" placeholder="Password">
-            <input id="new-name" class="swal2-input" placeholder="Display Name">
-            <select id="new-role" class="swal2-input">
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-            </select>`,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonColor: '#e63946',
-        customClass: { popup: 'rounded-[32px]' },
-        preConfirm: () => [
-            document.getElementById('new-user').value,
-            document.getElementById('new-pass').value,
-            document.getElementById('new-name').value,
-            document.getElementById('new-role').value
-        ]
+    Swal.fire({ title: 'เพิ่มผู้ใช้งานใหม่', html: `<input id="new-user" class="swal2-input" placeholder="Username"><input id="new-pass" class="swal2-input" placeholder="Password"><input id="new-name" class="swal2-input" placeholder="Display Name"><select id="new-role" class="swal2-input"><option value="user">User</option><option value="admin">Admin</option></select>`, focusConfirm: false, showCancelButton: true, confirmButtonColor: '#e63946', customClass: { popup: 'rounded-[32px]' }, preConfirm: () => [ document.getElementById('new-user').value, document.getElementById('new-pass').value, document.getElementById('new-name').value, document.getElementById('new-role').value ]
     }).then(result => {
         if (result.isConfirmed) {
-            const [u, p, n, r] = result.value;
-            if (!u || !p || !n) return;
+            const [u, p, n, r] = result.value; if (!u || !p || !n) return;
             appUsers.push({ username: u, password: p, name: n, role: r, empId: '', email: '', phone: '', position: '', avatar: '' });
-            renderUserTable();
-            gasCall('saveAppUsers', { users: appUsers }).catch(()=>{});
+            renderUserTable(); gasCall('saveAppUsers', { users: appUsers }).catch(()=>{});
             Swal.fire({ icon: 'success', title: 'เพิ่มผู้ใช้สำเร็จ', timer: 1200, showConfirmButton: false });
         }
     });
 }
-
 function deleteUser(username) {
-    Swal.fire({
-        title: 'ยืนยันลบ?',
-        text: `ลบผู้ใช้ ${username}`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#e63946',
-        customClass: { popup: 'rounded-[32px]' }
-    }).then(r => {
-        if (r.isConfirmed) {
-            appUsers = appUsers.filter(u => u.username !== username);
-            renderUserTable();
-            gasCall('saveAppUsers', { users: appUsers }).catch(()=>{});
-        }
+    Swal.fire({ title: 'ยืนยันลบ?', text: `ลบผู้ใช้ ${username}`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#e63946', customClass: { popup: 'rounded-[32px]' } }).then(r => {
+        if (r.isConfirmed) { appUsers = appUsers.filter(u => u.username !== username); renderUserTable(); gasCall('saveAppUsers', { users: appUsers }).catch(()=>{}); }
     });
 }
 
@@ -2619,121 +2000,61 @@ function deleteUser(username) {
 // ═══════════════════════════════════════════════════════════════
 function loadProfileData() {
     if (!currentUser) return;
-    document.getElementById('profEmpId').value    = currentUser.empId    || '';
-    document.getElementById('profUsername').value = currentUser.username || '';
-    document.getElementById('profName').value     = currentUser.name     || '';
-    document.getElementById('profEmail').value    = currentUser.email    || '';
-    document.getElementById('profPhone').value    = currentUser.phone    || '';
-    document.getElementById('profPosition').value = currentUser.position || '';
-    updateAvatarDisplays();
-    document.getElementById('passCurrent').value = '';
-    document.getElementById('passNew').value     = '';
-    document.getElementById('passConfirm').value = '';
+    document.getElementById('profEmpId').value = currentUser.empId || ''; document.getElementById('profUsername').value = currentUser.username || '';
+    document.getElementById('profName').value = currentUser.name || ''; document.getElementById('profEmail').value = currentUser.email || '';
+    document.getElementById('profPhone').value = currentUser.phone || ''; document.getElementById('profPosition').value = currentUser.position || '';
+    updateAvatarDisplays(); document.getElementById('passCurrent').value = ''; document.getElementById('passNew').value = ''; document.getElementById('passConfirm').value = '';
 }
-
 function handleProfilePicChange(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+    const file = event.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = e => {
         const img = new Image();
         img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let w = img.width, h = img.height;
-            const MAX = 200;
-            if (w > MAX) { h *= MAX / w; w = MAX; }
-            canvas.width = w; canvas.height = h;
-            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-            if (currentUser) {
-                currentUser.avatar = canvas.toDataURL('image/jpeg', 0.5);
-                updateAvatarDisplays();
-            }
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+            const canvas = document.createElement('canvas'); let w = img.width, h = img.height; const MAX = 200; if (w > MAX) { h *= MAX / w; w = MAX; }
+            canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            if (currentUser) { currentUser.avatar = canvas.toDataURL('image/jpeg', 0.5); updateAvatarDisplays(); }
+        }; img.src = e.target.result;
+    }; reader.readAsDataURL(file);
 }
-
 function updateAvatarDisplays() {
-    if (!currentUser) return;
-    const av = currentUser.avatar;
-    ['profileAvatar', 'sideUserAvatar'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.src = av || '';
-        if (av) el.classList.remove('hidden');
-        else    el.classList.add('hidden');
-    });
-    ['profileAvatarIcon', 'sideUserIcon'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (av) el.classList.add('hidden');
-        else    el.classList.remove('hidden');
-    });
+    if (!currentUser) return; const av = currentUser.avatar;
+    ['profileAvatar', 'sideUserAvatar'].forEach(id => { const el = document.getElementById(id); if (!el) return; el.src = av || ''; if (av) el.classList.remove('hidden'); else el.classList.add('hidden'); });
+    ['profileAvatarIcon', 'sideUserIcon'].forEach(id => { const el = document.getElementById(id); if (!el) return; if (av) el.classList.add('hidden'); else el.classList.remove('hidden'); });
 }
-
 function saveProfile() {
     const newName = document.getElementById('profName').value.trim();
-    if (!newName) {
-        Swal.fire({ icon: 'warning', title: 'ข้อมูลไม่ครบ', text: 'กรุณาระบุชื่อ-นามสกุล', customClass: { popup: 'rounded-[32px]' } });
-        return;
-    }
-    currentUser.name     = newName;
-    currentUser.empId    = document.getElementById('profEmpId').value.trim();
-    currentUser.email    = document.getElementById('profEmail').value.trim();
-    currentUser.phone    = document.getElementById('profPhone').value.trim();
-    currentUser.position = document.getElementById('profPosition').value.trim();
-
-    document.getElementById('dashNameDisplay').innerText   = currentUser.name;
-    document.getElementById('sideUserName').innerText      = currentUser.name;
-    document.getElementById('mobileWelcomeName').innerText = currentUser.name;
-
+    if (!newName) { Swal.fire({ icon: 'warning', title: 'ข้อมูลไม่ครบ', text: 'กรุณาระบุชื่อ-นามสกุล', customClass: { popup: 'rounded-[32px]' } }); return; }
+    currentUser.name = newName; currentUser.empId = document.getElementById('profEmpId').value.trim(); currentUser.email = document.getElementById('profEmail').value.trim(); currentUser.phone = document.getElementById('profPhone').value.trim(); currentUser.position = document.getElementById('profPosition').value.trim();
+    document.getElementById('dashNameDisplay').innerText = currentUser.name; document.getElementById('sideUserName').innerText = currentUser.name; document.getElementById('mobileWelcomeName').innerText = currentUser.name;
     gasCall('saveAppUsers', { users: appUsers }).catch(()=>{});
     Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', timer: 1500, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
 }
-
 function changePassword() {
-    const cp = document.getElementById('passCurrent').value;
-    const np = document.getElementById('passNew').value;
-    const cf = document.getElementById('passConfirm').value;
-
-    if (cp !== currentUser.password) {
-        Swal.fire({ icon: 'error', title: 'รหัสผ่านปัจจุบันไม่ถูกต้อง', customClass: { popup: 'rounded-[32px]' } });
-        return;
-    }
-    if (np.length < 4) {
-        Swal.fire({ icon: 'warning', title: 'รหัสผ่านสั้นเกินไป', text: 'อย่างน้อย 4 ตัวอักษร', customClass: { popup: 'rounded-[32px]' } });
-        return;
-    }
-    if (np !== cf) {
-        Swal.fire({ icon: 'error', title: 'รหัสผ่านไม่ตรงกัน', customClass: { popup: 'rounded-[32px]' } });
-        return;
-    }
-    currentUser.password = np;
-    gasCall('saveAppUsers', { users: appUsers }).catch(()=>{});
-    document.getElementById('passCurrent').value = '';
-    document.getElementById('passNew').value     = '';
-    document.getElementById('passConfirm').value = '';
+    const cp = document.getElementById('passCurrent').value, np = document.getElementById('passNew').value, cf = document.getElementById('passConfirm').value;
+    if (cp !== currentUser.password) { Swal.fire({ icon: 'error', title: 'รหัสผ่านปัจจุบันไม่ถูกต้อง', customClass: { popup: 'rounded-[32px]' } }); return; }
+    if (np.length < 4) { Swal.fire({ icon: 'warning', title: 'รหัสผ่านสั้นเกินไป', text: 'อย่างน้อย 4 ตัวอักษร', customClass: { popup: 'rounded-[32px]' } }); return; }
+    if (np !== cf) { Swal.fire({ icon: 'error', title: 'รหัสผ่านไม่ตรงกัน', customClass: { popup: 'rounded-[32px]' } }); return; }
+    currentUser.password = np; gasCall('saveAppUsers', { users: appUsers }).catch(()=>{});
+    document.getElementById('passCurrent').value = ''; document.getElementById('passNew').value = ''; document.getElementById('passConfirm').value = '';
     Swal.fire({ icon: 'success', title: 'เปลี่ยนรหัสผ่านสำเร็จ', customClass: { popup: 'rounded-[32px]' } });
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  INVENTORY FORM
+//  INVENTORY FORM & API CALLS
 // ═══════════════════════════════════════════════════════════════
 function checkItemInfo(code) {
     if (!code) return;
     document.getElementById('ItemDesc').value = 'กำลังค้นหา...';
 
-    if (typeof google === 'undefined' || !google.script) {
-        setTimeout(() => {
-            document.getElementById('ItemDesc').value = 'สินค้าตัวอย่าง (Mock)';
-            document.getElementById('ItemType').value = 'General';
-        }, 500);
-        return;
-    }
+    // ตัดระบบ Mock ทิ้ง ยิงเข้า GAS API โดยตรง
     gasCall('getItemDetails', { itemCode: code }).then(res => {
-        document.getElementById('ItemDesc').value = res.found ? (res.description || '-') : 'ไม่พบรหัสนี้ในระบบ';
-        document.getElementById('ItemType').value = res.found ? (res.type || '-') : '-';
+        // รองรับทั้งคีย์พิมพ์เล็กและพิมพ์ใหญ่จาก Apps Script
+        const desc = res.description || res.Description || res['ชื่อสินค้า'] || '-';
+        const type = res.type || res.Type || res['ประเภท'] || '-';
+        
+        document.getElementById('ItemDesc').value = res.found ? desc : 'ไม่พบรหัสนี้ในระบบ';
+        document.getElementById('ItemType').value = res.found ? type : '-';
     }).catch(() => {
         document.getElementById('ItemDesc').value = '-';
         document.getElementById('ItemType').value = '-';
@@ -2741,174 +2062,58 @@ function checkItemInfo(code) {
 }
 
 function resetForm() {
-    currentItemForEdit = null;
-    document.getElementById('stockForm').reset();
-
-    // Reset submit button
-    const btn = document.getElementById('submitBtn');
-    btn.disabled  = false;
-    btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
-
-    // Reset form header
-    document.getElementById('formTitle').innerText   = 'บันทึกรายการสินค้า';
-    document.getElementById('formSubTitle').innerText = 'NEW INVENTORY ENTRY';
-    document.getElementById('formIconBox').className  = 'w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shadow-sm transition-colors duration-500';
-    document.getElementById('formIcon').className     = 'fas fa-edit text-2xl';
-    document.getElementById('addNewBtn').classList.add('hidden');
-
-    resetPhotoUI();
-    document.getElementById('charCount').innerText = '0';
-    document.getElementById('ItemDesc').value      = '';
-    document.getElementById('ItemType').value      = '';
-    document.getElementById('OH').value            = '1';
-
-    // Set default recorder to current user
+    currentItemForEdit = null; document.getElementById('stockForm').reset();
+    const btn = document.getElementById('submitBtn'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
+    document.getElementById('formTitle').innerText = 'บันทึกรายการสินค้า'; document.getElementById('formSubTitle').innerText = 'NEW INVENTORY ENTRY'; document.getElementById('formIconBox').className = 'w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shadow-sm transition-colors duration-500'; document.getElementById('formIcon').className = 'fas fa-edit text-2xl'; document.getElementById('addNewBtn').classList.add('hidden');
+    resetPhotoUI(); document.getElementById('charCount').innerText = '0'; document.getElementById('ItemDesc').value = ''; document.getElementById('ItemType').value = ''; document.getElementById('OH').value = '1';
     if (currentUser) {
         const nSel = document.getElementById('NameSelect');
-        if (!Array.from(nSel.options).some(o => o.value === currentUser.name)) {
-            nSel.add(new Option(currentUser.name, currentUser.name));
-        }
-        nSel.value = currentUser.name;
-        document.getElementById('Name').value = currentUser.name;
+        if (!Array.from(nSel.options).some(o => o.value === currentUser.name)) nSel.add(new Option(currentUser.name, currentUser.name));
+        nSel.value = currentUser.name; document.getElementById('Name').value = currentUser.name;
     }
-    const rSel = document.getElementById('RemarkSelect');
-    if (rSel) document.getElementById('Remark').value = rSel.value;
+    const rSel = document.getElementById('RemarkSelect'); if (rSel) document.getElementById('Remark').value = rSel.value;
 }
 
 function editItem() {
     if (!currentItemForEdit) return;
-    closeModal('detailModal');
-    switchView('inventory');
-
-    const btn = document.getElementById('submitBtn');
-    btn.disabled  = false;
-    btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
-
-    document.getElementById('formTitle').innerText    = 'แก้ไขรายการสินค้า';
-    document.getElementById('formSubTitle').innerText = 'EDITING EXISTING ITEM';
-    document.getElementById('formIconBox').className  = 'w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shadow-sm transition-colors duration-500';
-    document.getElementById('formIcon').className     = 'fas fa-sync-alt fa-spin text-2xl';
-    document.getElementById('addNewBtn').classList.remove('hidden');
-
-    // Fill fields
-    ['Location', 'Item', 'OH', 'InventoryStatus', 'OnOffStatus', 'LicensePlate'].forEach(id => {
-        document.getElementById(id).value = currentItemForEdit[id] || (id === 'OH' ? 1 : '');
-    });
+    closeModal('detailModal'); switchView('inventory');
+    const btn = document.getElementById('submitBtn'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
+    document.getElementById('formTitle').innerText = 'แก้ไขรายการสินค้า'; document.getElementById('formSubTitle').innerText = 'EDITING EXISTING ITEM'; document.getElementById('formIconBox').className = 'w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shadow-sm transition-colors duration-500'; document.getElementById('formIcon').className = 'fas fa-sync-alt fa-spin text-2xl'; document.getElementById('addNewBtn').classList.remove('hidden');
+    ['Location', 'Item', 'OH', 'InventoryStatus', 'OnOffStatus', 'LicensePlate'].forEach(id => { document.getElementById(id).value = currentItemForEdit[id] || (id === 'OH' ? 1 : ''); });
     document.getElementById('charCount').innerText = (currentItemForEdit.LicensePlate || '').length;
-
-    // Solution radio
-    for (const r of document.getElementsByName('Solution')) {
-        if (r.value === currentItemForEdit.Solution) r.checked = true;
-    }
-
-    // Name
-    const nSel = document.getElementById('NameSelect');
-    if (!Array.from(nSel.options).some(o => o.value === currentItemForEdit.Name)) {
-        nSel.add(new Option(currentItemForEdit.Name, currentItemForEdit.Name));
-    }
-    nSel.value = currentItemForEdit.Name;
-    document.getElementById('Name').value = currentItemForEdit.Name;
-
-    // Remark
-    const rSel = document.getElementById('RemarkSelect');
-    if (!Array.from(rSel.options).some(o => o.value === currentItemForEdit.Remark)) {
-        rSel.add(new Option(currentItemForEdit.Remark, currentItemForEdit.Remark));
-    }
-    rSel.value = currentItemForEdit.Remark;
-    document.getElementById('Remark').value = currentItemForEdit.Remark;
-
-    // Photo
+    for (const r of document.getElementsByName('Solution')) { if (r.value === currentItemForEdit.Solution) r.checked = true; }
+    
+    const nSel = document.getElementById('NameSelect'); if (!Array.from(nSel.options).some(o => o.value === currentItemForEdit.Name)) nSel.add(new Option(currentItemForEdit.Name, currentItemForEdit.Name)); nSel.value = currentItemForEdit.Name; document.getElementById('Name').value = currentItemForEdit.Name;
+    const rSel = document.getElementById('RemarkSelect'); if (!Array.from(rSel.options).some(o => o.value === currentItemForEdit.Remark)) rSel.add(new Option(currentItemForEdit.Remark, currentItemForEdit.Remark)); rSel.value = currentItemForEdit.Remark; document.getElementById('Remark').value = currentItemForEdit.Remark;
     if (currentItemForEdit.Photo && currentItemForEdit.Photo !== '') {
-        currentPhotoBase64 = currentItemForEdit.Photo;
-        const imgEl = document.getElementById('imgPreview');
-        imgEl.src = currentPhotoBase64;
-        imgEl.classList.remove('hidden');
-        document.getElementById('photoPlaceholder').classList.add('hidden');
-        document.getElementById('removePhotoBtn').classList.remove('hidden');
-    } else {
-        resetPhotoUI();
-    }
-
+        currentPhotoBase64 = currentItemForEdit.Photo; const imgEl = document.getElementById('imgPreview'); imgEl.src = currentPhotoBase64; imgEl.classList.remove('hidden'); document.getElementById('photoPlaceholder').classList.add('hidden'); document.getElementById('removePhotoBtn').classList.remove('hidden');
+    } else { resetPhotoUI(); }
     checkItemInfo(currentItemForEdit.Item);
 }
 
 function handleFormSubmit() {
     const sn = document.getElementById('LicensePlate').value.trim();
-    if (sn.length !== 13) {
-        Swal.fire({ icon: 'error', title: 'ข้อมูลไม่ครบ', text: 'เลขตัวถังต้องมี 13 หลัก', customClass: { popup: 'rounded-[32px]' } });
-        return;
-    }
-
-    // Check duplicate
+    if (sn.length !== 13) { Swal.fire({ icon: 'error', title: 'ข้อมูลไม่ครบ', text: 'เลขตัวถังต้องมี 13 หลัก', customClass: { popup: 'rounded-[32px]' } }); return; }
     const dup = inventoryData.find(i => i.LicensePlate === sn);
-    if (dup && (!currentItemForEdit || currentItemForEdit.Timestamp !== dup.Timestamp)) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'พบข้อมูลซ้ำ!',
-            text: `เลขตัวถัง ${sn} ถูกบันทึกไปแล้วที่ ${dup.Location} โดย ${dup.Name}`,
-            customClass: { popup: 'rounded-[32px]' }
-        });
-        return;
-    }
+    if (dup && (!currentItemForEdit || currentItemForEdit.Timestamp !== dup.Timestamp)) { Swal.fire({ icon: 'warning', title: 'พบข้อมูลซ้ำ!', text: `เลขตัวถัง ${sn} ถูกบันทึกไปแล้วที่ ${dup.Location} โดย ${dup.Name}`, customClass: { popup: 'rounded-[32px]' } }); return; }
 
     const payload = {
-        Location        : document.getElementById('Location').value,
-        Item            : document.getElementById('Item').value,
-        Description     : document.getElementById('ItemDesc').value,
-        Type            : document.getElementById('ItemType').value,
-        OH              : parseInt(document.getElementById('OH').value),
-        InventoryStatus : document.getElementById('InventoryStatus').value,
-        OnOffStatus     : document.getElementById('OnOffStatus').value,
-        Solution        : document.querySelector('input[name="Solution"]:checked').value,
-        LicensePlate    : sn,
-        Remark          : document.getElementById('Remark').value,
-        Name            : document.getElementById('Name').value,
-        Photo           : currentPhotoBase64,
-        ActualDate      : new Date().toISOString()
+        Location: document.getElementById('Location').value, Item: document.getElementById('Item').value, Description: document.getElementById('ItemDesc').value,
+        Type: document.getElementById('ItemType').value, OH: parseInt(document.getElementById('OH').value), InventoryStatus: document.getElementById('InventoryStatus').value,
+        OnOffStatus: document.getElementById('OnOffStatus').value, Solution: document.querySelector('input[name="Solution"]:checked').value, LicensePlate: sn,
+        Remark: document.getElementById('Remark').value, Name: document.getElementById('Name').value, Photo: currentPhotoBase64, ActualDate: new Date().toISOString()
     };
 
-    const btn = document.getElementById('submitBtn');
-    btn.disabled  = true;
-    btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> กำลัง${currentItemForEdit ? 'บันทึกการแก้ไข' : 'บันทึกข้อมูล'}...`;
+    const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> กำลัง${currentItemForEdit ? 'บันทึกการแก้ไข' : 'บันทึกข้อมูล'}...`;
 
-    // Mock mode
-    if (typeof google === 'undefined' || !google.script) {
-        setTimeout(() => {
-            Swal.fire({ icon: 'success', title: 'สำเร็จ (Mock)!', timer: 1500, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
-            logTransaction(
-                currentItemForEdit ? 'EDIT' : 'ADD',
-                payload.Item, payload.Location, currentUser.name,
-                currentItemForEdit ? 'Updated Item' : 'Added New'
-            );
-            if (currentItemForEdit) {
-                const idx = inventoryData.indexOf(currentItemForEdit);
-                if (idx > -1) inventoryData[idx] = { ...payload, Timestamp: new Date().toLocaleString() };
-            } else {
-                payload.Timestamp = new Date().toLocaleString();
-                inventoryData.unshift(payload);
-            }
-            resetForm();
-            loadRealData();
-            switchView('dashboard');
-            btn.disabled  = false;
-            btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
-        }, 1000);
-        return;
-    }
-
-    // GAS REST API
+    // ยิง GAS API โดยตรง
     const action = currentItemForEdit ? 'updateInventoryItem' : 'recordInventory';
     if (currentItemForEdit) payload.oldLicensePlate = currentItemForEdit.LicensePlate;
 
     gasCall(action, { data: payload })
         .then(() => {
             Swal.fire({ icon: 'success', title: 'สำเร็จ!', timer: 1500, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
-            logTransaction(
-                currentItemForEdit ? 'EDIT' : 'ADD',
-                payload.Item, payload.Location,
-                currentUser ? currentUser.name : 'Unknown',
-                currentItemForEdit ? 'Updated' : 'Added'
-            );
+            logTransaction(currentItemForEdit ? 'EDIT' : 'ADD', payload.Item, payload.Location, currentUser ? currentUser.name : 'Unknown', currentItemForEdit ? 'Updated' : 'Added');
             resetForm(); loadRealData(); switchView('dashboard');
             btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
         })
@@ -2918,213 +2123,72 @@ function handleFormSubmit() {
         });
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  DELETE ITEM
-// ═══════════════════════════════════════════════════════════════
 function confirmDeleteItem(index, e) {
-    if (e) e.stopPropagation();
-    const item = inventoryData[index];
-
-    Swal.fire({
-        title: 'ยืนยันการลบ?',
-        text: `ลบ ${item.Item} (${item.LicensePlate})?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#e63946',
-        customClass: { popup: 'rounded-[32px]' }
-    }).then(r => {
+    if (e) e.stopPropagation(); const item = inventoryData[index];
+    Swal.fire({ title: 'ยืนยันการลบ?', text: `ลบ ${item.Item} (${item.LicensePlate})?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#e63946', customClass: { popup: 'rounded-[32px]' } }).then(r => {
         if (!r.isConfirmed) return;
         logTransaction('DELETE', item.Item, item.Location, currentUser.name, 'Deleted S/N: ' + item.LicensePlate);
-
-        if (typeof google === 'undefined' || !google.script) {
-            inventoryData.splice(index, 1);
-            Swal.fire({ icon: 'success', title: 'ลบสำเร็จ (Mock)', timer: 1000, showConfirmButton: false });
-            loadRealData();
-            closeModal('detailModal');
-            return;
-        }
+        
         gasCall('deleteInventoryItem', { data: item })
-            .then(() => {
-                Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', timer: 1000, showConfirmButton: false });
-                loadRealData(); closeModal('detailModal');
-            })
+            .then(() => { Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', timer: 1000, showConfirmButton: false }); loadRealData(); closeModal('detailModal'); })
             .catch(err => Swal.fire('Error', String(err), 'error'));
     });
 }
-
-function confirmDeleteItemFromModal() {
-    confirmDeleteItem(inventoryData.indexOf(currentItemForEdit));
-}
+function confirmDeleteItemFromModal() { confirmDeleteItem(inventoryData.indexOf(currentItemForEdit)); }
 
 // ═══════════════════════════════════════════════════════════════
 //  UTILITIES
 // ═══════════════════════════════════════════════════════════════
-function adjustQty(n) {
-    const i = document.getElementById('OH');
-    let v = parseInt(i.value);
-    if (isNaN(v)) v = 0;
-    i.value = Math.max(1, v + n);
-}
-
-function closeModal(id) {
-    document.getElementById(id).classList.remove('active');
-}
-
-function filterItems() {
-    const q = document.getElementById('searchInput').value.toLowerCase();
-    renderData(inventoryData.filter(i =>
-        (i.Item          || '').toLowerCase().includes(q) ||
-        (i.Location      || '').toLowerCase().includes(q) ||
-        (i.LicensePlate  || '').toLowerCase().includes(q)
-    ));
-}
+function adjustQty(n) { const i = document.getElementById('OH'); let v = parseInt(i.value); if (isNaN(v)) v = 0; i.value = Math.max(1, v + n); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+function filterItems() { const q = document.getElementById('searchInput').value.toLowerCase(); renderData(inventoryData.filter(i => (i.Item || '').toLowerCase().includes(q) || (i.Location || '').toLowerCase().includes(q) || (i.LicensePlate || '').toLowerCase().includes(q))); }
 
 function previewImage(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
+    const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
     reader.onload = e => {
         const img = new Image();
         img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let w = img.width, h = img.height;
-            const MAX = 400;
-            if (w > MAX) { h *= MAX / w; w = MAX; }
-            canvas.width = w; canvas.height = h;
-            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            const canvas = document.createElement('canvas'); let w = img.width, h = img.height; const MAX = 400; if (w > MAX) { h *= MAX / w; w = MAX; }
+            canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
             currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.5);
-
-            document.getElementById('imgPreview').src = currentPhotoBase64;
-            document.getElementById('imgPreview').classList.remove('hidden');
-            document.getElementById('photoPlaceholder').classList.add('hidden');
-            document.getElementById('removePhotoBtn').classList.remove('hidden');
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+            document.getElementById('imgPreview').src = currentPhotoBase64; document.getElementById('imgPreview').classList.remove('hidden');
+            document.getElementById('photoPlaceholder').classList.add('hidden'); document.getElementById('removePhotoBtn').classList.remove('hidden');
+        }; img.src = e.target.result;
+    }; reader.readAsDataURL(file);
 }
-
-function removePhoto(e) {
-    if (e) e.stopPropagation();
-    resetPhotoUI();
-}
-
-function resetPhotoUI() {
-    currentPhotoBase64 = '';
-    document.getElementById('PhotoInput').value = '';
-    document.getElementById('imgPreview').classList.add('hidden');
-    document.getElementById('photoPlaceholder').classList.remove('hidden');
-    document.getElementById('removePhotoBtn').classList.add('hidden');
-}
-
-function addNewRemark() {
-    Swal.fire({
-        title: 'เพิ่มหมายเหตุ',
-        input: 'text',
-        showCancelButton: true,
-        confirmButtonColor: '#e63946',
-        customClass: { popup: 'rounded-[32px]' }
-    }).then(r => {
-        if (r.isConfirmed && r.value) {
-            const sel = document.getElementById('RemarkSelect');
-            sel.add(new Option(r.value, r.value));
-            sel.value = r.value;
-            document.getElementById('Remark').value = r.value;
-        }
-    });
-}
-
-function addNewRecorder() {
-    Swal.fire({
-        title: 'เพิ่มชื่อผู้บันทึก',
-        input: 'text',
-        showCancelButton: true,
-        confirmButtonColor: '#e63946',
-        customClass: { popup: 'rounded-[32px]' }
-    }).then(r => {
-        if (r.isConfirmed && r.value) {
-            const sel = document.getElementById('NameSelect');
-            sel.add(new Option(r.value, r.value));
-            sel.value = r.value;
-            document.getElementById('Name').value = r.value;
-        }
-    });
-}
-
-function showError(m) {
-    document.getElementById('loaderText').innerText = m;
-    document.getElementById('forceCloseBtn').classList.remove('hidden');
-}
-
-function formatDateShort(dateStr) {
-    if (!dateStr) return '-';
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mi = String(d.getMinutes()).padStart(2, '0');
-    return `${dd}/${mm}/${d.getFullYear()} ${hh}:${mi}`;
-}
-
-function printSingleItem() {
-    if (currentItemForEdit) generatePDF('Single', currentItemForEdit);
-}
+function removePhoto(e) { if (e) e.stopPropagation(); resetPhotoUI(); }
+function resetPhotoUI() { currentPhotoBase64 = ''; document.getElementById('PhotoInput').value = ''; document.getElementById('imgPreview').classList.add('hidden'); document.getElementById('photoPlaceholder').classList.remove('hidden'); document.getElementById('removePhotoBtn').classList.add('hidden'); }
+function addNewRemark() { Swal.fire({ title: 'เพิ่มหมายเหตุ', input: 'text', showCancelButton: true, confirmButtonColor: '#e63946', customClass: { popup: 'rounded-[32px]' } }).then(r => { if (r.isConfirmed && r.value) { const sel = document.getElementById('RemarkSelect'); sel.add(new Option(r.value, r.value)); sel.value = r.value; document.getElementById('Remark').value = r.value; } }); }
+function addNewRecorder() { Swal.fire({ title: 'เพิ่มชื่อผู้บันทึก', input: 'text', showCancelButton: true, confirmButtonColor: '#e63946', customClass: { popup: 'rounded-[32px]' } }).then(r => { if (r.isConfirmed && r.value) { const sel = document.getElementById('NameSelect'); sel.add(new Option(r.value, r.value)); sel.value = r.value; document.getElementById('Name').value = r.value; } }); }
+function formatDateShort(dateStr) { if (!dateStr) return '-'; const d = new Date(dateStr); if (isNaN(d.getTime())) return dateStr; const dd = String(d.getDate()).padStart(2, '0'), mm = String(d.getMonth() + 1).padStart(2, '0'), hh = String(d.getHours()).padStart(2, '0'), mi = String(d.getMinutes()).padStart(2, '0'); return `${dd}/${mm}/${d.getFullYear()} ${hh}:${mi}`; }
+function printSingleItem() { if (currentItemForEdit) generatePDF('Single', currentItemForEdit); }
 
 // ═══════════════════════════════════════════════════════════════
 //  PDF GENERATION
 // ═══════════════════════════════════════════════════════════════
 function generatePDF(mode, singleData) {
-    let dataToPrint = [];
-    let titleSuffix = '';
-    let fileName    = `${(globalAppName || 'Report').replace(/\s+/g, '_')}_${Date.now()}.pdf`;
-
-    if (mode === 'Single' && singleData) {
-        dataToPrint = [singleData];
-        titleSuffix = `(Item: ${singleData.Item})`;
-        fileName    = `${(singleData.Item || 'Item').replace(/[^a-zA-Z0-9-_]/g, '')}_${singleData.InventoryStatus}.pdf`;
-
-    } else if (mode === 'Filtered') {
-        const q = document.getElementById('searchInput').value.toLowerCase();
-        dataToPrint = q
-            ? inventoryData.filter(i =>
-                (i.Item         || '').toLowerCase().includes(q) ||
-                (i.Location     || '').toLowerCase().includes(q) ||
-                (i.LicensePlate || '').toLowerCase().includes(q))
-            : [...inventoryData];
-        if (q) titleSuffix = `(Search: "${q}")`;
-
-    } else {
-        dataToPrint = [...inventoryData];
-    }
-
-    if (!dataToPrint.length) {
-        Swal.fire('Error', 'ไม่พบข้อมูลสำหรับสร้างรายงาน', 'error');
-        return;
-    }
-
+    let dataToPrint = []; let titleSuffix = ''; let fileName = `${(globalAppName || 'Report').replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+    if (mode === 'Single' && singleData) { dataToPrint = [singleData]; titleSuffix = `(Item: ${singleData.Item})`; fileName = `${(singleData.Item || 'Item').replace(/[^a-zA-Z0-9-_]/g, '')}_${singleData.InventoryStatus}.pdf`; }
+    else if (mode === 'Filtered') { const q = document.getElementById('searchInput').value.toLowerCase(); dataToPrint = q ? inventoryData.filter(i => (i.Item || '').toLowerCase().includes(q) || (i.Location || '').toLowerCase().includes(q) || (i.LicensePlate || '').toLowerCase().includes(q)) : [...inventoryData]; if (q) titleSuffix = `(Search: "${q}")`; }
+    else { dataToPrint = [...inventoryData]; }
+    
+    if (!dataToPrint.length) { Swal.fire('Error', 'ไม่พบข้อมูลสำหรับสร้างรายงาน', 'error'); return; }
     Swal.fire({ title: 'Generating PDF...', html: 'กำลังสร้างไฟล์ PDF ขนาด A4 (Landscape)...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-    const dateStr  = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    const appN     = globalAppName || 'Vespa Stock';
-    const logoHtml = globalAppLogo
-        ? `<img src="${globalAppLogo}" style="max-height:50px;border-radius:8px;background:white;padding:4px;object-fit:contain;margin-right:15px;">`
-        : '';
+    
+    const dateStr = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const appN = globalAppName || 'Vespa Stock';
+    const logoHtml = globalAppLogo ? `<img src="${globalAppLogo}" style="max-height:50px;border-radius:8px;background:white;padding:4px;object-fit:contain;margin-right:15px;">` : '';
 
     let html = `
     <div style="width:297mm;min-height:210mm;padding:15mm 20mm;box-sizing:border-box;background:white;font-family:'Kanit',sans-serif;color:black;position:relative;">
         <div style="background:#1e293b;padding:25px 35px;color:white;display:flex;justify-content:space-between;align-items:center;border-bottom:5px solid #e63946;border-radius:12px 12px 0 0;margin-bottom:25px;">
             <div style="display:flex;align-items:center;">
                 ${logoHtml}
-                <div>
-                    <h1 style="font-size:32px;font-weight:900;margin:0;font-family:'Pacifico',cursive;">${appN}</h1>
-                    <p style="font-size:14px;opacity:0.9;margin:4px 0 0 0;font-weight:bold;text-transform:uppercase;letter-spacing:3px;">MEGA INVENTORY REPORT</p>
-                </div>
+                <div><h1 style="font-size:32px;font-weight:900;margin:0;font-family:'Pacifico',cursive;">${appN}</h1><p style="font-size:14px;opacity:0.9;margin:4px 0 0 0;font-weight:bold;text-transform:uppercase;letter-spacing:3px;">MEGA INVENTORY REPORT</p></div>
             </div>
             <div style="text-align:right;">
                 <div style="background:rgba(255,255,255,0.1);padding:8px 16px;border-radius:10px;">
-                    <p style="font-size:11px;font-weight:bold;margin:0;opacity:0.8;text-transform:uppercase;">Generated On</p>
-                    <p style="font-size:16px;font-weight:bold;margin:0;">${dateStr}</p>
+                    <p style="font-size:11px;font-weight:bold;margin:0;opacity:0.8;text-transform:uppercase;">Generated On</p><p style="font-size:16px;font-weight:bold;margin:0;">${dateStr}</p>
                 </div>
             </div>
         </div>
@@ -3134,52 +2198,32 @@ function generatePDF(mode, singleData) {
         </div>`;
 
     dataToPrint.forEach(item => {
-        const statusBg    = item.InventoryStatus === 'Good'   ? '#dcfce7' : item.InventoryStatus === 'Damage' ? '#fee2e2' : '#fef3c7';
-        const statusColor = item.InventoryStatus === 'Good'   ? '#166534' : item.InventoryStatus === 'Damage' ? '#991b1b' : '#b45309';
-        const statusText  = item.OH <= 0 ? 'OUT OF STOCK' : item.InventoryStatus;
-        const badge       = `<span style="background:${statusBg};color:${statusColor};padding:6px 12px;border-radius:6px;font-weight:900;font-size:14px;text-transform:uppercase;display:inline-block;">${statusText}</span>`;
-        const photoHtml   = item.Photo && item.Photo.length > 50
+        const statusBg = item.InventoryStatus === 'Good' ? '#dcfce7' : item.InventoryStatus === 'Damage' ? '#fee2e2' : '#fef3c7';
+        const statusColor = item.InventoryStatus === 'Good' ? '#166534' : item.InventoryStatus === 'Damage' ? '#991b1b' : '#b45309';
+        const statusText = item.OH <= 0 ? 'OUT OF STOCK' : item.InventoryStatus;
+        const badge = `<span style="background:${statusBg};color:${statusColor};padding:6px 12px;border-radius:6px;font-weight:900;font-size:14px;text-transform:uppercase;display:inline-block;">${statusText}</span>`;
+        const photoHtml = item.Photo && item.Photo.length > 50
             ? `<div style="width:370px;height:320px;overflow:hidden;border-radius:10px;border:1px solid #f1f5f9;"><img src="${item.Photo}" style="width:100%;height:100%;object-fit:contain;background:#fff;"></div>`
             : `<div style="width:370px;height:320px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:40px;font-weight:bold;">NO IMAGE</div>`;
 
         html += `
         <div style="display:flex;gap:20px;margin-bottom:25px;background:#f8fafc;border:2px solid #e2e8f0;border-radius:18px;overflow:hidden;page-break-inside:avoid;box-shadow:0 2px 5px rgba(0,0,0,0.05);">
-            <div style="width:400px;flex-shrink:0;background:#fff;border-right:2px solid #e2e8f0;display:flex;align-items:center;justify-content:center;padding:15px;">
-                ${photoHtml}
-            </div>
+            <div style="width:400px;flex-shrink:0;background:#fff;border-right:2px solid #e2e8f0;display:flex;align-items:center;justify-content:center;padding:15px;">${photoHtml}</div>
             <div style="flex:1;padding:20px;display:flex;flex-direction:column;justify-content:center;">
                 <div style="border-bottom:2px dashed #cbd5e1;padding-bottom:12px;margin-bottom:12px;">
                     <div style="display:flex;justify-content:space-between;align-items:start;">
-                        <div>
-                            <div style="font-size:12px;font-weight:800;color:#94a3b8;letter-spacing:1px;margin-bottom:3px;">ITEM CODE</div>
-                            <div style="font-size:34px;font-weight:900;color:#0f172a;line-height:1;">${item.Item || '-'}</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="font-size:12px;font-weight:800;color:#94a3b8;margin-bottom:3px;">LOCATION</div>
-                            <div style="font-size:26px;font-weight:800;color:#334155;">${item.Location || '-'}</div>
-                        </div>
+                        <div><div style="font-size:12px;font-weight:800;color:#94a3b8;letter-spacing:1px;margin-bottom:3px;">ITEM CODE</div><div style="font-size:34px;font-weight:900;color:#0f172a;line-height:1;">${item.Item || '-'}</div></div>
+                        <div style="text-align:right;"><div style="font-size:12px;font-weight:800;color:#94a3b8;margin-bottom:3px;">LOCATION</div><div style="font-size:26px;font-weight:800;color:#334155;">${item.Location || '-'}</div></div>
                     </div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:12px;">
-                    <div>
-                        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Description</div>
-                        <div style="font-size:16px;font-weight:600;color:#1e293b;">${item.Description || '-'}</div>
-                    </div>
-                    <div>
-                        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Category</div>
-                        <div style="font-size:16px;font-weight:600;color:#1e293b;">${item.Type || '-'}</div>
-                    </div>
+                    <div><div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Description</div><div style="font-size:16px;font-weight:600;color:#1e293b;">${item.Description || '-'}</div></div>
+                    <div><div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Category</div><div style="font-size:16px;font-weight:600;color:#1e293b;">${item.Type || '-'}</div></div>
                 </div>
                 <div style="background:white;border:2px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:12px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <div>
-                            <div style="font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:3px;">License Plate</div>
-                            <div style="font-family:monospace;font-size:20px;font-weight:800;color:#0f172a;letter-spacing:2px;">${item.LicensePlate || '-'}</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:3px;">Quantity</div>
-                            <div style="font-size:26px;font-weight:900;color:#e63946;">${item.OH || '0'} <span style="font-size:13px;color:#64748b;">Pcs</span></div>
-                        </div>
+                        <div><div style="font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:3px;">License Plate</div><div style="font-family:monospace;font-size:20px;font-weight:800;color:#0f172a;letter-spacing:2px;">${item.LicensePlate || '-'}</div></div>
+                        <div style="text-align:right;"><div style="font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:3px;">Quantity</div><div style="font-size:26px;font-weight:900;color:#e63946;">${item.OH || '0'} <span style="font-size:13px;color:#64748b;">Pcs</span></div></div>
                     </div>
                 </div>
                 <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
@@ -3188,47 +2232,21 @@ function generatePDF(mode, singleData) {
                     <div style="font-size:13px;font-weight:700;color:#475569;background:#fff;padding:5px 10px;border-radius:6px;border:1px solid #cbd5e1;">Status : ${item.OnOffStatus || '-'}</div>
                 </div>
                 <div style="margin-top:12px;font-size:11px;color:#94a3b8;font-weight:600;display:flex;justify-content:space-between;">
-                    <span>Recorder: ${item.Name || '-'}</span>
-                    <span>Date: ${formatDateShort(item.ActualDate)}</span>
+                    <span>Recorder: ${item.Name || '-'}</span><span>Date: ${formatDateShort(item.ActualDate)}</span>
                 </div>
             </div>
         </div>`;
     });
 
-    html += `
-        <div style="position:absolute;bottom:10mm;left:0;right:0;text-align:center;font-size:11px;color:#cbd5e1;font-weight:bold;">
-            <p>Generated by ${appN} — Inventory Pro</p>
-        </div>
-    </div>`;
-
-    const pdfContainer = document.getElementById('pdf-container');
-    pdfContainer.innerHTML = html;
-    document.getElementById('mainApp').classList.add('hidden');
-    pdfContainer.style.display = 'block';
+    html += `<div style="position:absolute;bottom:10mm;left:0;right:0;text-align:center;font-size:11px;color:#cbd5e1;font-weight:bold;"><p>Generated by ${appN} — Inventory Pro</p></div></div>`;
+    
+    const pdfContainer = document.getElementById('pdf-container'); pdfContainer.innerHTML = html;
+    document.getElementById('mainApp').classList.add('hidden'); pdfContainer.style.display = 'block';
 
     setTimeout(() => {
-        html2pdf()
-            .set({
-                margin       : 0,
-                filename     : fileName,
-                image        : { type: 'jpeg', quality: 0.98 },
-                html2canvas  : { scale: 2, useCORS: true, logging: false, scrollY: 0 },
-                jsPDF        : { unit: 'mm', format: 'a4', orientation: 'landscape' }
-            })
-            .from(pdfContainer)
-            .save()
-            .then(() => {
-                Swal.close();
-                pdfContainer.innerHTML = '';
-                pdfContainer.style.display = 'none';
-                document.getElementById('mainApp').classList.remove('hidden');
-            })
-            .catch(err => {
-                console.error(err);
-                Swal.fire('Error', 'PDF Generation Failed: ' + err.message, 'error');
-                pdfContainer.style.display = 'none';
-                document.getElementById('mainApp').classList.remove('hidden');
-            });
+        html2pdf().set({ margin: 0, filename: fileName, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        }).from(pdfContainer).save().then(() => { Swal.close(); pdfContainer.innerHTML = ''; pdfContainer.style.display = 'none'; document.getElementById('mainApp').classList.remove('hidden');
+        }).catch(err => { console.error(err); Swal.fire('Error', 'PDF Generation Failed: ' + err.message, 'error'); pdfContainer.style.display = 'none'; document.getElementById('mainApp').classList.remove('hidden'); });
     }, 1500);
 }
 </script>
