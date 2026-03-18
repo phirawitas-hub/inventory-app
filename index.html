@@ -1411,15 +1411,32 @@ let appUsers = [
 // เปลี่ยนข้อความในเครื่องหมายคำพูดด้านล่าง ให้เป็น URL Web App ของคุณเอง
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxAur8Y2RLdxjJ1KllnxN1lUAkz6MEYDurJfs0NhrIjweXkgV2DNVOLPjl_q9ud4jihZA/exec';
 
+// เพิ่มระบบดักจับ Error ที่นี่
 async function gasCall(action, params) {
     const body = Object.assign({ action }, params || {});
-    const res  = await fetch(GAS_URL, {
-        method : 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body   : JSON.stringify(body)
-    });
-    const text = await res.text();
-    try { return JSON.parse(text); } catch(e) { return text; }
+    try {
+        const res  = await fetch(GAS_URL, {
+            method : 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body   : JSON.stringify(body)
+        });
+        
+        const text = await res.text();
+        
+        // ถ้าระบบส่งกลับมาเป็นหน้าเว็บ HTML (ส่วนใหญ่เป็นหน้า Login ของ Google) แปลว่าติด Block สิทธิ์
+        if (text.trim().startsWith('<')) {
+            throw new Error("Google บล็อกการเข้าถึง! (บัญชีของคุณอาจถูกจำกัดสิทธิ์โดยองค์กร หรือยังไม่ได้ตั้ง Who has access เป็น Anyone)");
+        }
+        
+        try { 
+            return JSON.parse(text); 
+        } catch(e) { 
+            return text; 
+        }
+    } catch (error) {
+        console.error("GAS Connection Error:", error);
+        throw error; // ส่ง Error ไปแสดงให้ผู้ใช้ดู
+    }
 }
 
 window.onload = initApp;
@@ -1551,25 +1568,49 @@ function saveAllSettings() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  AUTHENTICATION
+//  AUTHENTICATION (ปรับให้แจ้งเตือนชัดเจนขึ้น)
 // ═══════════════════════════════════════════════════════════════
 function handleLogin(event) {
     event.preventDefault();
     const u = document.getElementById('loginUser').value.trim().toLowerCase();
     const p = document.getElementById('loginPass').value.trim();
     const btn = event.target.querySelector('button[type=submit]');
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังโหลด...'; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังตรวจสอบ...'; }
 
-    // ดึงผู้ใช้จริงเสมอ (ตัด Mock Mode ออก)
+    // ยิงไปถามฐานข้อมูล
     gasCall('getAppUsers')
         .then(res => {
             if (btn) { btn.disabled = false; btn.innerHTML = '<span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>'; }
-            if (Array.isArray(res) && res.length > 0) appUsers = res;
-            doLogin(u, p);
+            
+            if (Array.isArray(res) && res.length > 0) {
+                appUsers = res;
+                doLogin(u, p);
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'ดึงข้อมูลผู้ใช้ไม่สำเร็จ',
+                    text: 'ติดต่อฐานข้อมูลได้ แต่ไม่มีรายชื่อพนักงานเลย',
+                    customClass: { popup: 'rounded-[32px]' }
+                });
+            }
         })
-        .catch(() => {
+        .catch(err => {
             if (btn) { btn.disabled = false; btn.innerHTML = '<span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>'; }
-            doLogin(u, p);
+            
+            // เด้งแจ้งเตือนสีแดงให้ผู้ใช้แคปหน้าจอส่งมา
+            Swal.fire({
+                icon: 'error',
+                title: 'โดนบล็อกการเชื่อมต่อ!',
+                html: `<div class="text-left text-sm text-slate-600 mt-2 space-y-2">
+                        <p><b>สาเหตุที่เป็นไปได้:</b></p>
+                        <ul class="list-disc pl-5">
+                            <li>ยังไม่ได้เปิดสิทธิ์ให้ "ทุกคน (Anyone)"</li>
+                            <li><b>อีเมลที่ใช้สร้างเป็นอีเมลองค์กร</b> ซึ่งโดนล็อกไม่ให้ใช้งานข้ามเว็บได้ (เจอประจำครับ)</li>
+                        </ul>
+                        <p class="text-[10px] text-red-500 mt-4 bg-red-50 p-2 rounded border border-red-100 font-mono"><b>Log:</b> ${err.message}</p>
+                       </div>`,
+                customClass: { popup: 'rounded-[32px]' }
+            });
         });
 }
 
