@@ -1,0 +1,3236 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Inventory Pro</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- jsQR: fallback scanner ทำงานได้ทุก browser -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800&family=Pacifico&display=swap');
+
+        :root {
+            --vespa-red: #e63946;
+            --vespa-dark: #1e293b;
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f1f5f9;
+            color: #334155;
+            overscroll-behavior-y: contain;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* ── Sidebar & Nav ── */
+        .sidebar-item.active {
+            background-color: var(--vespa-red);
+            color: white;
+            box-shadow: 0 4px 15px rgba(230, 57, 70, 0.3);
+            transform: translateX(8px);
+        }
+
+        .nav-bottom-item.active {
+            color: var(--vespa-red);
+            transform: translateY(-8px);
+        }
+
+        /* ── Cards ── */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+        }
+
+        .gradient-header {
+            background: linear-gradient(135deg, #e63946 0%, #dc2626 100%);
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            z-index: 2000;
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            align-items: flex-end;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 550px;
+            border-radius: 40px 40px 0 0;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 92vh;
+            overflow-y: auto;
+            padding-bottom: 40px;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        @media (min-width: 768px) {
+            .modal-overlay {
+                align-items: center;
+                padding: 24px;
+            }
+
+            .modal-content {
+                border-radius: 40px;
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            .modal-overlay.active .modal-content {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* ── Animations ── */
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-view { animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+        .animate-spin-slow { animation: spin 8s linear infinite; }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        /* ── Scan Button (input suffix) ── */
+        .scan-btn {
+            position: absolute;
+            right: 6px; top: 6px; bottom: 6px;
+            background: #f1f5f9;
+            border-radius: 12px;
+            width: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+        .scan-btn:active { background: #e2e8f0; transform: scale(0.9); }
+
+        /* ── Chart ── */
+        .chart-container { position: relative; height: 260px; width: 100%; }
+
+        /* ── Utility ── */
+        .hidden { display: none !important; }
+        #sidebar { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* ── SweetAlert z-index ── */
+        .swal2-container { z-index: 9999 !important; }
+
+        /* ── History badges ── */
+        .badge-add    { background-color: #dcfce7; color: #166534; }
+        .badge-edit   { background-color: #dbeafe; color: #1e40af; }
+        .badge-delete { background-color: #fee2e2; color: #991b1b; }
+
+        /* ── PDF container (hidden) ── */
+        #pdf-container {
+            display: none;
+            background: #ffffff;
+            width: 297mm;
+            margin: 0 auto;
+        }
+
+        /* ── Profile inputs ── */
+        .profile-input {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #334155;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .profile-input:focus {
+            border-color: #e63946;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.1);
+        }
+        .profile-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ════════════════════════════════════════
+           SCANNER STYLES
+        ════════════════════════════════════════ */
+
+        /* wrapper กล้อง */
+        .scanner-wrapper {
+            position: relative;
+            width: 100%;
+            background: #000;
+            overflow: hidden;
+            min-height: 340px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* video element */
+        #scannerVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            min-height: 340px;
+        }
+
+        /* overlay มืดรอบกรอบ */
+        .scan-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9;
+        }
+
+        /* กรอบเล็ง 4 มุม */
+        .scan-frame {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 72%;
+            max-width: 290px;
+            height: 130px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* มุมบนซ้าย */
+        .scan-frame::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 30px; height: 30px;
+            border-top: 3px solid #e63946;
+            border-left: 3px solid #e63946;
+            border-radius: 4px 0 0 0;
+        }
+
+        /* มุมบนขวา */
+        .scan-frame::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 30px; height: 30px;
+            border-top: 3px solid #e63946;
+            border-right: 3px solid #e63946;
+            border-radius: 0 4px 0 0;
+        }
+
+        /* มุมล่างขวา */
+        .scan-frame .corner-br {
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 30px; height: 30px;
+            border-bottom: 3px solid #e63946;
+            border-right: 3px solid #e63946;
+            border-radius: 0 0 4px 0;
+        }
+
+        /* มุมล่างซ้าย */
+        .scan-frame .corner-bl {
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 30px; height: 30px;
+            border-bottom: 3px solid #e63946;
+            border-left: 3px solid #e63946;
+            border-radius: 0 0 0 4px;
+        }
+
+        /* เส้นกวาด */
+        .scan-line {
+            position: absolute;
+            left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #e63946, transparent);
+            animation: scanMove 1.8s ease-in-out infinite;
+            z-index: 11;
+            border-radius: 2px;
+        }
+
+        @keyframes scanMove {
+            0%   { top: 8px;  opacity: 1; }
+            50%  { top: calc(100% - 8px); opacity: 1; }
+            100% { top: 8px;  opacity: 1; }
+        }
+
+        /* flash เขียวเมื่อสแกนเจอ */
+        #scanFlash {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        @keyframes flashGreen {
+            0%   { background: rgba(16, 185, 129, 0); }
+            25%  { background: rgba(16, 185, 129, 0.4); }
+            100% { background: rgba(16, 185, 129, 0); }
+        }
+
+        .scan-success-flash {
+            animation: flashGreen 0.5s ease-out forwards;
+        }
+
+        /* แถบสถานะด้านล่างกล้อง */
+        .scanner-status {
+            position: absolute;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.65);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 5px 16px;
+            border-radius: 20px;
+            white-space: nowrap;
+            z-index: 12;
+            letter-spacing: 0.5px;
+            font-family: 'Kanit', sans-serif;
+        }
+
+        /* ปุ่มไฟฉาย */
+        .torch-btn {
+            position: absolute;
+            top: 14px; right: 14px;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 12;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .torch-btn.on { background: rgba(251, 191, 36, 0.85); color: #000; }
+        .torch-btn:active { transform: scale(0.88); }
+
+        /* ปุ่มสลับกล้อง */
+        .flip-btn {
+            position: absolute;
+            top: 14px; left: 14px;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 12;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+        .flip-btn:active { transform: scale(0.88); }
+    </style>
+</head>
+<body class="bg-slate-50 pb-24 md:pb-0 relative">
+
+<!-- ═══════════════════════════════════════════════
+     LOADER SCREEN
+═══════════════════════════════════════════════ -->
+<div id="loader" class="fixed inset-0 z-[3000] flex flex-col items-center justify-center bg-white transition-opacity duration-500">
+    <div class="relative w-28 h-28 mb-8 flex items-center justify-center">
+        <div class="absolute inset-0 bg-red-100 rounded-full animate-ping opacity-50"></div>
+        <img  class="brand-logo-img hidden z-10 max-w-full max-h-full object-contain animate-bounce drop-shadow-lg" src="">
+        <div class="brand-default-icon absolute inset-0 m-auto w-20 h-20 bg-gradient-to-tr from-red-500 to-red-700 rounded-full flex items-center justify-center shadow-xl shadow-red-200 z-10">
+            <i class="fas fa-motorcycle text-white text-3xl animate-bounce"></i>
+        </div>
+    </div>
+    <h2 class="brand-name-text text-2xl font-black text-slate-800 mb-2 tracking-wide" style="font-family:'Pacifico',cursive;">Vespa Stock</h2>
+    <p class="text-slate-400 font-medium" id="loaderText">กำลังโหลดระบบ...</p>
+    <button onclick="document.getElementById('loader').style.display='none'"
+            id="forceCloseBtn"
+            class="hidden mt-10 px-8 py-3 bg-slate-100 text-slate-500 rounded-full text-xs font-bold hover:bg-slate-200 transition-all">
+        เข้าใช้งานแบบ Offline
+    </button>
+</div>
+
+<!-- ออก loader ทันที ไม่รอ JS ใดๆ -->
+<script>
+(function() {
+    function exitLoader() {
+        var loader = document.getElementById('loader');
+        var login  = document.getElementById('loginScreen');
+        if (loader) loader.classList.add('hidden');
+        if (login)  login.classList.remove('hidden');
+    }
+    // ออกใน 800ms (แค่แสดง animation loader สั้นๆ)
+    setTimeout(exitLoader, 800);
+    // กันสุด: ออกทันทีที่ DOM พร้อม
+    if (document.readyState === 'complete') {
+        setTimeout(exitLoader, 800);
+    } else {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(exitLoader, 800);
+        });
+    }
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════
+     LOGIN SCREEN
+═══════════════════════════════════════════════ -->
+<div id="loginScreen" class="hidden fixed inset-0 z-[2000] bg-white flex flex-col items-center justify-center p-6 animate-view">
+    <div class="w-full max-w-sm">
+        <div class="text-center mb-10">
+            <img class="brand-logo-img hidden mx-auto max-h-32 object-contain mb-4 drop-shadow-md" src="">
+            <div class="brand-default-icon inline-block p-4 rounded-3xl bg-red-50 mb-4 shadow-inner">
+                <i class="fas fa-motorcycle text-4xl text-red-500"></i>
+            </div>
+            <h1 class="brand-name-text text-4xl text-slate-800 mb-2" style="font-family:'Pacifico',cursive;">Vespa Stock</h1>
+            <p class="text-slate-400 text-sm font-bold uppercase tracking-widest">Login to Access</p>
+        </div>
+
+        <form onsubmit="handleLogin(event)" class="space-y-6">
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Username</label>
+                <input type="text" id="loginUser"
+                    class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-red-500 font-bold text-slate-700 transition-all focus:ring-4 focus:ring-red-50 text-base"
+                    placeholder="Enter username" required>
+            </div>
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
+                <input type="password" id="loginPass"
+                    class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-red-500 font-bold text-slate-700 transition-all focus:ring-4 focus:ring-red-50 text-base"
+                    placeholder="Enter password" required>
+            </div>
+            <button type="submit"
+                class="w-full py-4 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-2xl font-black shadow-xl shadow-red-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4">
+                <span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>
+            </button>
+        </form>
+        <p class="mt-8 text-center text-xs text-slate-400">Default: admin / 1234 &nbsp;|&nbsp; staff / 1234</p>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     MAIN APPLICATION
+═══════════════════════════════════════════════ -->
+<div id="mainApp" class="hidden relative z-10 bg-slate-50 min-h-screen">
+
+    <!-- ──────────── Sidebar (Desktop) ──────────── -->
+    <aside id="sidebar"
+        class="fixed top-0 left-0 z-[70] h-screen w-72 flex flex-col bg-white border-r border-slate-200 shadow-2xl md:shadow-none transform -translate-x-full md:translate-x-0">
+        <div class="p-8 h-full flex flex-col">
+
+            <!-- Brand -->
+            <div class="flex flex-col items-center justify-center text-center gap-3 mb-10 w-full">
+                <img class="brand-logo-img hidden max-h-20 w-auto object-contain drop-shadow-md" src="">
+                <div class="brand-default-icon bg-gradient-to-br from-red-500 to-red-700 w-16 h-16 rounded-[1.25rem] shadow-lg shadow-red-200 flex items-center justify-center">
+                    <i class="fas fa-motorcycle text-white text-3xl"></i>
+                </div>
+                <div class="w-full mt-2">
+                    <h1 class="brand-name-text text-3xl text-slate-800 leading-tight truncate" style="font-family:'Pacifico',cursive;">Vespa Stock</h1>
+                    <span class="text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase block mt-1">Inventory System</span>
+                </div>
+            </div>
+
+            <!-- Nav links -->
+            <nav class="space-y-4 flex-1">
+                <button onclick="switchView('dashboard')" id="side-dashboard"
+                    class="sidebar-item active w-full flex items-center gap-5 px-6 py-4 rounded-2xl transition-all font-semibold text-slate-400 hover:bg-slate-50 text-left">
+                    <i class="fas fa-chart-pie text-lg"></i><span>สรุปภาพรวม</span>
+                </button>
+                <button onclick="switchView('inventory')" id="side-inventory"
+                    class="sidebar-item w-full flex items-center gap-5 px-6 py-4 rounded-2xl transition-all font-semibold text-slate-400 hover:bg-slate-50 text-left">
+                    <i class="fas fa-qrcode text-lg"></i><span>บันทึกสต็อก</span>
+                </button>
+                <button onclick="switchView('report')" id="side-report"
+                    class="sidebar-item w-full flex items-center gap-5 px-6 py-4 rounded-2xl transition-all font-semibold text-slate-400 hover:bg-slate-50 text-left">
+                    <i class="fas fa-clipboard-list text-lg"></i><span>รายการสินค้า</span>
+                </button>
+                <button onclick="switchView('history')" id="side-history"
+                    class="sidebar-item w-full flex items-center gap-5 px-6 py-4 rounded-2xl transition-all font-semibold text-slate-400 hover:bg-slate-50 text-left">
+                    <i class="fas fa-history text-lg"></i><span>ประวัติการใช้งาน</span>
+                </button>
+                <button onclick="switchView('profile')" id="side-profile"
+                    class="sidebar-item w-full flex items-center gap-5 px-6 py-4 rounded-2xl transition-all font-semibold text-slate-400 hover:bg-slate-50 text-left">
+                    <i class="fas fa-user-circle text-lg"></i><span>โปรไฟล์</span>
+                </button>
+                <button onclick="switchView('users')" id="side-users"
+                    class="hidden sidebar-item w-full flex items-center gap-5 px-6 py-4 rounded-2xl transition-all font-semibold text-slate-400 hover:bg-slate-50 text-left">
+                    <i class="fas fa-cog text-lg"></i><span>จัดการผู้ใช้ & ตั้งค่า</span>
+                </button>
+            </nav>
+
+            <!-- User info & logout -->
+            <div class="mt-auto pt-6 border-t border-slate-100 flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-200 overflow-hidden shadow-sm flex-shrink-0">
+                    <img id="sideUserAvatar" src="" class="w-full h-full object-cover hidden">
+                    <i id="sideUserIcon" class="fas fa-user-shield text-xl"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-base font-black text-slate-800 truncate uppercase tracking-tight" id="sideUserName">User</p>
+                    <p class="text-[11px] text-red-500 font-black uppercase cursor-pointer flex items-center gap-1.5 mt-0.5 hover:text-red-600 transition-colors"
+                        onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> LOGOUT
+                    </p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay (mobile sidebar) -->
+    <div id="sidebarOverlay" onclick="toggleSidebar()"
+        class="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm hidden transition-opacity opacity-0"></div>
+
+    <!-- ──────────── Mobile Header ──────────── -->
+    <header class="md:hidden gradient-header text-white px-6 pt-8 pb-10 shadow-2xl sticky top-0 z-40 rounded-b-[40px]">
+        <div class="flex items-start justify-between mb-8 w-full gap-2">
+            <!-- hamburger -->
+            <div class="w-12 flex justify-start flex-shrink-0 z-20">
+                <button onclick="toggleSidebar()"
+                    class="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 active:scale-90 transition-all">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
+            </div>
+            <!-- brand center -->
+            <div class="flex-1 flex flex-col items-center justify-center text-center z-10 min-w-0">
+                <img class="brand-logo-img hidden h-14 w-auto max-w-full object-contain bg-white/20 rounded-xl p-1.5 mb-2 shadow-sm" src="">
+                <div class="brand-default-icon w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-2 shadow-sm">
+                    <i class="fas fa-motorcycle text-white text-xl"></i>
+                </div>
+                <h1 class="brand-name-text text-2xl truncate w-full leading-none drop-shadow-sm" style="font-family:'Pacifico',cursive;">Vespa Stock</h1>
+            </div>
+            <!-- logout -->
+            <div class="w-12 flex justify-end flex-shrink-0 z-20">
+                <button onclick="handleLogout()"
+                    class="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 active:scale-90 transition-all">
+                    <i class="fas fa-sign-out-alt text-sm"></i>
+                </button>
+            </div>
+        </div>
+        <div class="flex justify-between items-end">
+            <div>
+                <p class="text-[11px] opacity-70 uppercase font-bold tracking-wider mb-1">ยินดีต้อนรับ</p>
+                <h2 class="text-2xl font-black" id="mobileWelcomeName">User</h2>
+            </div>
+            <div class="bg-white/20 px-4 py-1.5 rounded-full text-[10px] font-black backdrop-blur-md border border-white/20 flex items-center gap-2 uppercase">
+                <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.8)]"></span>
+                <span id="roleBadge">User</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ──────────── Main Content ──────────── -->
+    <main class="md:ml-72 p-4 md:p-10 max-w-7xl mx-auto space-y-8">
+
+        <!-- ═══════════ VIEW: DASHBOARD ═══════════ -->
+        <div id="view-dashboard" class="space-y-8 animate-view">
+
+            <!-- Welcome card -->
+            <div class="glass-card p-8 relative overflow-hidden border-l-[6px] border-red-500">
+                <i class="brand-default-icon fas fa-motorcycle absolute right-6 bottom-[-15px] text-9xl text-red-500 opacity-[0.03] transform rotate-[-12deg] pointer-events-none"></i>
+                <img class="brand-logo-img hidden absolute right-2 bottom-[-10px] h-32 opacity-[0.05] pointer-events-none grayscale" src="">
+
+                <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div>
+                        <p class="text-sm font-bold text-red-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                            <i id="greetingIcon" class="fas fa-sun animate-spin-slow text-yellow-500"></i>
+                            <span id="greetingText">สวัสดี</span>
+                        </p>
+                        <h2 class="text-4xl font-black text-slate-800 mb-2 tracking-tight">
+                            คุณ <span id="dashNameDisplay">User</span>
+                        </h2>
+                        <span id="currentDateDisplay" class="text-xs text-slate-400 font-bold bg-slate-100 px-3 py-1 rounded-lg uppercase">
+                            กำลังโหลด...
+                        </span>
+                    </div>
+                    <div class="text-left md:text-right">
+                        <div id="clockTime" class="text-5xl md:text-6xl font-black text-slate-700 font-mono tracking-tighter leading-none">
+                            00:00:00
+                        </div>
+                        <p class="text-[10px] font-black text-white bg-slate-800 px-3 py-1 rounded-full inline-block mt-3 uppercase tracking-widest">
+                            Dashboard Active
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div class="glass-card p-8 relative overflow-hidden hover:scale-[1.02] transition-all">
+                    <div class="absolute right-0 top-0 w-28 h-28 bg-blue-50 rounded-bl-[100px] -mr-6 -mt-6"></div>
+                    <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 relative z-10">Location</p>
+                    <h3 id="statLoc" class="text-5xl font-black text-slate-800 relative z-10">0</h3>
+                    <i class="fas fa-map-marker-alt absolute right-6 bottom-6 text-4xl text-blue-500 opacity-20"></i>
+                </div>
+                <div class="glass-card p-8 relative overflow-hidden hover:scale-[1.02] transition-all">
+                    <div class="absolute right-0 top-0 w-28 h-28 bg-orange-50 rounded-bl-[100px] -mr-6 -mt-6"></div>
+                    <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 relative z-10">Item Code</p>
+                    <h3 id="statItem" class="text-5xl font-black text-slate-800 relative z-10">0</h3>
+                    <i class="fas fa-box absolute right-6 bottom-6 text-4xl text-orange-500 opacity-20"></i>
+                </div>
+                <div class="bg-gradient-to-br from-red-500 to-red-600 p-8 rounded-[32px] shadow-2xl shadow-red-200 text-white relative overflow-hidden hover:scale-[1.02] transition-all">
+                    <div class="absolute right-0 top-0 w-28 h-28 bg-white/10 rounded-bl-[100px] -mr-6 -mt-6"></div>
+                    <p class="text-[11px] font-black text-white/70 uppercase tracking-widest mb-3 relative z-10">Quantity</p>
+                    <h3 id="statWork" class="text-5xl font-black relative z-10">0</h3>
+                    <i class="fas fa-layer-group absolute right-6 bottom-6 text-4xl text-white opacity-20"></i>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass-card p-8">
+                    <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider flex items-center gap-3 mb-8">
+                        <span class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                            <i class="fas fa-chart-pie"></i>
+                        </span>
+                        Inventory Status
+                    </h4>
+                    <div class="chart-container"><canvas id="statusChart"></canvas></div>
+                </div>
+                <div class="glass-card p-8">
+                    <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider flex items-center gap-3 mb-8">
+                        <span class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                            <i class="fas fa-tags"></i>
+                        </span>
+                        Product Types (สัดส่วนประเภท)
+                    </h4>
+                    <div class="chart-container"><canvas id="typeChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Action / Status table -->
+            <div class="glass-card p-8 overflow-hidden">
+                <div class="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+                    <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider flex items-center gap-3 self-start sm:self-center">
+                        <span class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shadow-sm">
+                            <i class="fas fa-clipboard-check"></i>
+                        </span>
+                        ตรวจสอบสถานะสินค้า (Status List)
+                    </h4>
+                    <div class="relative w-full sm:w-auto">
+                        <select id="actionFilter" onchange="filterActionTable()"
+                            class="w-full sm:w-56 pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-50 appearance-none cursor-pointer">
+                            <option value="Issue">⚠️ ต้องตรวจสอบ (Damage/QC)</option>
+                            <option value="All">📋 ทั้งหมด (All)</option>
+                            <option value="Good">🟢 ปกติ (Good)</option>
+                            <option value="Damage">🔴 เสียหาย (Damage)</option>
+                            <option value="QC">🟡 รอตรวจสอบ (QC)</option>
+                        </select>
+                        <i class="fas fa-filter absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs"></i>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-[10px] text-slate-400 border-b border-slate-100 uppercase font-black tracking-widest">
+                                <th class="pb-4 pl-2 w-20 text-center">Image</th>
+                                <th class="pb-4 px-4">Item Details</th>
+                                <th class="pb-4">Status</th>
+                                <th class="pb-4">Location</th>
+                                <th class="pb-4 text-right pr-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="actionList" class="text-sm text-slate-600 divide-y divide-slate-50"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ═══════════ VIEW: INVENTORY FORM ═══════════ -->
+        <div id="view-inventory" class="hidden max-w-3xl mx-auto animate-view">
+            <div class="glass-card p-8 md:p-12">
+                <!-- Header -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+                    <div class="flex items-center gap-4">
+                        <div id="formIconBox" class="w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shadow-sm transition-colors duration-500">
+                            <i id="formIcon" class="fas fa-edit text-2xl"></i>
+                        </div>
+                        <div>
+                            <h2 id="formTitle" class="text-2xl font-black text-slate-800 leading-tight">บันทึกรายการสินค้า</h2>
+                            <p id="formSubTitle" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">NEW INVENTORY ENTRY</p>
+                        </div>
+                    </div>
+                    <button onclick="resetForm()" id="addNewBtn"
+                        class="hidden items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-2xl text-xs font-black shadow-lg shadow-green-100 active:scale-95 transition-all hover:bg-green-600 uppercase tracking-wider">
+                        <i class="fas fa-plus-circle"></i> บันทึกข้อมูลใหม่ (+)
+                    </button>
+                </div>
+
+                <form id="stockForm" class="space-y-8" onsubmit="event.preventDefault(); handleFormSubmit();">
+
+                    <!-- Location + Item -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Location (ที่เก็บ)</label>
+                            <div class="relative">
+                                <input type="text" id="Location" placeholder="เช่น A-01-01"
+                                    class="w-full p-5 pr-14 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-red-500 font-bold transition-all focus:ring-4 focus:ring-red-50" required>
+                                <button type="button" class="scan-btn" onclick="startScanner('Location')">
+                                    <i class="fas fa-qrcode"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Item Code (รหัสสินค้า)</label>
+                            <div class="relative">
+                                <input type="text" id="Item" placeholder="เช่น 1B000000"
+                                    class="w-full p-5 pr-14 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-red-500 font-bold transition-all focus:ring-4 focus:ring-red-50"
+                                    onchange="checkItemInfo(this.value)" required>
+                                <button type="button" class="scan-btn" onclick="startScanner('Item')">
+                                    <i class="fas fa-barcode"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Auto Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-3xl border border-slate-100 relative shadow-inner">
+                        <div class="absolute -top-3 left-6 bg-white text-[10px] font-black text-red-500 px-3 py-0.5 rounded-full border border-red-100 uppercase tracking-widest">
+                            Auto Info (จากระบบ)
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Description (ชื่อสินค้า)</label>
+                            <input type="text" id="ItemDesc" placeholder="-"
+                                class="w-full p-3 bg-white/50 border border-slate-100 rounded-xl text-sm font-bold text-slate-600 outline-none" readonly>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Type (ประเภท)</label>
+                            <input type="text" id="ItemType" placeholder="-"
+                                class="w-full p-3 bg-white/50 border border-slate-100 rounded-xl text-sm font-bold text-slate-600 outline-none" readonly>
+                        </div>
+                    </div>
+
+                    <!-- QTY + Status -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">QUANTITY (จำนวน)</label>
+                            <div class="flex items-center bg-white border border-slate-200 rounded-2xl shadow-sm h-16 overflow-hidden">
+                                <button type="button" onclick="adjustQty(-1)"
+                                    class="w-12 sm:w-14 h-full text-slate-400 hover:text-red-500 transition-colors active:bg-red-50 flex items-center justify-center focus:outline-none flex-shrink-0 border-r border-slate-100">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="text" id="OH" value="1" inputmode="numeric" pattern="[0-9]*"
+                                    class="flex-1 min-w-0 h-full text-center bg-white outline-none font-bold text-slate-900 text-2xl" required>
+                                <button type="button" onclick="adjustQty(1)"
+                                    class="w-12 sm:w-14 h-full text-slate-400 hover:text-green-500 transition-colors active:bg-green-50 flex items-center justify-center focus:outline-none flex-shrink-0 border-l border-slate-100">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Inventory Status</label>
+                            <div class="relative">
+                                <select id="InventoryStatus"
+                                    class="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-red-500 font-bold appearance-none cursor-pointer">
+                                    <option value="Good">🟢 GOOD</option>
+                                    <option value="Damage">🔴 DAMAGE</option>
+                                    <option value="QC">🟡 QC CHECK</option>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Status</label>
+                            <div class="relative">
+                                <select id="OnOffStatus"
+                                    class="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-red-500 font-bold appearance-none cursor-pointer">
+                                    <option value="ON">ON (เปิดใช้งาน)</option>
+                                    <option value="OFF">OFF (ปิดใช้งาน)</option>
+                                </select>
+                                <i class="fas fa-power-off absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- License Plate -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between px-1">
+                            <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest">License Plate (เลข 13 หลัก)</label>
+                            <span class="text-[10px] font-black text-slate-300 uppercase">
+                                <span id="charCount">0</span> / 13
+                            </span>
+                        </div>
+                        <div class="relative">
+                            <input type="text" id="LicensePlate" maxlength="13" placeholder="V000000012345"
+                                class="w-full p-5 pr-14 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-red-500 font-mono text-lg font-bold tracking-[0.15em] uppercase transition-all"
+                                required
+                                oninput="this.value = this.value.toUpperCase(); document.getElementById('charCount').innerText = this.value.length;">
+                            <button type="button" class="scan-btn" onclick="startScanner('LicensePlate')">
+                                <i class="fas fa-barcode"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Solution -->
+                    <div class="space-y-2">
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">การแก้ไข (Solution)</label>
+                        <div class="flex gap-4">
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="Solution" value="มีในระบบ" class="peer hidden" checked>
+                                <div class="p-5 text-center rounded-2xl border border-slate-200 peer-checked:bg-green-50 peer-checked:border-green-500 peer-checked:text-green-600 font-black transition-all text-sm shadow-sm">
+                                    <i class="fas fa-check-circle mb-1 block text-lg"></i> มีในระบบ
+                                </div>
+                            </label>
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="Solution" value="ไม่มีในระบบ" class="peer hidden">
+                                <div class="p-5 text-center rounded-2xl border border-slate-200 peer-checked:bg-red-50 peer-checked:border-red-500 peer-checked:text-red-600 font-black transition-all text-sm shadow-sm">
+                                    <i class="fas fa-times-circle mb-1 block text-lg"></i> ไม่มีในระบบ
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Remark + Recorder -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">หมายเหตุ (Remark)</label>
+                            <div class="flex gap-3">
+                                <div class="relative flex-1">
+                                    <select id="RemarkSelect" onchange="document.getElementById('Remark').value = this.value"
+                                        class="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none appearance-none font-bold"></select>
+                                    <i class="fas fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                                </div>
+                                <button type="button" onclick="addNewRemark()"
+                                    class="w-14 h-14 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center hover:bg-red-200 transition-all active:scale-90">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <input type="hidden" id="Remark" value="สินค้าปกติ">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">ผู้บันทึก (Recorder)</label>
+                            <div class="flex gap-3">
+                                <div class="relative flex-1">
+                                    <select id="NameSelect" onchange="document.getElementById('Name').value = this.value"
+                                        class="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none appearance-none font-bold text-slate-600"></select>
+                                    <i class="fas fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                                </div>
+                                <button type="button" onclick="addNewRecorder()"
+                                    class="w-14 h-14 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center hover:bg-red-200 transition-all active:scale-90">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <input type="hidden" id="Name">
+                        </div>
+                    </div>
+
+                    <!-- Photo -->
+                    <div class="space-y-2">
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">รูปถ่ายสินค้า (Photo)</label>
+                        <input type="file" id="PhotoInput" accept="image/*" class="hidden" onchange="previewImage(event)">
+                        <div onclick="document.getElementById('PhotoInput').click()"
+                            class="w-full h-44 border-2 border-dashed border-slate-200 rounded-[32px] flex flex-col items-center justify-center text-slate-300 cursor-pointer overflow-hidden relative group hover:border-red-300 transition-all">
+                            <div id="photoPlaceholder" class="flex flex-col items-center">
+                                <div class="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                                    <i class="fas fa-camera text-xl"></i>
+                                </div>
+                                <span class="text-xs font-black uppercase tracking-widest">แตะเพื่อถ่ายรูป / เลือกรูป</span>
+                            </div>
+                            <img id="imgPreview" class="hidden absolute inset-0 w-full h-full object-cover z-10 bg-white">
+                            <button type="button" id="removePhotoBtn" onclick="removePhoto(event)"
+                                class="hidden absolute top-4 right-4 bg-red-500 text-white w-10 h-10 rounded-full z-20 shadow-xl flex items-center justify-center hover:bg-red-600">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="space-y-4 pt-6">
+                        <button type="submit" id="submitBtn"
+                            class="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-5 rounded-[28px] font-black text-xl shadow-2xl shadow-red-200 active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+                            <i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>
+                        </button>
+                        <button type="button" onclick="resetForm()"
+                            class="w-full py-4 text-slate-400 font-bold hover:text-slate-600 text-sm hover:bg-slate-100 rounded-2xl transition-all uppercase tracking-widest">
+                            ล้างฟอร์ม / ยกเลิกรายการ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ═══════════ VIEW: REPORT ═══════════ -->
+        <div id="view-report" class="hidden space-y-8 animate-view">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h3 class="font-black text-slate-800 text-3xl flex items-center gap-4 tracking-tight leading-none">
+                        <i class="fas fa-clipboard-list text-red-500"></i> รายการสินค้า
+                    </h3>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">Inventory Stock Report</p>
+                </div>
+                <div class="relative w-full md:w-auto flex gap-3">
+                    <div class="relative w-full md:w-80">
+                        <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="searchInput" onkeyup="filterItems()"
+                            placeholder="ค้นหา Location / รหัสสินค้า / S/N..."
+                            class="w-full pl-12 pr-14 py-4 bg-white border border-slate-200 rounded-2xl outline-none focus:border-red-500 shadow-sm text-sm font-semibold transition-all focus:ring-4 focus:ring-red-50">
+                        <button type="button" class="scan-btn" onclick="startScanner('searchInput')">
+                            <i class="fas fa-qrcode"></i>
+                        </button>
+                    </div>
+                    <button onclick="generatePDF('Filtered')"
+                        class="w-14 h-14 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95">
+                        <i class="fas fa-file-pdf text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="itemsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 pb-20"></div>
+        </div>
+
+        <!-- ═══════════ VIEW: HISTORY ═══════════ -->
+        <div id="view-history" class="hidden space-y-8 animate-view">
+            <div class="glass-card p-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                    <div>
+                        <h3 class="font-black text-slate-800 text-2xl flex items-center gap-2">
+                            <i class="fas fa-history text-slate-500"></i> ประวัติการใช้งาน
+                        </h3>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Transaction History</p>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="relative">
+                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">กรองตาม User</label>
+                        <select id="histFilterUser" onchange="filterHistoryLogs()"
+                            class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-red-500 font-bold text-sm appearance-none">
+                            <option value="All">ทั้งหมด (All Users)</option>
+                        </select>
+                        <i class="fas fa-user absolute right-3 bottom-3.5 text-slate-300 pointer-events-none"></i>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">ค้นหา Item / LPN</label>
+                        <div class="relative">
+                            <i class="fas fa-box absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none z-10"></i>
+                            <input type="text" id="histFilterItem" onkeyup="filterHistoryLogs()"
+                                placeholder="ระบุรหัสสินค้า..."
+                                class="w-full p-3 pl-10 pr-12 bg-white border border-slate-200 rounded-xl outline-none focus:border-red-500 font-bold text-sm">
+                            <button type="button" onclick="startScanner('histFilterItem')"
+                                class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 hover:bg-red-500 hover:text-white transition-all active:scale-90">
+                                <i class="fas fa-qrcode"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">ค้นหา Location</label>
+                        <div class="relative">
+                            <i class="fas fa-map-marker-alt absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none z-10"></i>
+                            <input type="text" id="histFilterLoc" onkeyup="filterHistoryLogs()"
+                                placeholder="ระบุ Location..."
+                                class="w-full p-3 pl-10 pr-12 bg-white border border-slate-200 rounded-xl outline-none focus:border-red-500 font-bold text-sm">
+                            <button type="button" onclick="startScanner('histFilterLoc')"
+                                class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 hover:bg-red-500 hover:text-white transition-all active:scale-90">
+                                <i class="fas fa-qrcode"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-2xl border border-slate-100">
+                    <table class="w-full text-left border-collapse bg-white">
+                        <thead>
+                            <tr class="text-[10px] text-slate-400 border-b border-slate-100 uppercase font-black tracking-widest bg-slate-50/50">
+                                <th class="py-4 pl-4 w-32">Time</th>
+                                <th class="py-4 px-2">User</th>
+                                <th class="py-4 px-2">Action</th>
+                                <th class="py-4 px-2">Item / Loc</th>
+                                <th class="py-4 px-2">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody" class="text-sm text-slate-600 divide-y divide-slate-50"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════ VIEW: PROFILE ═══════════ -->
+        <div id="view-profile" class="hidden space-y-8 animate-view">
+
+            <div class="glass-card overflow-hidden p-0 border border-slate-200">
+                <div class="h-32 bg-gradient-to-r from-orange-400 to-red-500"></div>
+                <div class="px-8 pb-8 relative">
+                    <!-- Avatar -->
+                    <div class="absolute -top-12 left-8">
+                        <div class="w-24 h-24 rounded-full bg-white p-1 shadow-lg relative">
+                            <div class="w-full h-full rounded-full bg-slate-100 overflow-hidden flex items-center justify-center cursor-pointer hover:bg-slate-200 transition-colors"
+                                onclick="document.getElementById('profilePicInput').click()">
+                                <img id="profileAvatar" src="" class="w-full h-full object-cover hidden">
+                                <i id="profileAvatarIcon" class="fas fa-user text-4xl text-slate-400"></i>
+                            </div>
+                            <button onclick="document.getElementById('profilePicInput').click()"
+                                class="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center text-slate-500 hover:text-orange-600 border border-slate-100 transition-all">
+                                <i class="fas fa-camera text-xs"></i>
+                            </button>
+                            <input type="file" id="profilePicInput" accept="image/*" class="hidden" onchange="handleProfilePicChange(event)">
+                        </div>
+                    </div>
+
+                    <div class="pt-16">
+                        <h3 class="text-2xl font-black text-slate-800 mb-1">ข้อมูลส่วนตัว</h3>
+                        <p class="text-xs text-slate-400 font-bold mb-8 uppercase tracking-wide">แก้ไขข้อมูลส่วนตัวของคุณ</p>
+
+                        <form id="profileForm" class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                            onsubmit="event.preventDefault(); saveProfile();">
+                            <div>
+                                <label class="profile-label">รหัสพนักงาน</label>
+                                <input type="text" id="profEmpId" class="profile-input" placeholder="เช่น EMP8855">
+                            </div>
+                            <div>
+                                <label class="profile-label">ชื่อผู้ใช้ (Username)</label>
+                                <input type="text" id="profUsername" class="profile-input bg-slate-100 text-slate-500 cursor-not-allowed" readonly>
+                            </div>
+                            <div>
+                                <label class="profile-label">ชื่อ-นามสกุล <span class="text-red-500">*</span></label>
+                                <input type="text" id="profName" class="profile-input" required>
+                            </div>
+                            <div>
+                                <label class="profile-label">อีเมล</label>
+                                <input type="email" id="profEmail" class="profile-input" placeholder="email@company.com">
+                            </div>
+                            <div>
+                                <label class="profile-label">เบอร์โทรศัพท์</label>
+                                <input type="tel" id="profPhone" class="profile-input" placeholder="08x-xxx-xxxx">
+                            </div>
+                            <div>
+                                <label class="profile-label">ตำแหน่ง/แผนก</label>
+                                <input type="text" id="profPosition" class="profile-input" placeholder="เช่น ผู้จัดการ">
+                                <p class="text-[9px] text-slate-400 mt-1">* หากต้องการแก้ไขตำแหน่ง กรุณาติดต่อ Admin</p>
+                            </div>
+                            <div class="md:col-span-2 flex justify-end mt-4">
+                                <button type="submit"
+                                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center gap-2">
+                                    <i class="fas fa-save"></i> บันทึกการเปลี่ยนแปลง
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Change password -->
+            <div class="glass-card p-8 border border-slate-200">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-500 flex items-center justify-center">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-black text-slate-800">เปลี่ยนรหัสผ่าน</h3>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wide">จัดการความปลอดภัยบัญชีของคุณ</p>
+                    </div>
+                </div>
+                <form onsubmit="event.preventDefault(); changePassword();"
+                    class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                    <div>
+                        <label class="profile-label">รหัสผ่านปัจจุบัน</label>
+                        <input type="password" id="passCurrent" class="profile-input rounded-xl" required>
+                    </div>
+                    <div>
+                        <label class="profile-label">รหัสผ่านใหม่</label>
+                        <input type="password" id="passNew" class="profile-input rounded-xl" required>
+                    </div>
+                    <div>
+                        <label class="profile-label">ยืนยันรหัสผ่านใหม่</label>
+                        <input type="password" id="passConfirm" class="profile-input rounded-xl" required>
+                    </div>
+                    <div class="md:col-span-3 flex justify-end">
+                        <button type="submit"
+                            class="bg-white border border-slate-200 text-slate-600 hover:text-orange-600 hover:border-orange-200 font-bold py-3 px-6 rounded-xl transition-all active:scale-95 shadow-sm">
+                            เปลี่ยนรหัสผ่าน
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ═══════════ VIEW: USERS & SETTINGS (Admin only) ═══════════ -->
+        <div id="view-users" class="hidden space-y-8 animate-view">
+
+            <!-- System settings -->
+            <div class="glass-card p-8 border border-slate-200">
+                <h3 class="font-black text-slate-800 text-xl mb-6 flex items-center gap-3">
+                    <div class="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
+                    ตั้งค่าระบบ (System Settings)
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                    <!-- App name -->
+                    <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col">
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 block border-l-4 border-indigo-500 pl-2">
+                            ชื่อระบบ (System Name)
+                        </label>
+                        <p class="text-xs text-slate-400 mb-4">เปลี่ยนชื่อแบรนด์ที่จะแสดงบนหน้า Login, เมนู และหัวรายงาน PDF</p>
+                        <input type="text" id="settingAppName" placeholder="เช่น Vespa Stock"
+                            class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 font-bold text-slate-700 transition-all text-lg"
+                            style="font-family:'Pacifico',cursive;">
+                    </div>
+                    <!-- Logo -->
+                    <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col">
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 block border-l-4 border-indigo-500 pl-2">
+                            ตราสัญลักษณ์ (Logo)
+                        </label>
+                        <p class="text-xs text-slate-400 mb-4">อัปโหลดโลโก้ร้านค้า เพื่อแสดงบนหน้าเว็บและไฟล์ PDF</p>
+                        <div class="flex-1 border-2 border-dashed border-slate-300 rounded-[24px] flex items-center justify-center p-4 mb-4 relative overflow-hidden group hover:border-indigo-400 transition-colors bg-slate-50/50 cursor-pointer min-h-[120px]"
+                            onclick="document.getElementById('appLogoInput').click()">
+                            <img id="adminLogoPreview" src="" class="max-w-full max-h-full object-contain hidden z-10 drop-shadow-md">
+                            <div id="adminLogoPlaceholder" class="text-slate-300 flex flex-col items-center">
+                                <i class="fas fa-image text-3xl mb-2 opacity-50"></i>
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">คลิกเพื่ออัปโหลด</span>
+                            </div>
+                        </div>
+                        <input type="file" id="appLogoInput" accept="image/*" class="hidden" onchange="handleAppLogoChange(event)">
+                        <div class="flex gap-2 mt-auto">
+                            <button onclick="document.getElementById('appLogoInput').click()"
+                                class="flex-1 py-3 border border-slate-200 rounded-2xl text-slate-600 font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] text-sm">
+                                <i class="fas fa-image text-indigo-500"></i> เลือกรูปใหม่
+                            </button>
+                            <button id="removeLogoBtn" onclick="removeAppLogo()"
+                                class="hidden w-12 h-[46px] bg-red-50 text-red-500 border border-red-100 rounded-2xl flex items-center justify-center hover:bg-red-100 transition-all active:scale-[0.98]">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="saveAllSettings()"
+                    class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 active:scale-[0.98] flex items-center justify-center gap-2">
+                    <i class="fas fa-save text-xl"></i> บันทึกการตั้งค่าระบบทั้งหมด
+                </button>
+            </div>
+
+            <!-- User management -->
+            <div class="glass-card p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="font-black text-slate-800 text-2xl flex items-center gap-2">
+                            <i class="fas fa-users-cog text-blue-500"></i> จัดการผู้ใช้งาน
+                        </h3>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">User Management System</p>
+                    </div>
+                    <button onclick="openAddUserModal()"
+                        class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center hover:bg-blue-200 transition-all">
+                        <i class="fas fa-user-plus"></i>
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-[10px] text-slate-400 border-b border-slate-100 uppercase font-black tracking-widest">
+                                <th class="pb-4 px-4">Username</th>
+                                <th class="pb-4 px-4">Display Name</th>
+                                <th class="pb-4 px-4">Role</th>
+                                <th class="pb-4 text-right pr-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody" class="text-sm text-slate-600 divide-y divide-slate-50"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ──────────── Mobile Bottom Nav ──────────── -->
+    <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 py-4 flex justify-around items-center z-50 rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.08)]">
+        <button onclick="switchView('dashboard')" id="nav-dashboard"
+            class="nav-bottom-item active flex flex-col items-center gap-1.5 w-14 transition-all">
+            <i class="fas fa-chart-pie text-lg"></i>
+            <span class="text-[8px] font-black uppercase tracking-widest">Dash</span>
+        </button>
+        <button onclick="switchView('inventory')" id="nav-inventory"
+            class="nav-bottom-item flex flex-col items-center gap-1.5 w-14 relative">
+            <div class="absolute -top-14 bg-gradient-to-tr from-red-600 to-red-500 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-2xl shadow-red-300 border-[4px] border-slate-50 transform active:scale-90 transition-transform">
+                <i class="fas fa-plus text-lg"></i>
+            </div>
+            <span class="text-[8px] font-black mt-5 uppercase tracking-widest">Entry</span>
+        </button>
+        <button onclick="switchView('report')" id="nav-report"
+            class="nav-bottom-item flex flex-col items-center gap-1.5 w-14 transition-all">
+            <i class="fas fa-clipboard-list text-lg"></i>
+            <span class="text-[8px] font-black uppercase tracking-widest">List</span>
+        </button>
+        <button onclick="switchView('history')" id="nav-history"
+            class="nav-bottom-item flex flex-col items-center gap-1.5 w-14 transition-all">
+            <i class="fas fa-history text-lg"></i>
+            <span class="text-[8px] font-black uppercase tracking-widest">Logs</span>
+        </button>
+        <button onclick="switchView('profile')" id="nav-profile"
+            class="nav-bottom-item flex flex-col items-center gap-1.5 w-14 transition-all">
+            <i class="fas fa-user-circle text-lg"></i>
+            <span class="text-[8px] font-black uppercase tracking-widest">Profile</span>
+        </button>
+    </nav>
+
+</div><!-- /mainApp -->
+
+
+<!-- ═══════════════════════════════════════════════
+     SCANNER MODAL (Native BarcodeDetector)
+═══════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════
+     SCANNER WAITING MODAL
+     แสดงขณะรอ popup scanner ส่งค่ากลับมา
+═══════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════
+     SCANNER MODAL — inline camera (iOS/Android/Desktop)
+═══════════════════════════════════════════════ -->
+<div id="scannerModal" class="modal-overlay">
+    <div class="bg-white w-full max-w-md mx-auto h-full md:h-auto md:rounded-[40px] flex flex-col overflow-hidden shadow-2xl" style="max-height:92vh;">
+
+        <!-- Header -->
+        <div class="p-5 flex justify-between items-center border-b border-slate-100 bg-white flex-shrink-0 z-10">
+            <div>
+                <h3 class="font-black text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-qrcode text-red-500"></i> สแกนบาร์โค้ด / QR Code
+                </h3>
+                <p id="scanTargetLabel" class="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">กำลังโหลด...</p>
+            </div>
+            <button onclick="stopScanner()"
+                class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 active:scale-90 transition-all flex-shrink-0">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- ── STATE 1: ขออนุญาตกล้อง (แสดงก่อนเสมอ) ── -->
+        <div id="scanStatePermission" class="flex-1 flex flex-col items-center justify-center gap-6 p-8 text-center bg-slate-50">
+            <div class="w-24 h-24 rounded-full bg-red-50 flex items-center justify-center shadow-inner">
+                <i class="fas fa-camera text-4xl text-red-500"></i>
+            </div>
+            <div>
+                <p class="font-black text-slate-800 text-lg mb-2">ต้องใช้กล้องเพื่อสแกน</p>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    กดปุ่มด้านล่างเพื่ออนุญาตการเข้าถึงกล้อง<br>
+                    <span class="text-xs text-slate-300">(iPhone: เลือก "Allow" เมื่อ popup ถามสิทธิ์)</span>
+                </p>
+            </div>
+            <!-- ปุ่มนี้ต้องให้ user กดโดยตรง (iOS ต้องการ user gesture) -->
+            <button onclick="requestCameraAndScan()"
+                class="w-full py-4 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-2xl font-black text-lg shadow-xl shadow-red-200 active:scale-[0.97] transition-all flex items-center justify-center gap-3">
+                <i class="fas fa-camera text-xl"></i>
+                เปิดกล้องสแกน
+            </button>
+            <p class="text-[10px] text-slate-300 font-bold uppercase tracking-wider">
+                รองรับ QR · Code128 · EAN · DataMatrix
+            </p>
+        </div>
+
+        <!-- ── STATE 2: กล้องกำลังโหลด ── -->
+        <div id="scanStateLoading" class="hidden flex-1 flex flex-col items-center justify-center gap-4 p-8 bg-black">
+            <div class="relative w-16 h-16">
+                <div class="absolute inset-0 rounded-full border-4 border-white/20"></div>
+                <div class="absolute inset-0 rounded-full border-4 border-white border-t-transparent animate-spin"></div>
+            </div>
+            <p class="text-white font-bold text-sm">กำลังเปิดกล้อง...</p>
+        </div>
+
+        <!-- ── STATE 3: กล้องทำงาน (live scanning) ── -->
+        <div id="scanStateCamera" class="hidden scanner-wrapper flex-1" style="min-height:300px;">
+            <video id="scannerVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;display:block;"></video>
+
+            <!-- overlay มืดรอบกรอบ -->
+            <svg class="scan-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <mask id="holeMask">
+                        <rect width="100" height="100" fill="white"/>
+                        <rect x="12" y="32" width="76" height="36" rx="2" fill="black"/>
+                    </mask>
+                </defs>
+                <rect width="100" height="100" fill="rgba(0,0,0,0.52)" mask="url(#holeMask)"/>
+            </svg>
+
+            <!-- กรอบเล็ง 4 มุม -->
+            <div class="scan-frame">
+                <span class="corner-br"></span>
+                <span class="corner-bl"></span>
+                <div class="scan-line"></div>
+            </div>
+
+            <!-- Flash เขียวเมื่อสแกนเจอ -->
+            <div id="scanFlash"></div>
+
+            <!-- สถานะ -->
+            <div id="scannerStatus" class="scanner-status">หันกล้องไปที่บาร์โค้ด</div>
+
+            <!-- ปุ่มไฟฉาย -->
+            <button id="torchBtn" class="torch-btn hidden" onclick="toggleTorch()">
+                <i class="fas fa-bolt"></i>
+            </button>
+            <!-- ปุ่มสลับกล้อง -->
+            <button class="flip-btn" onclick="flipCamera()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+
+        <!-- ── STATE 4: Error + Fallback ถ่ายรูปสแกน ── -->
+        <div id="scanStateError" class="hidden flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center bg-slate-50">
+            <div class="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center">
+                <i class="fas fa-video-slash text-2xl text-orange-400"></i>
+            </div>
+            <div>
+                <p class="font-black text-slate-800 text-base mb-1">กล้อง Live ไม่พร้อมใช้งาน</p>
+                <p id="scanErrorMsg" class="text-[11px] text-slate-400 leading-relaxed mb-1"></p>
+                <p class="text-[10px] text-slate-300">GAS iframe จำกัดการใช้กล้อง — ใช้วิธีถ่ายรูปแทนได้เลย</p>
+            </div>
+
+            <!-- ปุ่มหลัก: ถ่ายรูปบาร์โค้ดด้วยกล้อง -->
+            <input type="file" id="scanCaptureInput" accept="image/*" capture="environment"
+                class="hidden" onchange="scanFromPhoto(event)">
+            <button onclick="document.getElementById('scanCaptureInput').click()"
+                class="w-full py-4 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-2xl font-black text-base shadow-xl shadow-red-200 active:scale-[0.97] transition-all flex items-center justify-center gap-3">
+                <i class="fas fa-camera text-xl"></i>
+                ถ่ายรูปบาร์โค้ด / QR Code
+            </button>
+
+            <!-- ปุ่มรอง: เลือกรูปจากคลัง -->
+            <input type="file" id="scanGalleryInput2" accept="image/*"
+                class="hidden" onchange="scanFromPhoto(event)">
+            <button onclick="document.getElementById('scanGalleryInput2').click()"
+                class="w-full py-3 bg-white border-2 border-slate-200 text-slate-600 rounded-2xl font-bold text-sm active:scale-[0.97] transition-all flex items-center justify-center gap-2">
+                <i class="fas fa-images text-slate-400"></i>
+                เลือกรูปจากคลังภาพ
+            </button>
+
+            <!-- spinner วิเคราะห์รูป -->
+            <div id="scanPhotoProcessing" class="hidden items-center gap-2 text-slate-500 text-sm font-bold">
+                <i class="fas fa-circle-notch fa-spin text-red-500"></i> กำลังวิเคราะห์...
+            </div>
+
+            <!-- ลองใหม่ด้วย live camera -->
+            <button onclick="showScanState('permission')"
+                class="text-xs text-slate-300 hover:text-slate-500 transition-colors py-1 flex items-center gap-1">
+                <i class="fas fa-redo text-[10px]"></i> ลองเปิดกล้อง live อีกครั้ง
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-4 bg-white border-t border-slate-100 flex-shrink-0 text-center">
+            <p class="text-[9px] text-slate-300 font-bold uppercase tracking-wider">
+                ระบบสแกนอัตโนมัติ — ไม่ต้องกดปุ่มหลังเปิดกล้อง
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     DETAIL MODAL
+═══════════════════════════════════════════════ -->
+<div id="detailModal" class="modal-overlay" onclick="if(event.target===this) closeModal('detailModal')">
+    <div class="modal-content p-10 relative">
+
+        <button id="modalDeleteIcon" onclick="confirmDeleteItemFromModal()"
+            class="hidden absolute top-8 right-8 w-10 h-10 bg-red-50 text-red-500 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-90 z-20">
+            <i class="fas fa-trash-alt"></i>
+        </button>
+
+        <div class="flex justify-between items-start mb-8 pr-12">
+            <div>
+                <span class="text-[10px] font-black bg-red-100 text-red-600 px-3 py-1 rounded-full uppercase tracking-widest mb-3 inline-block">
+                    Product Details
+                </span>
+                <h2 id="mItemCode" class="text-4xl font-black text-slate-800 tracking-tight leading-none">-</h2>
+            </div>
+        </div>
+
+        <div id="mPhotoArea" class="hidden mb-8 w-full h-56 bg-slate-50 rounded-[32px] overflow-hidden border border-slate-100 shadow-inner">
+            <img id="mPhoto" src="" class="w-full h-full object-contain">
+        </div>
+
+        <div class="space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                    <p class="text-[10px] text-slate-400 font-black uppercase mb-1">Location</p>
+                    <p id="mLoc" class="font-black text-slate-700 text-lg">-</p>
+                </div>
+                <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                    <p class="text-[10px] text-slate-400 font-black uppercase mb-1">Status</p>
+                    <p id="mStatus" class="font-black text-slate-700 text-lg">-</p>
+                </div>
+            </div>
+            <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                <p class="text-[10px] text-slate-400 font-black uppercase mb-2">Chassis S/N (เลขตัวถัง)</p>
+                <p id="mLP" class="font-black text-2xl text-slate-800 font-mono tracking-widest">-</p>
+            </div>
+            <div id="mMoreInfo" class="space-y-3 border-t border-slate-100 pt-6 text-sm font-semibold text-slate-600"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-10">
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="editItem()"
+                    class="py-5 bg-slate-800 text-white rounded-3xl font-black shadow-xl active:scale-95 transition-all">
+                    <i class="fas fa-edit mr-2"></i>แก้ไข
+                </button>
+                <button onclick="printSingleItem()"
+                    class="py-5 bg-red-500 text-white rounded-3xl font-black shadow-xl shadow-red-200 active:scale-95 transition-all hover:bg-red-600">
+                    <i class="fas fa-file-pdf mr-2"></i>PDF
+                </button>
+            </div>
+            <button onclick="closeModal('detailModal')"
+                class="py-5 bg-slate-100 text-slate-600 rounded-3xl font-black active:scale-95 transition-all">
+                ปิดหน้าต่าง
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden PDF container -->
+<div id="pdf-container"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════
+let inventoryData       = [];
+let transactionLogs     = [];
+let statusChart         = null;
+let typeChart           = null;
+let currentPhotoBase64  = '';
+let currentItemForEdit  = null;
+let currentUser         = null;
+
+// Brand
+let globalAppLogo = '';
+let globalAppName = 'Vespa Stock';
+try {
+    globalAppLogo = localStorage.getItem('vespaAppLogo') || '';
+    globalAppName = localStorage.getItem('vespaAppName') || 'Vespa Stock';
+} catch(e) {}
+
+// Users (fallback mock)
+let appUsers = [
+    {
+        username: 'admin', password: '1234', name: 'Admin', role: 'admin',
+        empId: 'EMP8855', email: 'admin@vespa.co.th', phone: '081-123-4567',
+        position: 'System Administrator', avatar: ''
+    },
+    {
+        username: 'staff', password: '1234', name: 'Staff A', role: 'user',
+        empId: 'EMP9901', email: 'staff.a@vespa.co.th', phone: '089-987-6543',
+        position: 'Inventory Staff', avatar: ''
+    }
+];
+
+
+// ═══════════════════════════════════════════════════════════════
+//  APP INIT
+// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  GAS API CONFIG
+//  ใส่ URL ของ GAS Web App ที่ deploy แล้วตรงนี้
+// ═══════════════════════════════════════════════════════════════
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxAur8Y2RLdxjJ1KllnxN1lUAkz6MEYDurJfs0NhrIjweXkgV2DNVOLPjl_q9ud4jihZA/exec';
+// ตัวอย่าง: 'https://script.google.com/macros/s/AKfy.../exec'
+
+/**
+ * เรียก GAS REST API (แทน google.script.run)
+ * @param {string} action - ชื่อ action ใน doPost
+ * @param {object} params - parameters เพิ่มเติม
+ * @returns {Promise<any>} - ผลลัพธ์จาก GAS
+ */
+async function gasCall(action, params) {
+    const body = Object.assign({ action }, params || {});
+    const res  = await fetch(GAS_URL, {
+        method : 'POST',
+        headers: { 'Content-Type': 'text/plain' }, // ต้องใช้ text/plain เพื่อหลีก CORS preflight
+        body   : JSON.stringify(body)
+    });
+    const text = await res.text();
+    try { return JSON.parse(text); } catch(e) { return text; }
+}
+
+window.onload = initApp;
+
+function initApp() {
+    if (typeof ChartDataLabels !== 'undefined') {
+        Chart.register(ChartDataLabels);
+    }
+
+    updateBrandUI();
+    setInterval(updateAppTime, 1000);
+    updateAppTime();
+
+    // ออก loader ทันที — ไม่รอ GAS เลย
+    forceExitLoader();
+
+    // โหลดข้อมูลจาก GAS แบบ background (ไม่บล็อก UI)
+    loadDataInBackground();
+}
+
+// ออก loader → แสดง login
+function forceExitLoader() {
+    document.getElementById('loader').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+}
+
+// โหลด users + settings ใน background หลัง UI แสดงแล้ว
+async function loadDataInBackground() {
+    try {
+        // โหลด users
+        const users = await gasCall('getAppUsers');
+        if (Array.isArray(users) && users.length > 0) appUsers = users;
+    } catch(e) {}
+
+    try {
+        // โหลด settings
+        const settings = await gasCall('getAppSettings');
+        if (settings && typeof settings === 'object') {
+            if (settings.logoBase64 !== undefined) {
+                globalAppLogo = settings.logoBase64;
+                try { localStorage.setItem('vespaAppLogo', globalAppLogo); } catch(e) {}
+            }
+            if (settings.appName) {
+                globalAppName = settings.appName;
+                try { localStorage.setItem('vespaAppName', globalAppName); } catch(e) {}
+            }
+            updateBrandUI();
+        }
+    } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BRAND / SETTINGS
+// ═══════════════════════════════════════════════════════════════
+function loadGlobalSettings() {
+    loadDataInBackground();
+}
+
+function updateBrandUI() {
+    const name   = globalAppName || 'Vespa Stock';
+    const hasLogo = globalAppLogo && globalAppLogo.length > 0;
+
+    // อัปเดตชื่อแบรนด์ทุกจุด
+    document.querySelectorAll('.brand-name-text').forEach(el => {
+        if (el.tagName !== 'INPUT') el.innerText = name;
+    });
+    const nameInput = document.getElementById('settingAppName');
+    if (nameInput) nameInput.value = name;
+
+    // อัปเดตโลโก้ทุกจุด
+    document.querySelectorAll('.brand-logo-img').forEach(el => {
+        if (el.id === 'adminLogoPreview') return; // จัดการแยก
+        if (hasLogo) {
+            el.src = globalAppLogo;
+            el.classList.remove('hidden');
+        } else {
+            el.src = '';
+            el.classList.add('hidden');
+        }
+    });
+
+    document.querySelectorAll('.brand-default-icon').forEach(el => {
+        if (hasLogo) el.classList.add('hidden');
+        else         el.classList.remove('hidden');
+    });
+
+    // Admin logo preview
+    const adminPrev  = document.getElementById('adminLogoPreview');
+    const adminPlace = document.getElementById('adminLogoPlaceholder');
+    const removeBtn  = document.getElementById('removeLogoBtn');
+    if (adminPrev) {
+        if (hasLogo) {
+            adminPrev.src = globalAppLogo;
+            adminPrev.classList.remove('hidden');
+            if (adminPlace) adminPlace.classList.add('hidden');
+            if (removeBtn)  removeBtn.classList.remove('hidden');
+        } else {
+            adminPrev.src = '';
+            adminPrev.classList.add('hidden');
+            if (adminPlace) adminPlace.classList.remove('hidden');
+            if (removeBtn)  removeBtn.classList.add('hidden');
+        }
+    }
+}
+
+function handleAppLogoChange(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let w = img.width, h = img.height;
+            const MAX = 300;
+            if (w > MAX) { h *= MAX / w; w = MAX; }
+            canvas.width  = w;
+            canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            globalAppLogo = canvas.toDataURL('image/jpeg', 0.6);
+            updateBrandUI();
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeAppLogo() {
+    globalAppLogo = '';
+    document.getElementById('appLogoInput').value = '';
+    updateBrandUI();
+}
+
+function saveAllSettings() {
+    const newName = document.getElementById('settingAppName').value.trim();
+    if (!newName) {
+        Swal.fire({ icon: 'warning', title: 'กรุณาระบุชื่อระบบ', customClass: { popup: 'rounded-[32px]' } });
+        return;
+    }
+
+    globalAppName = newName;
+    updateBrandUI();
+    try {
+        localStorage.setItem('vespaAppLogo', globalAppLogo);
+        localStorage.setItem('vespaAppName', globalAppName);
+    } catch(e) {}
+
+    const btn      = document.querySelector('button[onclick="saveAllSettings()"]');
+    const origHtml = btn.innerHTML;
+    btn.innerHTML  = '<i class="fas fa-circle-notch fa-spin text-xl"></i> กำลังบันทึก...';
+    btn.disabled   = true;
+
+    if (typeof google === 'undefined' || !google.script) {
+        setTimeout(() => {
+            Swal.fire({ icon: 'success', title: 'บันทึกแล้ว (Mock)', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+            btn.innerHTML = origHtml;
+            btn.disabled  = false;
+        }, 800);
+        return;
+    }
+
+    gasCall('saveAppSettings', { settings: { logoBase64: globalAppLogo, appName: globalAppName } })
+        .then(() => {
+            Swal.fire({ icon: 'success', title: 'บันทึกการตั้งค่าเรียบร้อย', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+            btn.innerHTML = origHtml; btn.disabled = false;
+        })
+        .catch(err => {
+            Swal.fire('Error', String(err), 'error');
+            btn.innerHTML = origHtml; btn.disabled = false;
+        });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  AUTHENTICATION
+// ═══════════════════════════════════════════════════════════════
+function handleLogin(event) {
+    event.preventDefault();
+
+    const u = document.getElementById('loginUser').value.trim().toLowerCase();
+    const p = document.getElementById('loginPass').value.trim();
+
+    // ถ้า appUsers ยังว่าง (GAS โหลดไม่เสร็จ) ให้ลองดึงก่อน แล้วค่อย login ใหม่
+    if (appUsers.length === 0 && typeof google !== 'undefined' && google.script) {
+        const btn = event.target.querySelector('button[type=submit]');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังโหลด...'; }
+
+        gasCall('getAppUsers')
+            .then(res => {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>'; }
+                if (Array.isArray(res) && res.length > 0) appUsers = res;
+                doLogin(u, p);
+            })
+            .catch(() => {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>'; }
+                doLogin(u, p);
+            });
+        return;
+    }
+
+    doLogin(u, p);
+}
+
+function doLogin(u, p) {
+    const user = appUsers.find(x =>
+        String(x.username || '').toLowerCase() === u &&
+        String(x.password || '') === p
+    );
+
+    if (user) {
+        try {
+            currentUser = user;
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+
+            document.getElementById('dashNameDisplay').innerText   = user.name || '';
+            document.getElementById('sideUserName').innerText      = user.name || '';
+            document.getElementById('mobileWelcomeName').innerText = user.name || '';
+            document.getElementById('roleBadge').innerText         = (user.role || 'user').toUpperCase();
+
+            updateAvatarDisplays();
+
+            const adminMenu = document.getElementById('side-users');
+            if (adminMenu) {
+                if (user.role === 'admin') adminMenu.classList.remove('hidden');
+                else adminMenu.classList.add('hidden');
+            }
+
+            switchView('dashboard');
+        } catch(err) {
+            console.error('Login render error:', err);
+            alert('เกิดข้อผิดพลาดหลัง login: ' + err.message);
+        }
+    } else {
+        Swal.fire({
+            icon: 'error',
+            title: 'Login Failed',
+            text: 'Username หรือ Password ไม่ถูกต้อง',
+            customClass: { popup: 'rounded-[32px]' }
+        });
+    }
+}
+
+function handleLogout() {
+    currentUser = null;
+    document.getElementById('mainApp').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('loginPass').value = '';
+    switchView('dashboard');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SCANNER — Inline camera with permission button
+//  iOS ต้องการ user gesture จึงมีปุ่ม "เปิดกล้องสแกน" ก่อนเสมอ
+//  ใช้ BarcodeDetector API + requestAnimationFrame loop
+// ═══════════════════════════════════════════════════════════════
+
+let scannerStream    = null;
+let scannerRAF       = null;
+let scannerActive    = false;
+let currentScanTarget = '';
+let torchTrack       = null;
+let torchOn          = false;
+let useFrontCamera   = false;
+let barcodeDetector  = null;
+let lastDetectedTime = 0;
+
+const SCAN_FORMATS = [
+    'qr_code','code_128','code_39','ean_13','ean_8',
+    'data_matrix','pdf417','aztec','itf','upc_a','upc_e','codabar'
+];
+
+// ── helper: สลับ state UI ──────────────────────────────────────
+function showScanState(state) {
+    // states: 'permission' | 'loading' | 'camera' | 'error'
+    const states = ['permission','loading','camera','error'];
+    states.forEach(s => {
+        const el = document.getElementById('scanState' + s.charAt(0).toUpperCase() + s.slice(1));
+        if (!el) return;
+        if (s === state) {
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+        } else {
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+        }
+    });
+}
+
+// ── เริ่มเปิด modal (แสดงปุ่มขออนุญาตก่อน) ──────────────────
+function startScanner(target) {
+    currentScanTarget = target;
+
+    const labelMap = {
+        Location      : 'Location (ที่เก็บ)',
+        Item          : 'Item Code (รหัสสินค้า)',
+        LicensePlate  : 'License Plate (เลขตัวถัง)',
+        searchInput   : 'ค้นหาสินค้า',
+        histFilterItem: 'Item / LPN',
+        histFilterLoc : 'Location'
+    };
+    document.getElementById('scanTargetLabel').innerText = labelMap[target] || target;
+
+    // แสดง state permission ก่อนเสมอ (ต้องการ user tap บน iOS)
+    showScanState('permission');
+    document.getElementById('scannerModal').classList.add('active');
+}
+
+// ── ปุ่ม "เปิดกล้องสแกน" กดแล้วจะขอสิทธิ์ทันที ──────────────
+// ฟังก์ชันนี้ถูกเรียกจาก user gesture โดยตรง → iOS อนุญาต
+async function requestCameraAndScan() {
+    showScanState('loading');
+
+    // Init BarcodeDetector (ถ้าไม่มีให้ใช้ jsQR แทน)
+    const hasBD = await initBarcodeDetector();
+    // hasBD = false → ใช้ jsQR fallback, ไม่ error
+
+    // ขอสิทธิ์กล้อง
+    try {
+        const constraints = {
+            video: {
+                facingMode: useFrontCamera ? 'user' : { ideal: 'environment' },
+                width:  { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        };
+        scannerStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+        const video = document.getElementById('scannerVideo');
+        video.srcObject = scannerStream;
+
+        // รอ video พร้อม
+        await new Promise((resolve, reject) => {
+            video.oncanplay = resolve;
+            video.onerror   = reject;
+            setTimeout(reject, 8000); // timeout 8 วิ
+        });
+        await video.play();
+
+        scannerActive = true;
+
+        // torch support
+        torchTrack = scannerStream.getVideoTracks()[0];
+        const caps = torchTrack.getCapabilities ? torchTrack.getCapabilities() : {};
+        document.getElementById('torchBtn').classList.toggle('hidden', !caps.torch);
+
+        document.getElementById('scannerStatus').innerText =
+            barcodeDetector ? 'หันกล้องไปที่บาร์โค้ด' : 'หันกล้อง — รองรับ QR Code เท่านั้น (jsQR mode)';
+        showScanState('camera');
+
+        // เริ่ม scan loop
+        scanLoopBD(video);
+
+    } catch(err) {
+        console.error('Camera error:', err);
+        let msg = '';
+
+        // Permissions Policy — GAS iframe บล็อกกล้อง
+        if (err.message && err.message.toLowerCase().includes('permission')) {
+            msg = 'GAS iframe บล็อกการใช้กล้อง live<br>กรุณาใช้ปุ่มถ่ายรูปด้านล่างแทน';
+        } else if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            msg = 'Environment นี้ไม่รองรับ Camera API';
+        } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            msg = 'กล้องถูกบล็อกโดย browser policy<br>กรุณาใช้ปุ่มถ่ายรูปด้านล่างแทน';
+        } else if (err.name === 'NotFoundError') {
+            msg = 'ไม่พบกล้องในอุปกรณ์นี้';
+        } else if (err.name === 'NotReadableError' || err.name === 'AbortError') {
+            msg = 'กล้องถูกใช้งานโดย app อื่น';
+        } else {
+            msg = err.message || 'ไม่สามารถเปิดกล้องได้';
+        }
+        showScanError(msg);
+    }
+}
+
+function showScanError(msg) {
+    document.getElementById('scanErrorMsg').innerHTML = msg || '';
+    showScanState('error');
+}
+
+// ── สแกนจากรูปที่ถ่าย/เลือก (ทำงานได้ใน GAS iframe) ──────────
+async function scanFromPhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    event.target.value = '';
+
+    const processing = document.getElementById('scanPhotoProcessing');
+    if (processing) { processing.classList.remove('hidden'); processing.classList.add('flex'); }
+
+    try {
+        // ใช้ jsQR วิเคราะห์รูป
+        if (typeof jsQR === 'undefined') throw new Error('jsQR ไม่โหลด');
+
+        const bitmap = await createImageBitmap(file);
+        const canvas = document.createElement('canvas');
+        canvas.width  = bitmap.width;
+        canvas.height = bitmap.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0);
+        bitmap.close();
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: 'attemptBoth'
+        });
+
+        if (processing) { processing.classList.add('hidden'); processing.classList.remove('flex'); }
+
+        if (code && code.data) {
+            stopScanner();
+            const val = code.data.trim();
+            const elem = document.getElementById(currentScanTarget);
+            if (elem) {
+                elem.value = val;
+                elem.dispatchEvent(new Event('input',  { bubbles: true }));
+                elem.dispatchEvent(new Event('change', { bubbles: true }));
+                elem.style.transition = 'box-shadow 0.2s';
+                elem.style.boxShadow  = '0 0 0 3px rgba(16,185,129,0.45)';
+                setTimeout(() => { elem.style.boxShadow = ''; }, 1200);
+            }
+            if (currentScanTarget === 'Item')          checkItemInfo(val);
+            if (currentScanTarget === 'LicensePlate')  document.getElementById('charCount').innerText = val.length;
+            if (currentScanTarget === 'searchInput')   filterItems();
+            if (currentScanTarget === 'histFilterItem' || currentScanTarget === 'histFilterLoc') filterHistoryLogs();
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'ไม่พบ QR Code ในรูป',
+                text: 'กรุณาถ่ายรูปใหม่ให้ QR Code อยู่ตรงกลางและชัดเจน',
+                confirmButtonColor: '#e63946',
+                customClass: { popup: 'rounded-[32px]' }
+            });
+        }
+    } catch(err) {
+        if (processing) { processing.classList.add('hidden'); processing.classList.remove('flex'); }
+        console.error('scanFromPhoto error:', err);
+        Swal.fire({
+            icon: 'error',
+            title: 'วิเคราะห์รูปไม่สำเร็จ',
+            text: 'กรุณาถ่ายรูปใหม่ให้ชัดขึ้น',
+            confirmButtonColor: '#e63946',
+            customClass: { popup: 'rounded-[32px]' }
+        });
+    }
+}
+
+// ── BarcodeDetector init (ถ้าไม่มีจะใช้ jsQR แทน) ──────────
+async function initBarcodeDetector() {
+    if (barcodeDetector) return true;
+    if (!('BarcodeDetector' in window)) {
+        // ไม่มี BarcodeDetector → jsQR จะทำงานแทนใน scanLoopBD
+        console.log('BarcodeDetector ไม่รองรับ → ใช้ jsQR แทน');
+        return false;
+    }
+    try {
+        const supported = await BarcodeDetector.getSupportedFormats().catch(() => SCAN_FORMATS);
+        const formats   = SCAN_FORMATS.filter(f => supported.includes(f));
+        barcodeDetector = new BarcodeDetector({ formats: formats.length ? formats : SCAN_FORMATS });
+        return true;
+    } catch(e) {
+        return false;
+    }
+}
+
+// ── Scan loop — รองรับทั้ง BarcodeDetector และ jsQR ───────────
+async function scanLoopBD(video) {
+    if (!scannerActive) return;
+    if (video.readyState < 2) {
+        scannerRAF = requestAnimationFrame(() => scanLoopBD(video));
+        return;
+    }
+
+    try {
+        if (barcodeDetector) {
+            // ── วิธีที่ 1: BarcodeDetector API (Android Chrome, Safari 17+)
+            const barcodes = await barcodeDetector.detect(video);
+            if (barcodes.length > 0) {
+                const now = Date.now();
+                if (now - lastDetectedTime > 1500) {
+                    lastDetectedTime = now;
+                    onScanSuccess(barcodes[0].rawValue);
+                    return;
+                }
+            }
+        } else if (typeof jsQR !== 'undefined') {
+            // ── วิธีที่ 2: jsQR fallback (ทุก browser รองรับ)
+            const canvas  = document.createElement('canvas');
+            canvas.width  = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx     = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code      = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: 'dontInvert'
+            });
+            if (code && code.data) {
+                const now = Date.now();
+                if (now - lastDetectedTime > 1500) {
+                    lastDetectedTime = now;
+                    onScanSuccess(code.data);
+                    return;
+                }
+            }
+        }
+    } catch(e) {}
+
+    scannerRAF = requestAnimationFrame(() => scanLoopBD(video));
+}
+
+// ── สแกนเจอ ───────────────────────────────────────────────────
+function onScanSuccess(text) {
+    // Flash เขียว
+    const flash = document.getElementById('scanFlash');
+    if (flash) {
+        flash.classList.add('scan-success-flash');
+        setTimeout(() => flash.classList.remove('scan-success-flash'), 500);
+    }
+    // Beep
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = 1200; osc.type = 'sine';
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+        osc.start(); osc.stop(ctx.currentTime + 0.15);
+    } catch(e) {}
+
+    document.getElementById('scannerStatus').innerText = '✅ สแกนเจอแล้ว!';
+
+    setTimeout(() => {
+        stopScanner();
+        const val = text.trim();
+        const elem = document.getElementById(currentScanTarget);
+        if (elem) {
+            elem.value = val;
+            elem.dispatchEvent(new Event('input',  { bubbles: true }));
+            elem.dispatchEvent(new Event('change', { bubbles: true }));
+            // flash ขอบ input สีเขียว
+            elem.style.transition  = 'box-shadow 0.2s';
+            elem.style.boxShadow   = '0 0 0 3px rgba(16,185,129,0.45)';
+            setTimeout(() => { elem.style.boxShadow = ''; }, 1200);
+        }
+        if (currentScanTarget === 'Item')          checkItemInfo(val);
+        if (currentScanTarget === 'LicensePlate')  document.getElementById('charCount').innerText = val.length;
+        if (currentScanTarget === 'searchInput')   filterItems();
+        if (currentScanTarget === 'histFilterItem' || currentScanTarget === 'histFilterLoc') filterHistoryLogs();
+    }, 400);
+}
+
+// ── หยุดกล้องและปิด modal ─────────────────────────────────────
+async function stopScannerStream() {
+    scannerActive = false;
+    if (scannerRAF) { cancelAnimationFrame(scannerRAF); scannerRAF = null; }
+    if (torchOn && torchTrack) {
+        try { await torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch(e) {}
+        torchOn = false;
+        const tb = document.getElementById('torchBtn');
+        if (tb) tb.classList.remove('on');
+    }
+    if (scannerStream) {
+        scannerStream.getTracks().forEach(t => t.stop());
+        scannerStream = null;
+    }
+    const video = document.getElementById('scannerVideo');
+    if (video) video.srcObject = null;
+}
+
+function stopScanner() {
+    document.getElementById('scannerModal').classList.remove('active');
+    stopScannerStream();
+}
+
+// ── Torch ─────────────────────────────────────────────────────
+async function toggleTorch() {
+    if (!torchTrack) return;
+    try {
+        torchOn = !torchOn;
+        await torchTrack.applyConstraints({ advanced: [{ torch: torchOn }] });
+        document.getElementById('torchBtn').classList.toggle('on', torchOn);
+    } catch(e) { console.warn('Torch error:', e); }
+}
+
+// ── สลับกล้องหน้า/หลัง ────────────────────────────────────────
+async function flipCamera() {
+    useFrontCamera = !useFrontCamera;
+    if (scannerActive) {
+        await stopScannerStream();
+        await requestCameraAndScan();
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CLOCK & GREETING
+// ═══════════════════════════════════════════════════════════════
+function updateAppTime() {
+    const now = new Date();
+
+    if (document.getElementById('clockTime')) {
+        document.getElementById('clockTime').innerText =
+            now.toLocaleTimeString('th-TH', { hour12: false });
+    }
+    if (document.getElementById('currentDateDisplay')) {
+        document.getElementById('currentDateDisplay').innerText =
+            now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    const h = now.getHours();
+    let greetText = 'สวัสดีตอนเช้า';
+    let iconClass = 'fas fa-sun animate-spin-slow text-yellow-500';
+
+    if (h >= 12 && h < 17) {
+        greetText = 'สวัสดีตอนบ่าย';
+        iconClass = 'fas fa-cloud-sun text-orange-500';
+    } else if (h >= 17 || h < 5) {
+        greetText = 'สวัสดีตอนเย็น';
+        iconClass = 'fas fa-moon text-indigo-500';
+    }
+
+    if (document.getElementById('greetingText')) document.getElementById('greetingText').innerText = greetText;
+    if (document.getElementById('greetingIcon')) document.getElementById('greetingIcon').className  = iconClass;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  VIEW MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+function switchView(view) {
+    try {
+        if (view === 'users' && (!currentUser || currentUser.role !== 'admin')) return;
+
+        const views = ['dashboard', 'inventory', 'report', 'users', 'history', 'profile'];
+        views.forEach(v => {
+            const ve = document.getElementById('view-' + v);
+            const se = document.getElementById('side-' + v);
+            const ne = document.getElementById('nav-'  + v);
+            if (ve) ve.classList.add('hidden');
+            if (se) se.classList.remove('active');
+            if (ne) ne.classList.remove('active');
+        });
+
+        const target = document.getElementById('view-' + view);
+        if (!target) { console.warn('view not found:', view); return; }
+        target.classList.remove('hidden');
+
+        const sideEl = document.getElementById('side-' + view);
+        const navEl  = document.getElementById('nav-'  + view);
+        if (sideEl) sideEl.classList.add('active');
+        if (navEl)  navEl.classList.add('active');
+
+        if (view === 'dashboard' || view === 'report') loadRealData();
+        if (view === 'inventory' && !currentItemForEdit) resetForm();
+        if (view === 'users')   { renderUserTable(); updateBrandUI(); }
+        if (view === 'history')  renderHistoryLogs();
+        if (view === 'profile')  loadProfileData();
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch(err) {
+        console.error('switchView error:', err);
+    }
+}
+
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('-translate-x-full');
+    const overlay = document.getElementById('sidebarOverlay');
+    overlay.classList.toggle('hidden');
+    setTimeout(() => overlay.classList.toggle('opacity-0'), 10);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DATA LOADING
+// ═══════════════════════════════════════════════════════════════
+function loadRealData() {
+    // Mock mode
+    if (typeof google === 'undefined' || !google.script) {
+        const mockImg = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAATUlEQVR4nGNkYGD4z8DAAMJkYGBgAABgAAH//wMIgAAAAABJRU5ErkJggg==';
+        inventoryData = [{
+            Location: 'A-01-01', Item: '1B000000', Description: 'Sample Item 1', Type: 'Part',
+            OH: 10, InventoryStatus: 'Good', Solution: 'มีในระบบ', LicensePlate: 'RP81234567890',
+            Name: 'Admin', Remark: 'สินค้าปกติ', Photo: mockImg,
+            Timestamp: '27/10/2023 10:00:00', ActualDate: '2023-10-27T10:00:00.000Z', OnOffStatus: 'ON'
+        }];
+        transactionLogs = [{
+            Timestamp: '27/10/2023 10:00:00', User: 'Admin', Action: 'ADD',
+            Item: '1B000000', Location: 'A-01-01', Details: 'Initial Entry'
+        }];
+
+        renderData(inventoryData);
+        updateCharts(inventoryData);
+        updateActionList(inventoryData);
+        updateDashboardStats(inventoryData);
+        updateUserFilterDropdown();
+        renderHistoryLogs();
+
+        // Remark dropdown
+        const remarks = ['สินค้าปกติ', 'มีรอยขีดข่วน', 'กล่องแตก', 'รอตรวจสอบ'];
+        const rSel = document.getElementById('RemarkSelect');
+        rSel.innerHTML = remarks.map(r => `<option value="${r}">${r}</option>`).join('');
+        document.getElementById('Remark').value = rSel.value;
+
+        // Name dropdown
+        const names = ['Admin', 'Staff A'];
+        const nSel = document.getElementById('NameSelect');
+        nSel.innerHTML = names.map(n => `<option value="${n}">${n}</option>`).join('');
+        if (currentUser && !names.includes(currentUser.name)) {
+            nSel.add(new Option(currentUser.name, currentUser.name));
+        }
+        if (currentUser) nSel.value = currentUser.name;
+        document.getElementById('Name').value = nSel.value;
+        return;
+    }
+
+    // GAS REST API mode
+    gasCall('getInventoryData').then(data => {
+        try {
+            inventoryData = typeof data === 'string' ? JSON.parse(data) : data;
+            if (!Array.isArray(inventoryData)) inventoryData = [];
+        } catch(e) { inventoryData = []; }
+        renderData(inventoryData);
+        updateCharts(inventoryData);
+        updateActionList(inventoryData);
+        updateDashboardStats(inventoryData);
+    }).catch(e => console.warn(e));
+
+    gasCall('getRemarkOptions').then(remarks => {
+        if (!Array.isArray(remarks)) return;
+        const sel = document.getElementById('RemarkSelect');
+        if (!sel) return;
+        sel.innerHTML = remarks.map(r => '<option value="' + r + '">' + r + '</option>').join('');
+        if (remarks.length) document.getElementById('Remark').value = sel.value;
+    }).catch(() => {});
+
+    gasCall('getRecorderOptions').then(names => {
+        if (!Array.isArray(names)) return;
+        const sel = document.getElementById('NameSelect');
+        if (!sel) return;
+        sel.innerHTML = names.map(n => '<option value="' + n + '">' + n + '</option>').join('');
+        if (currentUser) {
+            if (!names.includes(currentUser.name)) sel.add(new Option(currentUser.name, currentUser.name));
+            sel.value = currentUser.name;
+        }
+        const nameEl = document.getElementById('Name');
+        if (nameEl) nameEl.value = sel.value;
+        updateUserFilterDropdown(names);
+    }).catch(() => {});
+}
+
+function updateUserFilterDropdown(names) {
+    const list = names || appUsers.map(u => u.name);
+    document.getElementById('histFilterUser').innerHTML =
+        `<option value="All">ทั้งหมด (All Users)</option>` +
+        list.map(n => `<option value="${n}">${n}</option>`).join('');
+}
+
+function updateDashboardStats(data) {
+    if (!data) return;
+    document.getElementById('statLoc').innerText  = new Set(data.map(i => i.Location).filter(Boolean)).size;
+    document.getElementById('statItem').innerText = new Set(data.map(i => i.Item).filter(Boolean)).size;
+    document.getElementById('statWork').innerText = data.reduce((s, i) => s + (parseInt(i.OH) || 0), 0);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
+function renderData(data) {
+    const container = document.getElementById('itemsContainer');
+    if (!data || !data.length) {
+        container.innerHTML = `
+            <div class="col-span-full py-20 text-center opacity-30">
+                <i class="fas fa-box-open text-6xl mb-4"></i>
+                <p class="font-bold uppercase tracking-widest">ยังไม่พบข้อมูล</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = data.map((item, index) => {
+        const sCls = item.InventoryStatus === 'Good'   ? 'bg-green-100 text-green-600' :
+                     item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600'    :
+                                                          'bg-yellow-100 text-yellow-600';
+        const hasPhoto   = item.Photo && item.Photo !== '';
+        const deleteBtn  = (currentUser && currentUser.role === 'admin')
+            ? `<button onclick="confirmDeleteItem(${index}, event)"
+                class="mt-3 w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                <i class="fas fa-trash-alt text-[10px]"></i>
+               </button>` : '';
+
+        return `
+        <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center gap-5 cursor-pointer hover:shadow-xl transition-all active:scale-[0.98]">
+            <div onclick="showDetail(${index})" class="w-20 h-20 rounded-2xl bg-slate-50 overflow-hidden flex-shrink-0 border border-slate-100">
+                ${hasPhoto
+                    ? `<img src="${item.Photo}" class="w-full h-full object-cover">`
+                    : `<div class="w-full h-full flex items-center justify-center text-slate-200"><i class="fas fa-camera text-2xl"></i></div>`}
+            </div>
+            <div onclick="showDetail(${index})" class="flex-1 min-w-0">
+                <div class="flex gap-2 mb-1.5">
+                    <span class="text-[9px] font-black bg-slate-100 px-2 py-0.5 rounded text-slate-500 uppercase tracking-widest">${item.Location}</span>
+                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full ${sCls} uppercase tracking-widest">${item.InventoryStatus}</span>
+                </div>
+                <h4 class="font-black text-slate-800 truncate text-lg tracking-tight">${item.Item}</h4>
+                <p class="text-[11px] text-slate-400 font-mono font-bold truncate">${item.LicensePlate || '-'}</p>
+            </div>
+            <div class="text-right">
+                <div class="text-3xl font-black text-slate-700 leading-none">${item.OH}</div>
+                <p class="text-[8px] font-black text-slate-300 uppercase mt-1">Pcs</p>
+                ${deleteBtn}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function showDetail(index) {
+    currentItemForEdit = inventoryData[index];
+    const item = currentItemForEdit;
+    if (!item) return;
+
+    document.getElementById('mItemCode').innerText = item.Item          || '-';
+    document.getElementById('mLoc').innerText      = item.Location      || '-';
+    document.getElementById('mLP').innerText       = item.LicensePlate  || '-';
+    document.getElementById('mStatus').innerText   = item.InventoryStatus || '-';
+
+    document.getElementById('mMoreInfo').innerHTML = `
+        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-50 shadow-sm">
+            <span class="text-slate-400 font-black uppercase text-[10px]">Description</span>
+            <span class="font-bold text-slate-700">${item.Description || '-'}</span>
+        </div>
+        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-50 shadow-sm">
+            <span class="text-slate-400 font-black uppercase text-[10px]">Type</span>
+            <span class="font-bold text-slate-700">${item.Type || '-'}</span>
+        </div>
+        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-50 shadow-sm">
+            <span class="text-slate-400 font-black uppercase text-[10px]">Remark</span>
+            <span class="font-bold text-slate-700">${item.Remark || '-'}</span>
+        </div>
+        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-50 shadow-sm">
+            <span class="text-slate-400 font-black uppercase text-[10px]">Recorder</span>
+            <span class="font-bold text-slate-700">${item.Name || '-'}</span>
+        </div>
+        <div class="text-[9px] text-slate-300 font-bold uppercase text-center mt-4">
+            Updated: ${item.Timestamp}
+        </div>`;
+
+    // Photo
+    const pArea = document.getElementById('mPhotoArea');
+    const pImg  = document.getElementById('mPhoto');
+    if (item.Photo && item.Photo !== '') {
+        pImg.src = item.Photo;
+        pArea.classList.remove('hidden');
+    } else {
+        pArea.classList.add('hidden');
+    }
+
+    // Delete button (admin only)
+    const delBtn = document.getElementById('modalDeleteIcon');
+    if (currentUser && currentUser.role === 'admin') delBtn.classList.remove('hidden');
+    else delBtn.classList.add('hidden');
+
+    document.getElementById('detailModal').classList.add('active');
+}
+
+function filterActionTable() {
+    updateActionList(inventoryData);
+}
+
+function updateActionList(data) {
+    const container = document.getElementById('actionList');
+    if (!container) return;
+
+    const filterVal = document.getElementById('actionFilter')
+        ? document.getElementById('actionFilter').value : 'Issue';
+
+    let filtered;
+    if      (filterVal === 'Issue') filtered = data.filter(i => i.InventoryStatus === 'Damage' || i.InventoryStatus === 'QC');
+    else if (filterVal === 'All')   filtered = [...data];
+    else                            filtered = data.filter(i => i.InventoryStatus === filterVal);
+
+    if (!filtered.length) {
+        container.innerHTML = `<tr><td colspan="5" class="py-16 text-center opacity-30 font-black uppercase tracking-[0.2em]">ไม่พบข้อมูลในสถานะที่เลือก</td></tr>`;
+        return;
+    }
+
+    container.innerHTML = filtered.slice(0, 50).map(item => {
+        const badge = item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600' :
+                      item.InventoryStatus === 'QC'     ? 'bg-yellow-100 text-yellow-600' :
+                                                          'bg-green-100 text-green-600';
+        return `
+        <tr class="hover:bg-slate-50 transition-colors">
+            <td class="py-4 text-center">
+                ${item.Photo
+                    ? `<img src="${item.Photo}" class="w-12 h-12 rounded-xl object-cover border mx-auto shadow-sm">`
+                    : `<div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-300 mx-auto"><i class="fas fa-camera"></i></div>`}
+            </td>
+            <td class="py-4 px-4">
+                <div class="font-black text-slate-700">${item.Item}</div>
+                <div class="text-[10px] text-slate-400 font-bold">${item.LicensePlate || '-'}</div>
+            </td>
+            <td class="py-4">
+                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${badge}">
+                    ${item.InventoryStatus}
+                </span>
+            </td>
+            <td class="py-4 text-xs font-mono font-bold text-slate-500">${item.Location}</td>
+            <td class="py-4 text-right pr-4">
+                <button onclick="showDetail(${inventoryData.indexOf(item)})"
+                    class="w-9 h-9 rounded-full border border-slate-200 text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fas fa-search"></i>
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════════════════════════════
+function updateCharts(data) {
+    // Status donut
+    const ctxStatus = document.getElementById('statusChart');
+    if (ctxStatus) {
+        const s = { Good: 0, Damage: 0, QC: 0 };
+        data.forEach(d => { if (s[d.InventoryStatus] !== undefined) s[d.InventoryStatus]++; });
+
+        if (statusChart) statusChart.destroy();
+        statusChart = new Chart(ctxStatus, {
+            type: 'doughnut',
+            data: {
+                labels: ['GOOD', 'DAMAGE', 'QC'],
+                datasets: [{
+                    data: [s.Good, s.Damage, s.QC],
+                    backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
+                    borderWidth: 4,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } } },
+                    datalabels: {
+                        color: '#fff',
+                        font: { weight: 'black', size: 10 },
+                        formatter: (v, ctx) => {
+                            const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            return v > 0 ? `${v}\n(${((v * 100) / sum).toFixed(0)}%)` : '';
+                        },
+                        textAlign: 'center'
+                    }
+                }
+            }
+        });
+    }
+
+    // Type donut
+    const ctxType = document.getElementById('typeChart');
+    if (ctxType) {
+        const typeMap = {};
+        data.forEach(d => {
+            const t = d.Type || 'อื่นๆ';
+            typeMap[t] = (typeMap[t] || 0) + 1;
+        });
+
+        if (typeChart) typeChart.destroy();
+        typeChart = new Chart(ctxType, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(typeMap),
+                datasets: [{
+                    data: Object.values(typeMap),
+                    backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#6366f1', '#14b8a6'],
+                    borderWidth: 4,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 9 } } },
+                    datalabels: {
+                        color: '#fff',
+                        font: { weight: 'black', size: 10 },
+                        formatter: v => v > 0 ? v : '',
+                        textAlign: 'center'
+                    }
+                }
+            }
+        });
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HISTORY / TRANSACTION LOGS
+// ═══════════════════════════════════════════════════════════════
+function logTransaction(action, itemCode, location, user, details) {
+    transactionLogs.unshift({
+        Timestamp : new Date().toLocaleString('th-TH'),
+        User      : user,
+        Action    : action,
+        Item      : itemCode,
+        Location  : location,
+        Details   : details
+    });
+    renderHistoryLogs();
+}
+
+function renderHistoryLogs() {
+    const container = document.getElementById('historyTableBody');
+    if (!container) return;
+
+    const fUser = document.getElementById('histFilterUser').value;
+    const fItem = document.getElementById('histFilterItem').value.toLowerCase();
+    const fLoc  = document.getElementById('histFilterLoc').value.toLowerCase();
+
+    const filtered = transactionLogs.filter(log =>
+        (fUser === 'All' || log.User === fUser) &&
+        (!fItem || log.Item.toLowerCase().includes(fItem)) &&
+        (!fLoc  || log.Location.toLowerCase().includes(fLoc))
+    );
+
+    if (!filtered.length) {
+        container.innerHTML = `<tr><td colspan="5" class="py-10 text-center opacity-40 font-bold">ไม่พบประวัติการทำรายการ</td></tr>`;
+        return;
+    }
+
+    container.innerHTML = filtered.map(log => {
+        const badge = log.Action === 'ADD'    ? 'badge-add'    :
+                      log.Action === 'EDIT'   ? 'badge-edit'   :
+                      log.Action === 'DELETE' ? 'badge-delete' : 'bg-slate-100 text-slate-500';
+        const parts = log.Timestamp.split(' ');
+        return `
+        <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50">
+            <td class="py-4 pl-4 text-xs font-mono text-slate-400">
+                ${parts[1] || ''}<br>
+                <span class="text-[9px]">${parts[0] || ''}</span>
+            </td>
+            <td class="py-4 px-2 font-bold text-slate-700">${log.User}</td>
+            <td class="py-4 px-2">
+                <span class="px-2 py-1 rounded text-[10px] font-black uppercase ${badge}">${log.Action}</span>
+            </td>
+            <td class="py-4 px-2">
+                <div class="font-bold text-slate-700 text-xs">${log.Item}</div>
+                <div class="text-[9px] text-slate-400 font-mono">${log.Location}</div>
+            </td>
+            <td class="py-4 px-2 text-xs text-slate-500 max-w-[150px] truncate">${log.Details}</td>
+        </tr>`;
+    }).join('');
+}
+
+function filterHistoryLogs() {
+    renderHistoryLogs();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  USER MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+function renderUserTable() {
+    document.getElementById('userTableBody').innerHTML = appUsers.map(u => `
+        <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50">
+            <td class="py-4 px-4 font-bold text-slate-700">${u.username}</td>
+            <td class="py-4 px-4 text-slate-500">${u.name}</td>
+            <td class="py-4 px-4">
+                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${u.role === 'admin' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}">
+                    ${u.role}
+                </span>
+            </td>
+            <td class="py-4 text-right pr-4">
+                ${u.username !== 'admin'
+                    ? `<button onclick="deleteUser('${u.username}')"
+                        class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:bg-red-500 hover:text-white transition-all">
+                        <i class="fas fa-trash-alt text-[10px]"></i>
+                       </button>`
+                    : '<span class="text-[10px] text-slate-300 font-bold uppercase">Locked</span>'}
+            </td>
+        </tr>`).join('');
+}
+
+function openAddUserModal() {
+    Swal.fire({
+        title: 'เพิ่มผู้ใช้งานใหม่',
+        html: `
+            <input id="new-user" class="swal2-input" placeholder="Username">
+            <input id="new-pass" class="swal2-input" placeholder="Password">
+            <input id="new-name" class="swal2-input" placeholder="Display Name">
+            <select id="new-role" class="swal2-input">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+            </select>`,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonColor: '#e63946',
+        customClass: { popup: 'rounded-[32px]' },
+        preConfirm: () => [
+            document.getElementById('new-user').value,
+            document.getElementById('new-pass').value,
+            document.getElementById('new-name').value,
+            document.getElementById('new-role').value
+        ]
+    }).then(result => {
+        if (result.isConfirmed) {
+            const [u, p, n, r] = result.value;
+            if (!u || !p || !n) return;
+            appUsers.push({ username: u, password: p, name: n, role: r, empId: '', email: '', phone: '', position: '', avatar: '' });
+            renderUserTable();
+            gasCall('saveAppUsers', { users: appUsers }).catch(()=>{});
+            Swal.fire({ icon: 'success', title: 'เพิ่มผู้ใช้สำเร็จ', timer: 1200, showConfirmButton: false });
+        }
+    });
+}
+
+function deleteUser(username) {
+    Swal.fire({
+        title: 'ยืนยันลบ?',
+        text: `ลบผู้ใช้ ${username}`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e63946',
+        customClass: { popup: 'rounded-[32px]' }
+    }).then(r => {
+        if (r.isConfirmed) {
+            appUsers = appUsers.filter(u => u.username !== username);
+            renderUserTable();
+            gasCall('saveAppUsers', { users: appUsers }).catch(()=>{});
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PROFILE
+// ═══════════════════════════════════════════════════════════════
+function loadProfileData() {
+    if (!currentUser) return;
+    document.getElementById('profEmpId').value    = currentUser.empId    || '';
+    document.getElementById('profUsername').value = currentUser.username || '';
+    document.getElementById('profName').value     = currentUser.name     || '';
+    document.getElementById('profEmail').value    = currentUser.email    || '';
+    document.getElementById('profPhone').value    = currentUser.phone    || '';
+    document.getElementById('profPosition').value = currentUser.position || '';
+    updateAvatarDisplays();
+    document.getElementById('passCurrent').value = '';
+    document.getElementById('passNew').value     = '';
+    document.getElementById('passConfirm').value = '';
+}
+
+function handleProfilePicChange(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let w = img.width, h = img.height;
+            const MAX = 200;
+            if (w > MAX) { h *= MAX / w; w = MAX; }
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            if (currentUser) {
+                currentUser.avatar = canvas.toDataURL('image/jpeg', 0.5);
+                updateAvatarDisplays();
+            }
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function updateAvatarDisplays() {
+    if (!currentUser) return;
+    const av = currentUser.avatar;
+    ['profileAvatar', 'sideUserAvatar'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.src = av || '';
+        if (av) el.classList.remove('hidden');
+        else    el.classList.add('hidden');
+    });
+    ['profileAvatarIcon', 'sideUserIcon'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (av) el.classList.add('hidden');
+        else    el.classList.remove('hidden');
+    });
+}
+
+function saveProfile() {
+    const newName = document.getElementById('profName').value.trim();
+    if (!newName) {
+        Swal.fire({ icon: 'warning', title: 'ข้อมูลไม่ครบ', text: 'กรุณาระบุชื่อ-นามสกุล', customClass: { popup: 'rounded-[32px]' } });
+        return;
+    }
+    currentUser.name     = newName;
+    currentUser.empId    = document.getElementById('profEmpId').value.trim();
+    currentUser.email    = document.getElementById('profEmail').value.trim();
+    currentUser.phone    = document.getElementById('profPhone').value.trim();
+    currentUser.position = document.getElementById('profPosition').value.trim();
+
+    document.getElementById('dashNameDisplay').innerText   = currentUser.name;
+    document.getElementById('sideUserName').innerText      = currentUser.name;
+    document.getElementById('mobileWelcomeName').innerText = currentUser.name;
+
+    gasCall('saveAppUsers', { users: appUsers }).catch(()=>{});
+    Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', timer: 1500, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
+}
+
+function changePassword() {
+    const cp = document.getElementById('passCurrent').value;
+    const np = document.getElementById('passNew').value;
+    const cf = document.getElementById('passConfirm').value;
+
+    if (cp !== currentUser.password) {
+        Swal.fire({ icon: 'error', title: 'รหัสผ่านปัจจุบันไม่ถูกต้อง', customClass: { popup: 'rounded-[32px]' } });
+        return;
+    }
+    if (np.length < 4) {
+        Swal.fire({ icon: 'warning', title: 'รหัสผ่านสั้นเกินไป', text: 'อย่างน้อย 4 ตัวอักษร', customClass: { popup: 'rounded-[32px]' } });
+        return;
+    }
+    if (np !== cf) {
+        Swal.fire({ icon: 'error', title: 'รหัสผ่านไม่ตรงกัน', customClass: { popup: 'rounded-[32px]' } });
+        return;
+    }
+    currentUser.password = np;
+    gasCall('saveAppUsers', { users: appUsers }).catch(()=>{});
+    document.getElementById('passCurrent').value = '';
+    document.getElementById('passNew').value     = '';
+    document.getElementById('passConfirm').value = '';
+    Swal.fire({ icon: 'success', title: 'เปลี่ยนรหัสผ่านสำเร็จ', customClass: { popup: 'rounded-[32px]' } });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INVENTORY FORM
+// ═══════════════════════════════════════════════════════════════
+function checkItemInfo(code) {
+    if (!code) return;
+    document.getElementById('ItemDesc').value = 'กำลังค้นหา...';
+
+    if (typeof google === 'undefined' || !google.script) {
+        setTimeout(() => {
+            document.getElementById('ItemDesc').value = 'สินค้าตัวอย่าง (Mock)';
+            document.getElementById('ItemType').value = 'General';
+        }, 500);
+        return;
+    }
+    gasCall('getItemDetails', { itemCode: code }).then(res => {
+        document.getElementById('ItemDesc').value = res.found ? (res.description || '-') : 'ไม่พบรหัสนี้ในระบบ';
+        document.getElementById('ItemType').value = res.found ? (res.type || '-') : '-';
+    }).catch(() => {
+        document.getElementById('ItemDesc').value = '-';
+        document.getElementById('ItemType').value = '-';
+    });
+}
+
+function resetForm() {
+    currentItemForEdit = null;
+    document.getElementById('stockForm').reset();
+
+    // Reset submit button
+    const btn = document.getElementById('submitBtn');
+    btn.disabled  = false;
+    btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
+
+    // Reset form header
+    document.getElementById('formTitle').innerText   = 'บันทึกรายการสินค้า';
+    document.getElementById('formSubTitle').innerText = 'NEW INVENTORY ENTRY';
+    document.getElementById('formIconBox').className  = 'w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shadow-sm transition-colors duration-500';
+    document.getElementById('formIcon').className     = 'fas fa-edit text-2xl';
+    document.getElementById('addNewBtn').classList.add('hidden');
+
+    resetPhotoUI();
+    document.getElementById('charCount').innerText = '0';
+    document.getElementById('ItemDesc').value      = '';
+    document.getElementById('ItemType').value      = '';
+    document.getElementById('OH').value            = '1';
+
+    // Set default recorder to current user
+    if (currentUser) {
+        const nSel = document.getElementById('NameSelect');
+        if (!Array.from(nSel.options).some(o => o.value === currentUser.name)) {
+            nSel.add(new Option(currentUser.name, currentUser.name));
+        }
+        nSel.value = currentUser.name;
+        document.getElementById('Name').value = currentUser.name;
+    }
+    const rSel = document.getElementById('RemarkSelect');
+    if (rSel) document.getElementById('Remark').value = rSel.value;
+}
+
+function editItem() {
+    if (!currentItemForEdit) return;
+    closeModal('detailModal');
+    switchView('inventory');
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled  = false;
+    btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
+
+    document.getElementById('formTitle').innerText    = 'แก้ไขรายการสินค้า';
+    document.getElementById('formSubTitle').innerText = 'EDITING EXISTING ITEM';
+    document.getElementById('formIconBox').className  = 'w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shadow-sm transition-colors duration-500';
+    document.getElementById('formIcon').className     = 'fas fa-sync-alt fa-spin text-2xl';
+    document.getElementById('addNewBtn').classList.remove('hidden');
+
+    // Fill fields
+    ['Location', 'Item', 'OH', 'InventoryStatus', 'OnOffStatus', 'LicensePlate'].forEach(id => {
+        document.getElementById(id).value = currentItemForEdit[id] || (id === 'OH' ? 1 : '');
+    });
+    document.getElementById('charCount').innerText = (currentItemForEdit.LicensePlate || '').length;
+
+    // Solution radio
+    for (const r of document.getElementsByName('Solution')) {
+        if (r.value === currentItemForEdit.Solution) r.checked = true;
+    }
+
+    // Name
+    const nSel = document.getElementById('NameSelect');
+    if (!Array.from(nSel.options).some(o => o.value === currentItemForEdit.Name)) {
+        nSel.add(new Option(currentItemForEdit.Name, currentItemForEdit.Name));
+    }
+    nSel.value = currentItemForEdit.Name;
+    document.getElementById('Name').value = currentItemForEdit.Name;
+
+    // Remark
+    const rSel = document.getElementById('RemarkSelect');
+    if (!Array.from(rSel.options).some(o => o.value === currentItemForEdit.Remark)) {
+        rSel.add(new Option(currentItemForEdit.Remark, currentItemForEdit.Remark));
+    }
+    rSel.value = currentItemForEdit.Remark;
+    document.getElementById('Remark').value = currentItemForEdit.Remark;
+
+    // Photo
+    if (currentItemForEdit.Photo && currentItemForEdit.Photo !== '') {
+        currentPhotoBase64 = currentItemForEdit.Photo;
+        const imgEl = document.getElementById('imgPreview');
+        imgEl.src = currentPhotoBase64;
+        imgEl.classList.remove('hidden');
+        document.getElementById('photoPlaceholder').classList.add('hidden');
+        document.getElementById('removePhotoBtn').classList.remove('hidden');
+    } else {
+        resetPhotoUI();
+    }
+
+    checkItemInfo(currentItemForEdit.Item);
+}
+
+function handleFormSubmit() {
+    const sn = document.getElementById('LicensePlate').value.trim();
+    if (sn.length !== 13) {
+        Swal.fire({ icon: 'error', title: 'ข้อมูลไม่ครบ', text: 'เลขตัวถังต้องมี 13 หลัก', customClass: { popup: 'rounded-[32px]' } });
+        return;
+    }
+
+    // Check duplicate
+    const dup = inventoryData.find(i => i.LicensePlate === sn);
+    if (dup && (!currentItemForEdit || currentItemForEdit.Timestamp !== dup.Timestamp)) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'พบข้อมูลซ้ำ!',
+            text: `เลขตัวถัง ${sn} ถูกบันทึกไปแล้วที่ ${dup.Location} โดย ${dup.Name}`,
+            customClass: { popup: 'rounded-[32px]' }
+        });
+        return;
+    }
+
+    const payload = {
+        Location        : document.getElementById('Location').value,
+        Item            : document.getElementById('Item').value,
+        Description     : document.getElementById('ItemDesc').value,
+        Type            : document.getElementById('ItemType').value,
+        OH              : parseInt(document.getElementById('OH').value),
+        InventoryStatus : document.getElementById('InventoryStatus').value,
+        OnOffStatus     : document.getElementById('OnOffStatus').value,
+        Solution        : document.querySelector('input[name="Solution"]:checked').value,
+        LicensePlate    : sn,
+        Remark          : document.getElementById('Remark').value,
+        Name            : document.getElementById('Name').value,
+        Photo           : currentPhotoBase64,
+        ActualDate      : new Date().toISOString()
+    };
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled  = true;
+    btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> กำลัง${currentItemForEdit ? 'บันทึกการแก้ไข' : 'บันทึกข้อมูล'}...`;
+
+    // Mock mode
+    if (typeof google === 'undefined' || !google.script) {
+        setTimeout(() => {
+            Swal.fire({ icon: 'success', title: 'สำเร็จ (Mock)!', timer: 1500, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
+            logTransaction(
+                currentItemForEdit ? 'EDIT' : 'ADD',
+                payload.Item, payload.Location, currentUser.name,
+                currentItemForEdit ? 'Updated Item' : 'Added New'
+            );
+            if (currentItemForEdit) {
+                const idx = inventoryData.indexOf(currentItemForEdit);
+                if (idx > -1) inventoryData[idx] = { ...payload, Timestamp: new Date().toLocaleString() };
+            } else {
+                payload.Timestamp = new Date().toLocaleString();
+                inventoryData.unshift(payload);
+            }
+            resetForm();
+            loadRealData();
+            switchView('dashboard');
+            btn.disabled  = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
+        }, 1000);
+        return;
+    }
+
+    // GAS REST API
+    const action = currentItemForEdit ? 'updateInventoryItem' : 'recordInventory';
+    if (currentItemForEdit) payload.oldLicensePlate = currentItemForEdit.LicensePlate;
+
+    gasCall(action, { data: payload })
+        .then(() => {
+            Swal.fire({ icon: 'success', title: 'สำเร็จ!', timer: 1500, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
+            logTransaction(
+                currentItemForEdit ? 'EDIT' : 'ADD',
+                payload.Item, payload.Location,
+                currentUser ? currentUser.name : 'Unknown',
+                currentItemForEdit ? 'Updated' : 'Added'
+            );
+            resetForm(); loadRealData(); switchView('dashboard');
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
+        })
+        .catch(err => {
+            Swal.fire('Error', 'ตรวจพบปัญหา: ' + String(err), 'error');
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
+        });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DELETE ITEM
+// ═══════════════════════════════════════════════════════════════
+function confirmDeleteItem(index, e) {
+    if (e) e.stopPropagation();
+    const item = inventoryData[index];
+
+    Swal.fire({
+        title: 'ยืนยันการลบ?',
+        text: `ลบ ${item.Item} (${item.LicensePlate})?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e63946',
+        customClass: { popup: 'rounded-[32px]' }
+    }).then(r => {
+        if (!r.isConfirmed) return;
+        logTransaction('DELETE', item.Item, item.Location, currentUser.name, 'Deleted S/N: ' + item.LicensePlate);
+
+        if (typeof google === 'undefined' || !google.script) {
+            inventoryData.splice(index, 1);
+            Swal.fire({ icon: 'success', title: 'ลบสำเร็จ (Mock)', timer: 1000, showConfirmButton: false });
+            loadRealData();
+            closeModal('detailModal');
+            return;
+        }
+        gasCall('deleteInventoryItem', { data: item })
+            .then(() => {
+                Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', timer: 1000, showConfirmButton: false });
+                loadRealData(); closeModal('detailModal');
+            })
+            .catch(err => Swal.fire('Error', String(err), 'error'));
+    });
+}
+
+function confirmDeleteItemFromModal() {
+    confirmDeleteItem(inventoryData.indexOf(currentItemForEdit));
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════════════════════
+function adjustQty(n) {
+    const i = document.getElementById('OH');
+    let v = parseInt(i.value);
+    if (isNaN(v)) v = 0;
+    i.value = Math.max(1, v + n);
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+
+function filterItems() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    renderData(inventoryData.filter(i =>
+        (i.Item          || '').toLowerCase().includes(q) ||
+        (i.Location      || '').toLowerCase().includes(q) ||
+        (i.LicensePlate  || '').toLowerCase().includes(q)
+    ));
+}
+
+function previewImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let w = img.width, h = img.height;
+            const MAX = 400;
+            if (w > MAX) { h *= MAX / w; w = MAX; }
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.5);
+
+            document.getElementById('imgPreview').src = currentPhotoBase64;
+            document.getElementById('imgPreview').classList.remove('hidden');
+            document.getElementById('photoPlaceholder').classList.add('hidden');
+            document.getElementById('removePhotoBtn').classList.remove('hidden');
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function removePhoto(e) {
+    if (e) e.stopPropagation();
+    resetPhotoUI();
+}
+
+function resetPhotoUI() {
+    currentPhotoBase64 = '';
+    document.getElementById('PhotoInput').value = '';
+    document.getElementById('imgPreview').classList.add('hidden');
+    document.getElementById('photoPlaceholder').classList.remove('hidden');
+    document.getElementById('removePhotoBtn').classList.add('hidden');
+}
+
+function addNewRemark() {
+    Swal.fire({
+        title: 'เพิ่มหมายเหตุ',
+        input: 'text',
+        showCancelButton: true,
+        confirmButtonColor: '#e63946',
+        customClass: { popup: 'rounded-[32px]' }
+    }).then(r => {
+        if (r.isConfirmed && r.value) {
+            const sel = document.getElementById('RemarkSelect');
+            sel.add(new Option(r.value, r.value));
+            sel.value = r.value;
+            document.getElementById('Remark').value = r.value;
+        }
+    });
+}
+
+function addNewRecorder() {
+    Swal.fire({
+        title: 'เพิ่มชื่อผู้บันทึก',
+        input: 'text',
+        showCancelButton: true,
+        confirmButtonColor: '#e63946',
+        customClass: { popup: 'rounded-[32px]' }
+    }).then(r => {
+        if (r.isConfirmed && r.value) {
+            const sel = document.getElementById('NameSelect');
+            sel.add(new Option(r.value, r.value));
+            sel.value = r.value;
+            document.getElementById('Name').value = r.value;
+        }
+    });
+}
+
+function showError(m) {
+    document.getElementById('loaderText').innerText = m;
+    document.getElementById('forceCloseBtn').classList.remove('hidden');
+}
+
+function formatDateShort(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${dd}/${mm}/${d.getFullYear()} ${hh}:${mi}`;
+}
+
+function printSingleItem() {
+    if (currentItemForEdit) generatePDF('Single', currentItemForEdit);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PDF GENERATION
+// ═══════════════════════════════════════════════════════════════
+function generatePDF(mode, singleData) {
+    let dataToPrint = [];
+    let titleSuffix = '';
+    let fileName    = `${(globalAppName || 'Report').replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+
+    if (mode === 'Single' && singleData) {
+        dataToPrint = [singleData];
+        titleSuffix = `(Item: ${singleData.Item})`;
+        fileName    = `${(singleData.Item || 'Item').replace(/[^a-zA-Z0-9-_]/g, '')}_${singleData.InventoryStatus}.pdf`;
+
+    } else if (mode === 'Filtered') {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        dataToPrint = q
+            ? inventoryData.filter(i =>
+                (i.Item         || '').toLowerCase().includes(q) ||
+                (i.Location     || '').toLowerCase().includes(q) ||
+                (i.LicensePlate || '').toLowerCase().includes(q))
+            : [...inventoryData];
+        if (q) titleSuffix = `(Search: "${q}")`;
+
+    } else {
+        dataToPrint = [...inventoryData];
+    }
+
+    if (!dataToPrint.length) {
+        Swal.fire('Error', 'ไม่พบข้อมูลสำหรับสร้างรายงาน', 'error');
+        return;
+    }
+
+    Swal.fire({ title: 'Generating PDF...', html: 'กำลังสร้างไฟล์ PDF ขนาด A4 (Landscape)...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    const dateStr  = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const appN     = globalAppName || 'Vespa Stock';
+    const logoHtml = globalAppLogo
+        ? `<img src="${globalAppLogo}" style="max-height:50px;border-radius:8px;background:white;padding:4px;object-fit:contain;margin-right:15px;">`
+        : '';
+
+    let html = `
+    <div style="width:297mm;min-height:210mm;padding:15mm 20mm;box-sizing:border-box;background:white;font-family:'Kanit',sans-serif;color:black;position:relative;">
+        <div style="background:#1e293b;padding:25px 35px;color:white;display:flex;justify-content:space-between;align-items:center;border-bottom:5px solid #e63946;border-radius:12px 12px 0 0;margin-bottom:25px;">
+            <div style="display:flex;align-items:center;">
+                ${logoHtml}
+                <div>
+                    <h1 style="font-size:32px;font-weight:900;margin:0;font-family:'Pacifico',cursive;">${appN}</h1>
+                    <p style="font-size:14px;opacity:0.9;margin:4px 0 0 0;font-weight:bold;text-transform:uppercase;letter-spacing:3px;">MEGA INVENTORY REPORT</p>
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div style="background:rgba(255,255,255,0.1);padding:8px 16px;border-radius:10px;">
+                    <p style="font-size:11px;font-weight:bold;margin:0;opacity:0.8;text-transform:uppercase;">Generated On</p>
+                    <p style="font-size:16px;font-weight:bold;margin:0;">${dateStr}</p>
+                </div>
+            </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:2px solid #e2e8f0;padding-bottom:12px;">
+            <h2 style="font-size:22px;font-weight:800;color:#334155;margin:0;">FILTER: <span style="color:#e63946;">${titleSuffix || 'All Items'}</span></h2>
+            <h2 style="font-size:22px;font-weight:800;color:#334155;margin:0;">TOTAL: <span style="color:#e63946;">${dataToPrint.length}</span> Items</h2>
+        </div>`;
+
+    dataToPrint.forEach(item => {
+        const statusBg    = item.InventoryStatus === 'Good'   ? '#dcfce7' : item.InventoryStatus === 'Damage' ? '#fee2e2' : '#fef3c7';
+        const statusColor = item.InventoryStatus === 'Good'   ? '#166534' : item.InventoryStatus === 'Damage' ? '#991b1b' : '#b45309';
+        const statusText  = item.OH <= 0 ? 'OUT OF STOCK' : item.InventoryStatus;
+        const badge       = `<span style="background:${statusBg};color:${statusColor};padding:6px 12px;border-radius:6px;font-weight:900;font-size:14px;text-transform:uppercase;display:inline-block;">${statusText}</span>`;
+        const photoHtml   = item.Photo && item.Photo.length > 50
+            ? `<div style="width:370px;height:320px;overflow:hidden;border-radius:10px;border:1px solid #f1f5f9;"><img src="${item.Photo}" style="width:100%;height:100%;object-fit:contain;background:#fff;"></div>`
+            : `<div style="width:370px;height:320px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:40px;font-weight:bold;">NO IMAGE</div>`;
+
+        html += `
+        <div style="display:flex;gap:20px;margin-bottom:25px;background:#f8fafc;border:2px solid #e2e8f0;border-radius:18px;overflow:hidden;page-break-inside:avoid;box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+            <div style="width:400px;flex-shrink:0;background:#fff;border-right:2px solid #e2e8f0;display:flex;align-items:center;justify-content:center;padding:15px;">
+                ${photoHtml}
+            </div>
+            <div style="flex:1;padding:20px;display:flex;flex-direction:column;justify-content:center;">
+                <div style="border-bottom:2px dashed #cbd5e1;padding-bottom:12px;margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:start;">
+                        <div>
+                            <div style="font-size:12px;font-weight:800;color:#94a3b8;letter-spacing:1px;margin-bottom:3px;">ITEM CODE</div>
+                            <div style="font-size:34px;font-weight:900;color:#0f172a;line-height:1;">${item.Item || '-'}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:12px;font-weight:800;color:#94a3b8;margin-bottom:3px;">LOCATION</div>
+                            <div style="font-size:26px;font-weight:800;color:#334155;">${item.Location || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:12px;">
+                    <div>
+                        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Description</div>
+                        <div style="font-size:16px;font-weight:600;color:#1e293b;">${item.Description || '-'}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Category</div>
+                        <div style="font-size:16px;font-weight:600;color:#1e293b;">${item.Type || '-'}</div>
+                    </div>
+                </div>
+                <div style="background:white;border:2px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <div style="font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:3px;">License Plate</div>
+                            <div style="font-family:monospace;font-size:20px;font-weight:800;color:#0f172a;letter-spacing:2px;">${item.LicensePlate || '-'}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:3px;">Quantity</div>
+                            <div style="font-size:26px;font-weight:900;color:#e63946;">${item.OH || '0'} <span style="font-size:13px;color:#64748b;">Pcs</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                    ${badge}
+                    <div style="font-size:13px;font-weight:700;color:#475569;background:#fff;padding:5px 10px;border-radius:6px;border:1px solid #cbd5e1;">Solution : ${item.Solution || '-'}</div>
+                    <div style="font-size:13px;font-weight:700;color:#475569;background:#fff;padding:5px 10px;border-radius:6px;border:1px solid #cbd5e1;">Status : ${item.OnOffStatus || '-'}</div>
+                </div>
+                <div style="margin-top:12px;font-size:11px;color:#94a3b8;font-weight:600;display:flex;justify-content:space-between;">
+                    <span>Recorder: ${item.Name || '-'}</span>
+                    <span>Date: ${formatDateShort(item.ActualDate)}</span>
+                </div>
+            </div>
+        </div>`;
+    });
+
+    html += `
+        <div style="position:absolute;bottom:10mm;left:0;right:0;text-align:center;font-size:11px;color:#cbd5e1;font-weight:bold;">
+            <p>Generated by ${appN} — Inventory Pro</p>
+        </div>
+    </div>`;
+
+    const pdfContainer = document.getElementById('pdf-container');
+    pdfContainer.innerHTML = html;
+    document.getElementById('mainApp').classList.add('hidden');
+    pdfContainer.style.display = 'block';
+
+    setTimeout(() => {
+        html2pdf()
+            .set({
+                margin       : 0,
+                filename     : fileName,
+                image        : { type: 'jpeg', quality: 0.98 },
+                html2canvas  : { scale: 2, useCORS: true, logging: false, scrollY: 0 },
+                jsPDF        : { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            })
+            .from(pdfContainer)
+            .save()
+            .then(() => {
+                Swal.close();
+                pdfContainer.innerHTML = '';
+                pdfContainer.style.display = 'none';
+                document.getElementById('mainApp').classList.remove('hidden');
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Error', 'PDF Generation Failed: ' + err.message, 'error');
+                pdfContainer.style.display = 'none';
+                document.getElementById('mainApp').classList.remove('hidden');
+            });
+    }, 1500);
+}
+</script>
+</body>
+</html>
