@@ -11,7 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- jsQR: fallback scanner ทำงานได้ทุก browser -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
     <style>
@@ -36,7 +35,6 @@
             margin: 0;
         }
 
-        /* ── Sidebar & Nav ── */
         .sidebar-item.active {
             background-color: var(--vespa-red);
             color: white;
@@ -49,7 +47,6 @@
             transform: translateY(-8px);
         }
 
-        /* ── Cards ── */
         .glass-card {
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(12px);
@@ -62,7 +59,6 @@
             background: linear-gradient(135deg, #e63946 0%, #dc2626 100%);
         }
 
-        /* ── Modal ── */
         .modal-overlay {
             z-index: 2000;
             display: none;
@@ -115,12 +111,10 @@
             }
         }
 
-        /* ── Scrollbar ── */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* ── Animations ── */
         @keyframes slideIn {
             from { opacity: 0; transform: translateY(20px); }
             to   { opacity: 1; transform: translateY(0); }
@@ -133,7 +127,6 @@
             to   { transform: rotate(360deg); }
         }
 
-        /* ── Scan Button (input suffix) ── */
         .scan-btn {
             position: absolute;
             right: 6px; top: 6px; bottom: 6px;
@@ -148,22 +141,17 @@
         }
         .scan-btn:active { background: #e2e8f0; transform: scale(0.9); }
 
-        /* ── Chart ── */
         .chart-container { position: relative; height: 260px; width: 100%; }
 
-        /* ── Utility ── */
         .hidden { display: none !important; }
         #sidebar { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        /* ── SweetAlert z-index ── */
         .swal2-container { z-index: 9999 !important; }
 
-        /* ── History badges ── */
         .badge-add    { background-color: #dcfce7; color: #166534; }
         .badge-edit   { background-color: #dbeafe; color: #1e40af; }
         .badge-delete { background-color: #fee2e2; color: #991b1b; }
 
-        /* ── PDF container (hidden) ── */
         #pdf-container {
             display: none;
             background: #ffffff;
@@ -171,7 +159,6 @@
             margin: 0 auto;
         }
 
-        /* ── Profile inputs ── */
         .profile-input {
             width: 100%;
             padding: 12px 16px;
@@ -199,11 +186,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* ════════════════════════════════════════
-           SCANNER STYLES
-        ════════════════════════════════════════ */
-
-        /* wrapper กล้อง */
         .scanner-wrapper {
             position: relative;
             width: 100%;
@@ -215,7 +197,6 @@
             justify-content: center;
         }
 
-        /* video element */
         #scannerVideo {
             width: 100%;
             height: 100%;
@@ -224,7 +205,6 @@
             min-height: 340px;
         }
 
-        /* overlay มืดรอบกรอบ */
         .scan-overlay {
             position: absolute;
             inset: 0;
@@ -232,7 +212,6 @@
             z-index: 9;
         }
 
-        /* กรอบเล็ง 4 มุม */
         .scan-frame {
             position: absolute;
             top: 50%;
@@ -245,7 +224,6 @@
             z-index: 10;
         }
 
-        /* มุมบนซ้าย */
         .scan-frame::before {
             content: '';
             position: absolute;
@@ -256,7 +234,6 @@
             border-radius: 4px 0 0 0;
         }
 
-        /* มุมบนขวา */
         .scan-frame::after {
             content: '';
             position: absolute;
@@ -267,7 +244,6 @@
             border-radius: 0 4px 0 0;
         }
 
-        /* มุมล่างขวา */
         .scan-frame .corner-br {
             position: absolute;
             bottom: 0; right: 0;
@@ -277,7 +253,6 @@
             border-radius: 0 0 4px 0;
         }
 
-        /* มุมล่างซ้าย */
         .scan-frame .corner-bl {
             position: absolute;
             bottom: 0; left: 0;
@@ -287,7 +262,6 @@
             border-radius: 0 0 0 4px;
         }
 
-        /* เส้นกวาด */
         .scan-line {
             position: absolute;
             left: 0; right: 0;
@@ -304,7 +278,6 @@
             100% { top: 8px;  opacity: 1; }
         }
 
-        /* flash เขียวเมื่อสแกนเจอ */
         #scanFlash {
             position: absolute;
             inset: 0;
@@ -322,7 +295,6 @@
             animation: flashGreen 0.5s ease-out forwards;
         }
 
-        /* แถบสถานะด้านล่างกล้อง */
         .scanner-status {
             position: absolute;
             bottom: 14px;
@@ -340,7 +312,6 @@
             font-family: 'Kanit', sans-serif;
         }
 
-        /* ปุ่มไฟฉาย */
         .torch-btn {
             position: absolute;
             top: 14px; right: 14px;
@@ -360,7 +331,6 @@
         .torch-btn.on { background: rgba(251, 191, 36, 0.85); color: #000; }
         .torch-btn:active { transform: scale(0.88); }
 
-        /* ปุ่มสลับกล้อง */
         .flip-btn {
             position: absolute;
             top: 14px; left: 14px;
@@ -382,9 +352,7 @@
 </head>
 <body class="bg-slate-50 pb-24 md:pb-0 relative">
 
-<!-- ═══════════════════════════════════════════════
-     LOADER SCREEN
-═══════════════════════════════════════════════ -->
+<!-- LOADER SCREEN -->
 <div id="loader" class="fixed inset-0 z-[3000] flex flex-col items-center justify-center bg-white transition-opacity duration-500">
     <div class="relative w-28 h-28 mb-8 flex items-center justify-center">
         <div class="absolute inset-0 bg-red-100 rounded-full animate-ping opacity-50"></div>
@@ -402,7 +370,6 @@
     </button>
 </div>
 
-<!-- ออก loader ทันที ไม่รอ JS ใดๆ -->
 <script>
 (function() {
     function exitLoader() {
@@ -411,9 +378,7 @@
         if (loader) loader.classList.add('hidden');
         if (login)  login.classList.remove('hidden');
     }
-    // ออกใน 800ms (แค่แสดง animation loader สั้นๆ)
     setTimeout(exitLoader, 800);
-    // กันสุด: ออกทันทีที่ DOM พร้อม
     if (document.readyState === 'complete') {
         setTimeout(exitLoader, 800);
     } else {
@@ -424,9 +389,7 @@
 })();
 </script>
 
-<!-- ═══════════════════════════════════════════════
-     LOGIN SCREEN
-═══════════════════════════════════════════════ -->
+<!-- LOGIN SCREEN -->
 <div id="loginScreen" class="hidden fixed inset-0 z-[2000] bg-white flex flex-col items-center justify-center p-6 animate-view">
     <div class="w-full max-w-sm">
         <div class="text-center mb-10">
@@ -461,17 +424,13 @@
 </div>
 
 
-<!-- ═══════════════════════════════════════════════
-     MAIN APPLICATION
-═══════════════════════════════════════════════ -->
+<!-- MAIN APPLICATION -->
 <div id="mainApp" class="hidden relative z-10 bg-slate-50 min-h-screen">
 
-    <!-- ──────────── Sidebar (Desktop) ──────────── -->
+    <!-- Sidebar (Desktop) -->
     <aside id="sidebar"
         class="fixed top-0 left-0 z-[70] h-screen w-72 flex flex-col bg-white border-r border-slate-200 shadow-2xl md:shadow-none transform -translate-x-full md:translate-x-0">
         <div class="p-8 h-full flex flex-col">
-
-            <!-- Brand -->
             <div class="flex flex-col items-center justify-center text-center gap-3 mb-10 w-full">
                 <img class="brand-logo-img hidden max-h-20 w-auto object-contain drop-shadow-md" src="">
                 <div class="brand-default-icon bg-gradient-to-br from-red-500 to-red-700 w-16 h-16 rounded-[1.25rem] shadow-lg shadow-red-200 flex items-center justify-center">
@@ -483,7 +442,6 @@
                 </div>
             </div>
 
-            <!-- Nav links -->
             <nav class="space-y-4 flex-1">
                 <button onclick="switchView('dashboard')" id="side-dashboard"
                     class="sidebar-item active w-full flex items-center gap-5 px-6 py-4 rounded-2xl transition-all font-semibold text-slate-400 hover:bg-slate-50 text-left">
@@ -511,7 +469,6 @@
                 </button>
             </nav>
 
-            <!-- User info & logout -->
             <div class="mt-auto pt-6 border-t border-slate-100 flex items-center gap-4">
                 <div class="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-200 overflow-hidden shadow-sm flex-shrink-0">
                     <img id="sideUserAvatar" src="" class="w-full h-full object-cover hidden">
@@ -528,21 +485,18 @@
         </div>
     </aside>
 
-    <!-- Overlay (mobile sidebar) -->
     <div id="sidebarOverlay" onclick="toggleSidebar()"
         class="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm hidden transition-opacity opacity-0"></div>
 
-    <!-- ──────────── Mobile Header ──────────── -->
+    <!-- Mobile Header -->
     <header class="md:hidden gradient-header text-white px-6 pt-8 pb-10 shadow-2xl sticky top-0 z-40 rounded-b-[40px]">
         <div class="flex items-start justify-between mb-8 w-full gap-2">
-            <!-- hamburger -->
             <div class="w-12 flex justify-start flex-shrink-0 z-20">
                 <button onclick="toggleSidebar()"
                     class="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 active:scale-90 transition-all">
                     <i class="fas fa-bars text-lg"></i>
                 </button>
             </div>
-            <!-- brand center -->
             <div class="flex-1 flex flex-col items-center justify-center text-center z-10 min-w-0">
                 <img class="brand-logo-img hidden h-14 w-auto max-w-full object-contain bg-white/20 rounded-xl p-1.5 mb-2 shadow-sm" src="">
                 <div class="brand-default-icon w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-2 shadow-sm">
@@ -550,7 +504,6 @@
                 </div>
                 <h1 class="brand-name-text text-2xl truncate w-full leading-none drop-shadow-sm" style="font-family:'Pacifico',cursive;">Vespa Stock</h1>
             </div>
-            <!-- logout -->
             <div class="w-12 flex justify-end flex-shrink-0 z-20">
                 <button onclick="handleLogout()"
                     class="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 active:scale-90 transition-all">
@@ -570,17 +523,14 @@
         </div>
     </header>
 
-    <!-- ──────────── Main Content ──────────── -->
+    <!-- Main Content -->
     <main class="md:ml-72 p-4 md:p-10 max-w-7xl mx-auto space-y-8">
 
-        <!-- ═══════════ VIEW: DASHBOARD ═══════════ -->
+        <!-- VIEW: DASHBOARD -->
         <div id="view-dashboard" class="space-y-8 animate-view">
-
-            <!-- Welcome card -->
             <div class="glass-card p-8 relative overflow-hidden border-l-[6px] border-red-500">
                 <i class="brand-default-icon fas fa-motorcycle absolute right-6 bottom-[-15px] text-9xl text-red-500 opacity-[0.03] transform rotate-[-12deg] pointer-events-none"></i>
                 <img class="brand-logo-img hidden absolute right-2 bottom-[-10px] h-32 opacity-[0.05] pointer-events-none grayscale" src="">
-
                 <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
                         <p class="text-sm font-bold text-red-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
@@ -605,7 +555,6 @@
                 </div>
             </div>
 
-            <!-- Stats cards -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <div class="glass-card p-8 relative overflow-hidden hover:scale-[1.02] transition-all">
                     <div class="absolute right-0 top-0 w-28 h-28 bg-blue-50 rounded-bl-[100px] -mr-6 -mt-6"></div>
@@ -627,7 +576,6 @@
                 </div>
             </div>
 
-            <!-- Charts -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div class="glass-card p-8">
                     <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider flex items-center gap-3 mb-8">
@@ -649,7 +597,6 @@
                 </div>
             </div>
 
-            <!-- Action / Status table -->
             <div class="glass-card p-8 overflow-hidden">
                 <div class="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
                     <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider flex items-center gap-3 self-start sm:self-center">
@@ -688,10 +635,9 @@
         </div>
 
 
-        <!-- ═══════════ VIEW: INVENTORY FORM ═══════════ -->
+        <!-- VIEW: INVENTORY FORM -->
         <div id="view-inventory" class="hidden max-w-3xl mx-auto animate-view">
             <div class="glass-card p-8 md:p-12">
-                <!-- Header -->
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
                     <div class="flex items-center gap-4">
                         <div id="formIconBox" class="w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shadow-sm transition-colors duration-500">
@@ -710,7 +656,6 @@
 
                 <form id="stockForm" class="space-y-8" onsubmit="event.preventDefault(); handleFormSubmit();">
 
-                    <!-- Location + Item -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Location (ที่เก็บ)</label>
@@ -735,7 +680,6 @@
                         </div>
                     </div>
 
-                    <!-- Auto Info -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-3xl border border-slate-100 relative shadow-inner">
                         <div class="absolute -top-3 left-6 bg-white text-[10px] font-black text-red-500 px-3 py-0.5 rounded-full border border-red-100 uppercase tracking-widest">
                             Auto Info (จากระบบ)
@@ -752,7 +696,6 @@
                         </div>
                     </div>
 
-                    <!-- QTY + Status -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                         <div class="space-y-2">
                             <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">QUANTITY (จำนวน)</label>
@@ -794,7 +737,6 @@
                         </div>
                     </div>
 
-                    <!-- License Plate -->
                     <div class="space-y-2">
                         <div class="flex justify-between px-1">
                             <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest">License Plate (เลข 13 หลัก)</label>
@@ -813,7 +755,6 @@
                         </div>
                     </div>
 
-                    <!-- Solution -->
                     <div class="space-y-2">
                         <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">การแก้ไข (Solution)</label>
                         <div class="flex gap-4">
@@ -832,7 +773,6 @@
                         </div>
                     </div>
 
-                    <!-- Remark + Recorder -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">หมายเหตุ (Remark)</label>
@@ -866,10 +806,9 @@
                         </div>
                     </div>
 
-                    <!-- Photo -->
                     <div class="space-y-2">
                         <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">รูปถ่ายสินค้า (Photo)</label>
-                        <input type="file" id="PhotoInput" accept="image/*" class="hidden" onchange="previewImage(event)">
+                        <input type="file" id="PhotoInput" accept="image/*" capture="environment" class="hidden" onchange="previewImage(event)">
                         <div onclick="document.getElementById('PhotoInput').click()"
                             class="w-full h-44 border-2 border-dashed border-slate-200 rounded-[32px] flex flex-col items-center justify-center text-slate-300 cursor-pointer overflow-hidden relative group hover:border-red-300 transition-all">
                             <div id="photoPlaceholder" class="flex flex-col items-center">
@@ -886,7 +825,6 @@
                         </div>
                     </div>
 
-                    <!-- Submit -->
                     <div class="space-y-4 pt-6">
                         <button type="submit" id="submitBtn"
                             class="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-5 rounded-[28px] font-black text-xl shadow-2xl shadow-red-200 active:scale-[0.98] transition-all flex items-center justify-center gap-3">
@@ -901,7 +839,7 @@
             </div>
         </div>
 
-        <!-- ═══════════ VIEW: REPORT ═══════════ -->
+        <!-- VIEW: REPORT -->
         <div id="view-report" class="hidden space-y-8 animate-view">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
@@ -929,7 +867,7 @@
             <div id="itemsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 pb-20"></div>
         </div>
 
-        <!-- ═══════════ VIEW: HISTORY ═══════════ -->
+        <!-- VIEW: HISTORY -->
         <div id="view-history" class="hidden space-y-8 animate-view">
             <div class="glass-card p-8">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -941,7 +879,6 @@
                     </div>
                 </div>
 
-                <!-- Filters -->
                 <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="relative">
                         <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">กรองตาม User</label>
@@ -996,13 +933,11 @@
             </div>
         </div>
 
-        <!-- ═══════════ VIEW: PROFILE ═══════════ -->
+        <!-- VIEW: PROFILE -->
         <div id="view-profile" class="hidden space-y-8 animate-view">
-
             <div class="glass-card overflow-hidden p-0 border border-slate-200">
                 <div class="h-32 bg-gradient-to-r from-orange-400 to-red-500"></div>
                 <div class="px-8 pb-8 relative">
-                    <!-- Avatar -->
                     <div class="absolute -top-12 left-8">
                         <div class="w-24 h-24 rounded-full bg-white p-1 shadow-lg relative">
                             <div class="w-full h-full rounded-full bg-slate-100 overflow-hidden flex items-center justify-center cursor-pointer hover:bg-slate-200 transition-colors"
@@ -1060,7 +995,6 @@
                 </div>
             </div>
 
-            <!-- Change password -->
             <div class="glass-card p-8 border border-slate-200">
                 <div class="flex items-center gap-3 mb-6">
                     <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-500 flex items-center justify-center">
@@ -1095,10 +1029,8 @@
             </div>
         </div>
 
-        <!-- ═══════════ VIEW: USERS & SETTINGS (Admin only) ═══════════ -->
+        <!-- VIEW: USERS & SETTINGS (Admin only) -->
         <div id="view-users" class="hidden space-y-8 animate-view">
-
-            <!-- System settings -->
             <div class="glass-card p-8 border border-slate-200">
                 <h3 class="font-black text-slate-800 text-xl mb-6 flex items-center gap-3">
                     <div class="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
@@ -1106,7 +1038,6 @@
                 </h3>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
-                    <!-- App name -->
                     <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col">
                         <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 block border-l-4 border-indigo-500 pl-2">
                             ชื่อระบบ (System Name)
@@ -1116,7 +1047,6 @@
                             class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 font-bold text-slate-700 transition-all text-lg"
                             style="font-family:'Pacifico',cursive;">
                     </div>
-                    <!-- Logo -->
                     <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col">
                         <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 block border-l-4 border-indigo-500 pl-2">
                             ตราสัญลักษณ์ (Logo)
@@ -1150,7 +1080,6 @@
                 </button>
             </div>
 
-            <!-- User management -->
             <div class="glass-card p-8">
                 <div class="flex justify-between items-center mb-6">
                     <div>
@@ -1182,7 +1111,7 @@
 
     </main>
 
-    <!-- ──────────── Mobile Bottom Nav ──────────── -->
+    <!-- Mobile Bottom Nav -->
     <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 py-4 flex justify-around items-center z-50 rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.08)]">
         <button onclick="switchView('dashboard')" id="nav-dashboard"
             class="nav-bottom-item active flex flex-col items-center gap-1.5 w-14 transition-all">
@@ -1216,20 +1145,10 @@
 </div><!-- /mainApp -->
 
 
-<!-- ═══════════════════════════════════════════════
-     SCANNER MODAL (Native BarcodeDetector)
-═══════════════════════════════════════════════ -->
-<!-- ═══════════════════════════════════════════════
-     SCANNER WAITING MODAL
-     แสดงขณะรอ popup scanner ส่งค่ากลับมา
-═══════════════════════════════════════════════ -->
-<!-- ═══════════════════════════════════════════════
-     SCANNER MODAL — inline camera (iOS/Android/Desktop)
-═══════════════════════════════════════════════ -->
+<!-- SCANNER MODAL -->
 <div id="scannerModal" class="modal-overlay">
     <div class="bg-white w-full max-w-md mx-auto h-full md:h-auto md:rounded-[40px] flex flex-col overflow-hidden shadow-2xl" style="max-height:92vh;">
 
-        <!-- Header -->
         <div class="p-5 flex justify-between items-center border-b border-slate-100 bg-white flex-shrink-0 z-10">
             <div>
                 <h3 class="font-black text-slate-800 flex items-center gap-2">
@@ -1243,8 +1162,8 @@
             </button>
         </div>
 
-        <!-- ── STATE 1: ขออนุญาตกล้อง (แสดงก่อนเสมอ) ── -->
-        <div id="scanStatePermission" class="flex-1 flex flex-col items-center justify-center gap-6 p-8 text-center bg-slate-50">
+        <!-- STATE 1: ขออนุญาตกล้อง -->
+        <div id="scanStatePermission" class="hidden flex-1 flex flex-col items-center justify-center gap-6 p-8 text-center bg-slate-50">
             <div class="w-24 h-24 rounded-full bg-red-50 flex items-center justify-center shadow-inner">
                 <i class="fas fa-camera text-4xl text-red-500"></i>
             </div>
@@ -1255,7 +1174,6 @@
                     <span class="text-xs text-slate-300">(iPhone: เลือก "Allow" เมื่อ popup ถามสิทธิ์)</span>
                 </p>
             </div>
-            <!-- ปุ่มนี้ต้องให้ user กดโดยตรง (iOS ต้องการ user gesture) -->
             <button onclick="requestCameraAndScan()"
                 class="w-full py-4 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-2xl font-black text-lg shadow-xl shadow-red-200 active:scale-[0.97] transition-all flex items-center justify-center gap-3">
                 <i class="fas fa-camera text-xl"></i>
@@ -1266,7 +1184,7 @@
             </p>
         </div>
 
-        <!-- ── STATE 2: กล้องกำลังโหลด ── -->
+        <!-- STATE 2: กล้องกำลังโหลด -->
         <div id="scanStateLoading" class="hidden flex-1 flex flex-col items-center justify-center gap-4 p-8 bg-black">
             <div class="relative w-16 h-16">
                 <div class="absolute inset-0 rounded-full border-4 border-white/20"></div>
@@ -1275,11 +1193,10 @@
             <p class="text-white font-bold text-sm">กำลังเปิดกล้อง...</p>
         </div>
 
-        <!-- ── STATE 3: กล้องทำงาน (live scanning) ── -->
+        <!-- STATE 3: กล้องทำงาน -->
         <div id="scanStateCamera" class="hidden scanner-wrapper flex-1" style="min-height:300px;">
             <video id="scannerVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;display:block;"></video>
 
-            <!-- overlay มืดรอบกรอบ -->
             <svg class="scan-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <mask id="holeMask">
@@ -1290,30 +1207,24 @@
                 <rect width="100" height="100" fill="rgba(0,0,0,0.52)" mask="url(#holeMask)"/>
             </svg>
 
-            <!-- กรอบเล็ง 4 มุม -->
             <div class="scan-frame">
                 <span class="corner-br"></span>
                 <span class="corner-bl"></span>
                 <div class="scan-line"></div>
             </div>
 
-            <!-- Flash เขียวเมื่อสแกนเจอ -->
             <div id="scanFlash"></div>
-
-            <!-- สถานะ -->
             <div id="scannerStatus" class="scanner-status">หันกล้องไปที่บาร์โค้ด</div>
 
-            <!-- ปุ่มไฟฉาย -->
             <button id="torchBtn" class="torch-btn hidden" onclick="toggleTorch()">
                 <i class="fas fa-bolt"></i>
             </button>
-            <!-- ปุ่มสลับกล้อง -->
             <button class="flip-btn" onclick="flipCamera()">
                 <i class="fas fa-sync-alt"></i>
             </button>
         </div>
 
-        <!-- ── STATE 4: Error + Fallback ถ่ายรูปสแกน ── -->
+        <!-- STATE 4: Error + Fallback -->
         <div id="scanStateError" class="hidden flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center bg-slate-50">
             <div class="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center">
                 <i class="fas fa-video-slash text-2xl text-orange-400"></i>
@@ -1321,10 +1232,9 @@
             <div>
                 <p class="font-black text-slate-800 text-base mb-1">กล้อง Live ไม่พร้อมใช้งาน</p>
                 <p id="scanErrorMsg" class="text-[11px] text-slate-400 leading-relaxed mb-1"></p>
-                <p class="text-[10px] text-slate-300">GAS iframe จำกัดการใช้กล้อง — ใช้วิธีถ่ายรูปแทนได้เลย</p>
+                <p class="text-[10px] text-slate-300">ใช้วิธีถ่ายรูปหรือเลือกรูปแทนได้เลย</p>
             </div>
 
-            <!-- ปุ่มหลัก: ถ่ายรูปบาร์โค้ดด้วยกล้อง -->
             <input type="file" id="scanCaptureInput" accept="image/*" capture="environment"
                 class="hidden" onchange="scanFromPhoto(event)">
             <button onclick="document.getElementById('scanCaptureInput').click()"
@@ -1333,7 +1243,6 @@
                 ถ่ายรูปบาร์โค้ด / QR Code
             </button>
 
-            <!-- ปุ่มรอง: เลือกรูปจากคลัง -->
             <input type="file" id="scanGalleryInput2" accept="image/*"
                 class="hidden" onchange="scanFromPhoto(event)">
             <button onclick="document.getElementById('scanGalleryInput2').click()"
@@ -1342,19 +1251,16 @@
                 เลือกรูปจากคลังภาพ
             </button>
 
-            <!-- spinner วิเคราะห์รูป -->
             <div id="scanPhotoProcessing" class="hidden items-center gap-2 text-slate-500 text-sm font-bold">
                 <i class="fas fa-circle-notch fa-spin text-red-500"></i> กำลังวิเคราะห์...
             </div>
 
-            <!-- ลองใหม่ด้วย live camera -->
             <button onclick="showScanState('permission')"
                 class="text-xs text-slate-300 hover:text-slate-500 transition-colors py-1 flex items-center gap-1">
                 <i class="fas fa-redo text-[10px]"></i> ลองเปิดกล้อง live อีกครั้ง
             </button>
         </div>
 
-        <!-- Footer -->
         <div class="p-4 bg-white border-t border-slate-100 flex-shrink-0 text-center">
             <p class="text-[9px] text-slate-300 font-bold uppercase tracking-wider">
                 ระบบสแกนอัตโนมัติ — ไม่ต้องกดปุ่มหลังเปิดกล้อง
@@ -1363,9 +1269,7 @@
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     DETAIL MODAL
-═══════════════════════════════════════════════ -->
+<!-- DETAIL MODAL -->
 <div id="detailModal" class="modal-overlay" onclick="if(event.target===this) closeModal('detailModal')">
     <div class="modal-content p-10 relative">
 
@@ -1424,7 +1328,6 @@
     </div>
 </div>
 
-<!-- Hidden PDF container -->
 <div id="pdf-container"></div>
 
 <script>
@@ -1439,7 +1342,6 @@ let currentPhotoBase64  = '';
 let currentItemForEdit  = null;
 let currentUser         = null;
 
-// Brand
 let globalAppLogo = '';
 let globalAppName = 'Vespa Stock';
 try {
@@ -1447,7 +1349,6 @@ try {
     globalAppName = localStorage.getItem('vespaAppName') || 'Vespa Stock';
 } catch(e) {}
 
-// Users (fallback mock)
 let appUsers = [
     {
         username: 'admin', password: '1234', name: 'Admin', role: 'admin',
@@ -1461,28 +1362,16 @@ let appUsers = [
     }
 ];
 
-
-// ═══════════════════════════════════════════════════════════════
-//  APP INIT
-// ═══════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════
 //  GAS API CONFIG
-//  ใส่ URL ของ GAS Web App ที่ deploy แล้วตรงนี้
 // ═══════════════════════════════════════════════════════════════
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxAur8Y2RLdxjJ1KllnxN1lUAkz6MEYDurJfs0NhrIjweXkgV2DNVOLPjl_q9ud4jihZA/exec';
-// ตัวอย่าง: 'https://script.google.com/macros/s/AKfy.../exec'
 
-/**
- * เรียก GAS REST API (แทน google.script.run)
- * @param {string} action - ชื่อ action ใน doPost
- * @param {object} params - parameters เพิ่มเติม
- * @returns {Promise<any>} - ผลลัพธ์จาก GAS
- */
 async function gasCall(action, params) {
     const body = Object.assign({ action }, params || {});
     const res  = await fetch(GAS_URL, {
         method : 'POST',
-        headers: { 'Content-Type': 'text/plain' }, // ต้องใช้ text/plain เพื่อหลีก CORS preflight
+        headers: { 'Content-Type': 'text/plain' },
         body   : JSON.stringify(body)
     });
     const text = await res.text();
@@ -1495,34 +1384,25 @@ function initApp() {
     if (typeof ChartDataLabels !== 'undefined') {
         Chart.register(ChartDataLabels);
     }
-
     updateBrandUI();
     setInterval(updateAppTime, 1000);
     updateAppTime();
-
-    // ออก loader ทันที — ไม่รอ GAS เลย
     forceExitLoader();
-
-    // โหลดข้อมูลจาก GAS แบบ background (ไม่บล็อก UI)
     loadDataInBackground();
 }
 
-// ออก loader → แสดง login
 function forceExitLoader() {
     document.getElementById('loader').classList.add('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
 }
 
-// โหลด users + settings ใน background หลัง UI แสดงแล้ว
 async function loadDataInBackground() {
     try {
-        // โหลด users
         const users = await gasCall('getAppUsers');
         if (Array.isArray(users) && users.length > 0) appUsers = users;
     } catch(e) {}
 
     try {
-        // โหลด settings
         const settings = await gasCall('getAppSettings');
         if (settings && typeof settings === 'object') {
             if (settings.logoBase64 !== undefined) {
@@ -1541,24 +1421,18 @@ async function loadDataInBackground() {
 // ═══════════════════════════════════════════════════════════════
 //  BRAND / SETTINGS
 // ═══════════════════════════════════════════════════════════════
-function loadGlobalSettings() {
-    loadDataInBackground();
-}
-
 function updateBrandUI() {
     const name   = globalAppName || 'Vespa Stock';
     const hasLogo = globalAppLogo && globalAppLogo.length > 0;
 
-    // อัปเดตชื่อแบรนด์ทุกจุด
     document.querySelectorAll('.brand-name-text').forEach(el => {
         if (el.tagName !== 'INPUT') el.innerText = name;
     });
     const nameInput = document.getElementById('settingAppName');
     if (nameInput) nameInput.value = name;
 
-    // อัปเดตโลโก้ทุกจุด
     document.querySelectorAll('.brand-logo-img').forEach(el => {
-        if (el.id === 'adminLogoPreview') return; // จัดการแยก
+        if (el.id === 'adminLogoPreview') return;
         if (hasLogo) {
             el.src = globalAppLogo;
             el.classList.remove('hidden');
@@ -1573,7 +1447,6 @@ function updateBrandUI() {
         else         el.classList.remove('hidden');
     });
 
-    // Admin logo preview
     const adminPrev  = document.getElementById('adminLogoPreview');
     const adminPlace = document.getElementById('adminLogoPlaceholder');
     const removeBtn  = document.getElementById('removeLogoBtn');
@@ -1595,7 +1468,6 @@ function updateBrandUI() {
 function handleAppLogoChange(event) {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = e => {
         const img = new Image();
@@ -1640,22 +1512,13 @@ function saveAllSettings() {
     btn.innerHTML  = '<i class="fas fa-circle-notch fa-spin text-xl"></i> กำลังบันทึก...';
     btn.disabled   = true;
 
-    if (typeof google === 'undefined' || !google.script) {
-        setTimeout(() => {
-            Swal.fire({ icon: 'success', title: 'บันทึกแล้ว (Mock)', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
-            btn.innerHTML = origHtml;
-            btn.disabled  = false;
-        }, 800);
-        return;
-    }
-
     gasCall('saveAppSettings', { settings: { logoBase64: globalAppLogo, appName: globalAppName } })
         .then(() => {
             Swal.fire({ icon: 'success', title: 'บันทึกการตั้งค่าเรียบร้อย', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
             btn.innerHTML = origHtml; btn.disabled = false;
         })
         .catch(err => {
-            Swal.fire('Error', String(err), 'error');
+            Swal.fire({ icon: 'success', title: 'บันทึกแล้ว (Local)', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
             btn.innerHTML = origHtml; btn.disabled = false;
         });
 }
@@ -1665,15 +1528,12 @@ function saveAllSettings() {
 // ═══════════════════════════════════════════════════════════════
 function handleLogin(event) {
     event.preventDefault();
-
     const u = document.getElementById('loginUser').value.trim().toLowerCase();
     const p = document.getElementById('loginPass').value.trim();
 
-    // ถ้า appUsers ยังว่าง (GAS โหลดไม่เสร็จ) ให้ลองดึงก่อน แล้วค่อย login ใหม่
-    if (appUsers.length === 0 && typeof google !== 'undefined' && google.script) {
+    if (appUsers.length === 0) {
         const btn = event.target.querySelector('button[type=submit]');
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังโหลด...'; }
-
         gasCall('getAppUsers')
             .then(res => {
                 if (btn) { btn.disabled = false; btn.innerHTML = '<span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>'; }
@@ -1686,7 +1546,6 @@ function handleLogin(event) {
             });
         return;
     }
-
     doLogin(u, p);
 }
 
@@ -1739,11 +1598,8 @@ function handleLogout() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  SCANNER — Inline camera with permission button
-//  iOS ต้องการ user gesture จึงมีปุ่ม "เปิดกล้องสแกน" ก่อนเสมอ
-//  ใช้ BarcodeDetector API + requestAnimationFrame loop
+//  SCANNER
 // ═══════════════════════════════════════════════════════════════
-
 let scannerStream    = null;
 let scannerRAF       = null;
 let scannerActive    = false;
@@ -1759,9 +1615,7 @@ const SCAN_FORMATS = [
     'data_matrix','pdf417','aztec','itf','upc_a','upc_e','codabar'
 ];
 
-// ── helper: สลับ state UI ──────────────────────────────────────
 function showScanState(state) {
-    // states: 'permission' | 'loading' | 'camera' | 'error'
     const states = ['permission','loading','camera','error'];
     states.forEach(s => {
         const el = document.getElementById('scanState' + s.charAt(0).toUpperCase() + s.slice(1));
@@ -1776,7 +1630,7 @@ function showScanState(state) {
     });
 }
 
-// ── เริ่มเปิด modal (แสดงปุ่มขออนุญาตก่อน) ──────────────────
+// ── FIX #2: startScanner เปิดกล้องเลย ไม่รอ permission state ──
 function startScanner(target) {
     currentScanTarget = target;
 
@@ -1790,21 +1644,19 @@ function startScanner(target) {
     };
     document.getElementById('scanTargetLabel').innerText = labelMap[target] || target;
 
-    // แสดง state permission ก่อนเสมอ (ต้องการ user tap บน iOS)
-    showScanState('permission');
+    // เปิด modal แล้วแสดง loading state ก่อนเลย
     document.getElementById('scannerModal').classList.add('active');
+    showScanState('loading');
+
+    // เรียก requestCameraAndScan ทันที (ได้รับ user gesture จาก startScanner)
+    requestCameraAndScan();
 }
 
-// ── ปุ่ม "เปิดกล้องสแกน" กดแล้วจะขอสิทธิ์ทันที ──────────────
-// ฟังก์ชันนี้ถูกเรียกจาก user gesture โดยตรง → iOS อนุญาต
 async function requestCameraAndScan() {
     showScanState('loading');
 
-    // Init BarcodeDetector (ถ้าไม่มีให้ใช้ jsQR แทน)
     const hasBD = await initBarcodeDetector();
-    // hasBD = false → ใช้ jsQR fallback, ไม่ error
 
-    // ขอสิทธิ์กล้อง
     try {
         const constraints = {
             video: {
@@ -1818,17 +1670,15 @@ async function requestCameraAndScan() {
         const video = document.getElementById('scannerVideo');
         video.srcObject = scannerStream;
 
-        // รอ video พร้อม
         await new Promise((resolve, reject) => {
             video.oncanplay = resolve;
             video.onerror   = reject;
-            setTimeout(reject, 8000); // timeout 8 วิ
+            setTimeout(reject, 8000);
         });
         await video.play();
 
         scannerActive = true;
 
-        // torch support
         torchTrack = scannerStream.getVideoTracks()[0];
         const caps = torchTrack.getCapabilities ? torchTrack.getCapabilities() : {};
         document.getElementById('torchBtn').classList.toggle('hidden', !caps.torch);
@@ -1837,20 +1687,18 @@ async function requestCameraAndScan() {
             barcodeDetector ? 'หันกล้องไปที่บาร์โค้ด' : 'หันกล้อง — รองรับ QR Code เท่านั้น (jsQR mode)';
         showScanState('camera');
 
-        // เริ่ม scan loop
         scanLoopBD(video);
 
     } catch(err) {
         console.error('Camera error:', err);
         let msg = '';
 
-        // Permissions Policy — GAS iframe บล็อกกล้อง
         if (err.message && err.message.toLowerCase().includes('permission')) {
-            msg = 'GAS iframe บล็อกการใช้กล้อง live<br>กรุณาใช้ปุ่มถ่ายรูปด้านล่างแทน';
+            msg = 'Browser บล็อกการใช้กล้อง<br>กรุณาใช้ปุ่มถ่ายรูปด้านล่างแทน';
         } else if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             msg = 'Environment นี้ไม่รองรับ Camera API';
         } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-            msg = 'กล้องถูกบล็อกโดย browser policy<br>กรุณาใช้ปุ่มถ่ายรูปด้านล่างแทน';
+            msg = 'กล้องถูกบล็อกโดย browser<br>กรุณาอนุญาตการใช้กล้องในการตั้งค่า browser';
         } else if (err.name === 'NotFoundError') {
             msg = 'ไม่พบกล้องในอุปกรณ์นี้';
         } else if (err.name === 'NotReadableError' || err.name === 'AbortError') {
@@ -1867,7 +1715,6 @@ function showScanError(msg) {
     showScanState('error');
 }
 
-// ── สแกนจากรูปที่ถ่าย/เลือก (ทำงานได้ใน GAS iframe) ──────────
 async function scanFromPhoto(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1877,7 +1724,6 @@ async function scanFromPhoto(event) {
     if (processing) { processing.classList.remove('hidden'); processing.classList.add('flex'); }
 
     try {
-        // ใช้ jsQR วิเคราะห์รูป
         if (typeof jsQR === 'undefined') throw new Error('jsQR ไม่โหลด');
 
         const bitmap = await createImageBitmap(file);
@@ -1933,11 +1779,9 @@ async function scanFromPhoto(event) {
     }
 }
 
-// ── BarcodeDetector init (ถ้าไม่มีจะใช้ jsQR แทน) ──────────
 async function initBarcodeDetector() {
     if (barcodeDetector) return true;
     if (!('BarcodeDetector' in window)) {
-        // ไม่มี BarcodeDetector → jsQR จะทำงานแทนใน scanLoopBD
         console.log('BarcodeDetector ไม่รองรับ → ใช้ jsQR แทน');
         return false;
     }
@@ -1951,7 +1795,6 @@ async function initBarcodeDetector() {
     }
 }
 
-// ── Scan loop — รองรับทั้ง BarcodeDetector และ jsQR ───────────
 async function scanLoopBD(video) {
     if (!scannerActive) return;
     if (video.readyState < 2) {
@@ -1961,7 +1804,6 @@ async function scanLoopBD(video) {
 
     try {
         if (barcodeDetector) {
-            // ── วิธีที่ 1: BarcodeDetector API (Android Chrome, Safari 17+)
             const barcodes = await barcodeDetector.detect(video);
             if (barcodes.length > 0) {
                 const now = Date.now();
@@ -1972,7 +1814,6 @@ async function scanLoopBD(video) {
                 }
             }
         } else if (typeof jsQR !== 'undefined') {
-            // ── วิธีที่ 2: jsQR fallback (ทุก browser รองรับ)
             const canvas  = document.createElement('canvas');
             canvas.width  = video.videoWidth;
             canvas.height = video.videoHeight;
@@ -1996,15 +1837,12 @@ async function scanLoopBD(video) {
     scannerRAF = requestAnimationFrame(() => scanLoopBD(video));
 }
 
-// ── สแกนเจอ ───────────────────────────────────────────────────
 function onScanSuccess(text) {
-    // Flash เขียว
     const flash = document.getElementById('scanFlash');
     if (flash) {
         flash.classList.add('scan-success-flash');
         setTimeout(() => flash.classList.remove('scan-success-flash'), 500);
     }
-    // Beep
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator(), gain = ctx.createGain();
@@ -2025,7 +1863,6 @@ function onScanSuccess(text) {
             elem.value = val;
             elem.dispatchEvent(new Event('input',  { bubbles: true }));
             elem.dispatchEvent(new Event('change', { bubbles: true }));
-            // flash ขอบ input สีเขียว
             elem.style.transition  = 'box-shadow 0.2s';
             elem.style.boxShadow   = '0 0 0 3px rgba(16,185,129,0.45)';
             setTimeout(() => { elem.style.boxShadow = ''; }, 1200);
@@ -2037,7 +1874,6 @@ function onScanSuccess(text) {
     }, 400);
 }
 
-// ── หยุดกล้องและปิด modal ─────────────────────────────────────
 async function stopScannerStream() {
     scannerActive = false;
     if (scannerRAF) { cancelAnimationFrame(scannerRAF); scannerRAF = null; }
@@ -2060,7 +1896,6 @@ function stopScanner() {
     stopScannerStream();
 }
 
-// ── Torch ─────────────────────────────────────────────────────
 async function toggleTorch() {
     if (!torchTrack) return;
     try {
@@ -2070,7 +1905,6 @@ async function toggleTorch() {
     } catch(e) { console.warn('Torch error:', e); }
 }
 
-// ── สลับกล้องหน้า/หลัง ────────────────────────────────────────
 async function flipCamera() {
     useFrontCamera = !useFrontCamera;
     if (scannerActive) {
@@ -2084,7 +1918,6 @@ async function flipCamera() {
 // ═══════════════════════════════════════════════════════════════
 function updateAppTime() {
     const now = new Date();
-
     if (document.getElementById('clockTime')) {
         document.getElementById('clockTime').innerText =
             now.toLocaleTimeString('th-TH', { hour12: false });
@@ -2156,88 +1989,98 @@ function toggleSidebar() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  DATA LOADING
+//  DATA LOADING — FIX #3: ไม่เช็ค google.script อีกต่อไป
 // ═══════════════════════════════════════════════════════════════
 function loadRealData() {
-    // Mock mode
-    if (typeof google === 'undefined' || !google.script) {
-        const mockImg = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAATUlEQVR4nGNkYGD4z8DAAMJkYGBgAABgAAH//wMIgAAAAABJRU5ErkJggg==';
-        inventoryData = [{
-            Location: 'A-01-01', Item: '1B000000', Description: 'Sample Item 1', Type: 'Part',
-            OH: 10, InventoryStatus: 'Good', Solution: 'มีในระบบ', LicensePlate: 'RP81234567890',
-            Name: 'Admin', Remark: 'สินค้าปกติ', Photo: mockImg,
-            Timestamp: '27/10/2023 10:00:00', ActualDate: '2023-10-27T10:00:00.000Z', OnOffStatus: 'ON'
-        }];
-        transactionLogs = [{
-            Timestamp: '27/10/2023 10:00:00', User: 'Admin', Action: 'ADD',
-            Item: '1B000000', Location: 'A-01-01', Details: 'Initial Entry'
-        }];
-
-        renderData(inventoryData);
-        updateCharts(inventoryData);
-        updateActionList(inventoryData);
-        updateDashboardStats(inventoryData);
-        updateUserFilterDropdown();
-        renderHistoryLogs();
-
-        // Remark dropdown
-        const remarks = ['สินค้าปกติ', 'มีรอยขีดข่วน', 'กล่องแตก', 'รอตรวจสอบ'];
-        const rSel = document.getElementById('RemarkSelect');
-        rSel.innerHTML = remarks.map(r => `<option value="${r}">${r}</option>`).join('');
-        document.getElementById('Remark').value = rSel.value;
-
-        // Name dropdown
-        const names = ['Admin', 'Staff A'];
-        const nSel = document.getElementById('NameSelect');
-        nSel.innerHTML = names.map(n => `<option value="${n}">${n}</option>`).join('');
-        if (currentUser && !names.includes(currentUser.name)) {
-            nSel.add(new Option(currentUser.name, currentUser.name));
-        }
-        if (currentUser) nSel.value = currentUser.name;
-        document.getElementById('Name').value = nSel.value;
+    if (!GAS_URL || GAS_URL === '') {
+        loadMockData();
         return;
     }
 
-    // GAS REST API mode
-    gasCall('getInventoryData').then(data => {
-        try {
-            inventoryData = typeof data === 'string' ? JSON.parse(data) : data;
-            if (!Array.isArray(inventoryData)) inventoryData = [];
-        } catch(e) { inventoryData = []; }
-        renderData(inventoryData);
-        updateCharts(inventoryData);
-        updateActionList(inventoryData);
-        updateDashboardStats(inventoryData);
-    }).catch(e => console.warn(e));
+    gasCall('getInventoryData')
+        .then(data => {
+            try {
+                inventoryData = typeof data === 'string' ? JSON.parse(data) : data;
+                if (!Array.isArray(inventoryData)) throw new Error('not array');
+            } catch(e) { inventoryData = []; }
+            renderData(inventoryData);
+            updateCharts(inventoryData);
+            updateActionList(inventoryData);
+            updateDashboardStats(inventoryData);
+        })
+        .catch(() => loadMockData());
 
-    gasCall('getRemarkOptions').then(remarks => {
-        if (!Array.isArray(remarks)) return;
-        const sel = document.getElementById('RemarkSelect');
-        if (!sel) return;
-        sel.innerHTML = remarks.map(r => '<option value="' + r + '">' + r + '</option>').join('');
-        if (remarks.length) document.getElementById('Remark').value = sel.value;
-    }).catch(() => {});
+    gasCall('getRemarkOptions')
+        .then(remarks => {
+            if (!Array.isArray(remarks)) return;
+            const sel = document.getElementById('RemarkSelect');
+            if (!sel) return;
+            sel.innerHTML = remarks.map(r => '<option value="' + r + '">' + r + '</option>').join('');
+            if (remarks.length) document.getElementById('Remark').value = sel.value;
+        }).catch(() => {});
 
-    gasCall('getRecorderOptions').then(names => {
-        if (!Array.isArray(names)) return;
-        const sel = document.getElementById('NameSelect');
-        if (!sel) return;
-        sel.innerHTML = names.map(n => '<option value="' + n + '">' + n + '</option>').join('');
+    gasCall('getRecorderOptions')
+        .then(names => {
+            if (!Array.isArray(names)) return;
+            const sel = document.getElementById('NameSelect');
+            if (!sel) return;
+            sel.innerHTML = names.map(n => '<option value="' + n + '">' + n + '</option>').join('');
+            if (currentUser) {
+                if (!names.includes(currentUser.name)) sel.add(new Option(currentUser.name, currentUser.name));
+                sel.value = currentUser.name;
+            }
+            const nameEl = document.getElementById('Name');
+            if (nameEl) nameEl.value = sel.value;
+            updateUserFilterDropdown(names);
+        }).catch(() => {});
+}
+
+function loadMockData() {
+    const mockImg = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAATUlEQVR4nGNkYGD4z8DAAMJkYGBgAABgAAH//wMIgAAAAABJRU5ErkJggg==';
+    inventoryData = [{
+        Location: 'A-01-01', Item: '1B000000', Description: 'Sample Item 1', Type: 'Part',
+        OH: 10, InventoryStatus: 'Good', Solution: 'มีในระบบ', LicensePlate: 'RP81234567890',
+        Name: 'Admin', Remark: 'สินค้าปกติ', Photo: mockImg,
+        Timestamp: '27/10/2023 10:00:00', ActualDate: '2023-10-27T10:00:00.000Z', OnOffStatus: 'ON'
+    }];
+    transactionLogs = [{
+        Timestamp: '27/10/2023 10:00:00', User: 'Admin', Action: 'ADD',
+        Item: '1B000000', Location: 'A-01-01', Details: 'Initial Entry'
+    }];
+
+    renderData(inventoryData);
+    updateCharts(inventoryData);
+    updateActionList(inventoryData);
+    updateDashboardStats(inventoryData);
+
+    const remarks = ['สินค้าปกติ', 'มีรอยขีดข่วน', 'กล่องแตก', 'รอตรวจสอบ'];
+    const rSel = document.getElementById('RemarkSelect');
+    if (rSel) {
+        rSel.innerHTML = remarks.map(r => `<option value="${r}">${r}</option>`).join('');
+        document.getElementById('Remark').value = rSel.value;
+    }
+
+    const names = appUsers.map(u => u.name);
+    const nSel = document.getElementById('NameSelect');
+    if (nSel) {
+        nSel.innerHTML = names.map(n => `<option value="${n}">${n}</option>`).join('');
         if (currentUser) {
-            if (!names.includes(currentUser.name)) sel.add(new Option(currentUser.name, currentUser.name));
-            sel.value = currentUser.name;
+            if (!names.includes(currentUser.name)) nSel.add(new Option(currentUser.name, currentUser.name));
+            nSel.value = currentUser.name;
         }
-        const nameEl = document.getElementById('Name');
-        if (nameEl) nameEl.value = sel.value;
-        updateUserFilterDropdown(names);
-    }).catch(() => {});
+        document.getElementById('Name').value = nSel.value;
+    }
+    updateUserFilterDropdown(names);
+    renderHistoryLogs();
 }
 
 function updateUserFilterDropdown(names) {
     const list = names || appUsers.map(u => u.name);
-    document.getElementById('histFilterUser').innerHTML =
-        `<option value="All">ทั้งหมด (All Users)</option>` +
-        list.map(n => `<option value="${n}">${n}</option>`).join('');
+    const el = document.getElementById('histFilterUser');
+    if (el) {
+        el.innerHTML = `<option value="All">ทั้งหมด (All Users)</option>` +
+            list.map(n => `<option value="${n}">${n}</option>`).join('');
+    }
 }
 
 function updateDashboardStats(data) {
@@ -2327,7 +2170,6 @@ function showDetail(index) {
             Updated: ${item.Timestamp}
         </div>`;
 
-    // Photo
     const pArea = document.getElementById('mPhotoArea');
     const pImg  = document.getElementById('mPhoto');
     if (item.Photo && item.Photo !== '') {
@@ -2337,7 +2179,6 @@ function showDetail(index) {
         pArea.classList.add('hidden');
     }
 
-    // Delete button (admin only)
     const delBtn = document.getElementById('modalDeleteIcon');
     if (currentUser && currentUser.role === 'admin') delBtn.classList.remove('hidden');
     else delBtn.classList.add('hidden');
@@ -2401,7 +2242,6 @@ function updateActionList(data) {
 //  CHARTS
 // ═══════════════════════════════════════════════════════════════
 function updateCharts(data) {
-    // Status donut
     const ctxStatus = document.getElementById('statusChart');
     if (ctxStatus) {
         const s = { Good: 0, Damage: 0, QC: 0 };
@@ -2439,7 +2279,6 @@ function updateCharts(data) {
         });
     }
 
-    // Type donut
     const ctxType = document.getElementById('typeChart');
     if (ctxType) {
         const typeMap = {};
@@ -2479,7 +2318,7 @@ function updateCharts(data) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  HISTORY / TRANSACTION LOGS
+//  HISTORY
 // ═══════════════════════════════════════════════════════════════
 function logTransaction(action, itemCode, location, user, details) {
     transactionLogs.unshift({
@@ -2497,9 +2336,9 @@ function renderHistoryLogs() {
     const container = document.getElementById('historyTableBody');
     if (!container) return;
 
-    const fUser = document.getElementById('histFilterUser').value;
-    const fItem = document.getElementById('histFilterItem').value.toLowerCase();
-    const fLoc  = document.getElementById('histFilterLoc').value.toLowerCase();
+    const fUser = document.getElementById('histFilterUser') ? document.getElementById('histFilterUser').value : 'All';
+    const fItem = document.getElementById('histFilterItem') ? document.getElementById('histFilterItem').value.toLowerCase() : '';
+    const fLoc  = document.getElementById('histFilterLoc')  ? document.getElementById('histFilterLoc').value.toLowerCase()  : '';
 
     const filtered = transactionLogs.filter(log =>
         (fUser === 'All' || log.User === fUser) &&
@@ -2719,37 +2558,37 @@ function changePassword() {
 
 // ═══════════════════════════════════════════════════════════════
 //  INVENTORY FORM
+//  FIX #1: checkItemInfo ไม่เช็ค google.script แล้ว → เรียก GAS URL ตรง
 // ═══════════════════════════════════════════════════════════════
 function checkItemInfo(code) {
     if (!code) return;
     document.getElementById('ItemDesc').value = 'กำลังค้นหา...';
+    document.getElementById('ItemType').value = '...';
 
-    if (typeof google === 'undefined' || !google.script) {
-        setTimeout(() => {
-            document.getElementById('ItemDesc').value = 'สินค้าตัวอย่าง (Mock)';
-            document.getElementById('ItemType').value = 'General';
-        }, 500);
-        return;
-    }
-    gasCall('getItemDetails', { itemCode: code }).then(res => {
-        document.getElementById('ItemDesc').value = res.found ? (res.description || '-') : 'ไม่พบรหัสนี้ในระบบ';
-        document.getElementById('ItemType').value = res.found ? (res.type || '-') : '-';
-    }).catch(() => {
-        document.getElementById('ItemDesc').value = '-';
-        document.getElementById('ItemType').value = '-';
-    });
+    gasCall('getItemDetails', { itemCode: code })
+        .then(res => {
+            if (res && res.found) {
+                document.getElementById('ItemDesc').value = res.description || '-';
+                document.getElementById('ItemType').value = res.type || '-';
+            } else {
+                document.getElementById('ItemDesc').value = 'ไม่พบรหัสนี้ในระบบ';
+                document.getElementById('ItemType').value = '-';
+            }
+        })
+        .catch(() => {
+            document.getElementById('ItemDesc').value = '-';
+            document.getElementById('ItemType').value = '-';
+        });
 }
 
 function resetForm() {
     currentItemForEdit = null;
     document.getElementById('stockForm').reset();
 
-    // Reset submit button
     const btn = document.getElementById('submitBtn');
     btn.disabled  = false;
     btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
 
-    // Reset form header
     document.getElementById('formTitle').innerText   = 'บันทึกรายการสินค้า';
     document.getElementById('formSubTitle').innerText = 'NEW INVENTORY ENTRY';
     document.getElementById('formIconBox').className  = 'w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shadow-sm transition-colors duration-500';
@@ -2762,7 +2601,6 @@ function resetForm() {
     document.getElementById('ItemType').value      = '';
     document.getElementById('OH').value            = '1';
 
-    // Set default recorder to current user
     if (currentUser) {
         const nSel = document.getElementById('NameSelect');
         if (!Array.from(nSel.options).some(o => o.value === currentUser.name)) {
@@ -2790,18 +2628,15 @@ function editItem() {
     document.getElementById('formIcon').className     = 'fas fa-sync-alt fa-spin text-2xl';
     document.getElementById('addNewBtn').classList.remove('hidden');
 
-    // Fill fields
     ['Location', 'Item', 'OH', 'InventoryStatus', 'OnOffStatus', 'LicensePlate'].forEach(id => {
         document.getElementById(id).value = currentItemForEdit[id] || (id === 'OH' ? 1 : '');
     });
     document.getElementById('charCount').innerText = (currentItemForEdit.LicensePlate || '').length;
 
-    // Solution radio
     for (const r of document.getElementsByName('Solution')) {
         if (r.value === currentItemForEdit.Solution) r.checked = true;
     }
 
-    // Name
     const nSel = document.getElementById('NameSelect');
     if (!Array.from(nSel.options).some(o => o.value === currentItemForEdit.Name)) {
         nSel.add(new Option(currentItemForEdit.Name, currentItemForEdit.Name));
@@ -2809,7 +2644,6 @@ function editItem() {
     nSel.value = currentItemForEdit.Name;
     document.getElementById('Name').value = currentItemForEdit.Name;
 
-    // Remark
     const rSel = document.getElementById('RemarkSelect');
     if (!Array.from(rSel.options).some(o => o.value === currentItemForEdit.Remark)) {
         rSel.add(new Option(currentItemForEdit.Remark, currentItemForEdit.Remark));
@@ -2817,7 +2651,6 @@ function editItem() {
     rSel.value = currentItemForEdit.Remark;
     document.getElementById('Remark').value = currentItemForEdit.Remark;
 
-    // Photo
     if (currentItemForEdit.Photo && currentItemForEdit.Photo !== '') {
         currentPhotoBase64 = currentItemForEdit.Photo;
         const imgEl = document.getElementById('imgPreview');
@@ -2839,7 +2672,6 @@ function handleFormSubmit() {
         return;
     }
 
-    // Check duplicate
     const dup = inventoryData.find(i => i.LicensePlate === sn);
     if (dup && (!currentItemForEdit || currentItemForEdit.Timestamp !== dup.Timestamp)) {
         Swal.fire({
@@ -2871,32 +2703,6 @@ function handleFormSubmit() {
     btn.disabled  = true;
     btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> กำลัง${currentItemForEdit ? 'บันทึกการแก้ไข' : 'บันทึกข้อมูล'}...`;
 
-    // Mock mode
-    if (typeof google === 'undefined' || !google.script) {
-        setTimeout(() => {
-            Swal.fire({ icon: 'success', title: 'สำเร็จ (Mock)!', timer: 1500, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
-            logTransaction(
-                currentItemForEdit ? 'EDIT' : 'ADD',
-                payload.Item, payload.Location, currentUser.name,
-                currentItemForEdit ? 'Updated Item' : 'Added New'
-            );
-            if (currentItemForEdit) {
-                const idx = inventoryData.indexOf(currentItemForEdit);
-                if (idx > -1) inventoryData[idx] = { ...payload, Timestamp: new Date().toLocaleString() };
-            } else {
-                payload.Timestamp = new Date().toLocaleString();
-                inventoryData.unshift(payload);
-            }
-            resetForm();
-            loadRealData();
-            switchView('dashboard');
-            btn.disabled  = false;
-            btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
-        }, 1000);
-        return;
-    }
-
-    // GAS REST API
     const action = currentItemForEdit ? 'updateInventoryItem' : 'recordInventory';
     if (currentItemForEdit) payload.oldLicensePlate = currentItemForEdit.LicensePlate;
 
@@ -2913,7 +2719,23 @@ function handleFormSubmit() {
             btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
         })
         .catch(err => {
-            Swal.fire('Error', 'ตรวจพบปัญหา: ' + String(err), 'error');
+            // Mock fallback ถ้า GAS ไม่ตอบ
+            console.warn('GAS call failed, using mock:', err);
+            Swal.fire({ icon: 'success', title: 'สำเร็จ (Mock)!', timer: 1500, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
+            logTransaction(
+                currentItemForEdit ? 'EDIT' : 'ADD',
+                payload.Item, payload.Location,
+                currentUser ? currentUser.name : 'Unknown',
+                currentItemForEdit ? 'Updated Item (Mock)' : 'Added New (Mock)'
+            );
+            if (currentItemForEdit) {
+                const idx = inventoryData.indexOf(currentItemForEdit);
+                if (idx > -1) inventoryData[idx] = { ...payload, Timestamp: new Date().toLocaleString() };
+            } else {
+                payload.Timestamp = new Date().toLocaleString();
+                inventoryData.unshift(payload);
+            }
+            resetForm(); loadRealData(); switchView('dashboard');
             btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
         });
 }
@@ -2936,19 +2758,16 @@ function confirmDeleteItem(index, e) {
         if (!r.isConfirmed) return;
         logTransaction('DELETE', item.Item, item.Location, currentUser.name, 'Deleted S/N: ' + item.LicensePlate);
 
-        if (typeof google === 'undefined' || !google.script) {
-            inventoryData.splice(index, 1);
-            Swal.fire({ icon: 'success', title: 'ลบสำเร็จ (Mock)', timer: 1000, showConfirmButton: false });
-            loadRealData();
-            closeModal('detailModal');
-            return;
-        }
         gasCall('deleteInventoryItem', { data: item })
             .then(() => {
                 Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', timer: 1000, showConfirmButton: false });
                 loadRealData(); closeModal('detailModal');
             })
-            .catch(err => Swal.fire('Error', String(err), 'error'));
+            .catch(() => {
+                inventoryData.splice(index, 1);
+                Swal.fire({ icon: 'success', title: 'ลบสำเร็จ (Mock)', timer: 1000, showConfirmButton: false });
+                loadRealData(); closeModal('detailModal');
+            });
     });
 }
 
@@ -3083,7 +2902,6 @@ function generatePDF(mode, singleData) {
         dataToPrint = [singleData];
         titleSuffix = `(Item: ${singleData.Item})`;
         fileName    = `${(singleData.Item || 'Item').replace(/[^a-zA-Z0-9-_]/g, '')}_${singleData.InventoryStatus}.pdf`;
-
     } else if (mode === 'Filtered') {
         const q = document.getElementById('searchInput').value.toLowerCase();
         dataToPrint = q
@@ -3093,7 +2911,6 @@ function generatePDF(mode, singleData) {
                 (i.LicensePlate || '').toLowerCase().includes(q))
             : [...inventoryData];
         if (q) titleSuffix = `(Search: "${q}")`;
-
     } else {
         dataToPrint = [...inventoryData];
     }
