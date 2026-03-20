@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-Datalabels@2.0.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -1612,7 +1612,7 @@ let lastDetectedTime = 0;
 
 const SCAN_FORMATS = [
     'qr_code','code_128','code_39','ean_13','ean_8',
-    'data_matrix','pdf417','aztec','itf','upc_a','upc_e','codabar'
+    'Data_matrix','pdf417','aztec','itf','upc_a','upc_e','codabar'
 ];
 
 function showScanState(state) {
@@ -1735,15 +1735,15 @@ async function scanFromPhoto(event) {
         bitmap.close();
 
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        const code = jsQR(imageData.Data, imageData.width, imageData.height, {
             inversionAttempts: 'attemptBoth'
         });
 
         if (processing) { processing.classList.add('hidden'); processing.classList.remove('flex'); }
 
-        if (code && code.data) {
+        if (code && code.Data) {
             stopScanner();
-            const val = code.data.trim();
+            const val = code.Data.trim();
             const elem = document.getElementById(currentScanTarget);
             if (elem) {
                 elem.value = val;
@@ -1820,14 +1820,14 @@ async function scanLoopBD(video) {
             const ctx     = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code      = jsQR(imageData.data, imageData.width, imageData.height, {
+            const code      = jsQR(imageData.Data, imageData.width, imageData.height, {
                 inversionAttempts: 'dontInvert'
             });
-            if (code && code.data) {
+            if (code && code.Data) {
                 const now = Date.now();
                 if (now - lastDetectedTime > 1500) {
                     lastDetectedTime = now;
-                    onScanSuccess(code.data);
+                    onScanSuccess(code.Data);
                     return;
                 }
             }
@@ -1989,7 +1989,7 @@ function toggleSidebar() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  DATA LOADING — FIX #3: ไม่เช็ค google.script อีกต่อไป
+//  Data LOADING — FIX #3: ไม่เช็ค google.script อีกต่อไป
 // ═══════════════════════════════════════════════════════════════
 function loadRealData() {
     if (!GAS_URL || GAS_URL === '') {
@@ -1998,9 +1998,9 @@ function loadRealData() {
     }
 
     gasCall('getInventoryData')
-        .then(data => {
+        .then(Data => {
             try {
-                inventoryData = typeof data === 'string' ? JSON.parse(data) : data;
+                inventoryData = typeof Data === 'string' ? JSON.parse(Data) : Data;
                 if (!Array.isArray(inventoryData)) throw new Error('not array');
             } catch(e) { inventoryData = []; }
             renderData(inventoryData);
@@ -2036,7 +2036,7 @@ function loadRealData() {
 }
 
 function loadMockData() {
-    const mockImg = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAATUlEQVR4nGNkYGD4z8DAAMJkYGBgAABgAAH//wMIgAAAAABJRU5ErkJggg==';
+    const mockImg = 'Data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAATUlEQVR4nGNkYGD4z8DAAMJkYGBgAABgAAH//wMIgAAAAABJRU5ErkJggg==';
     inventoryData = [{
         Location: 'A-01-01', Item: '1B000000', Description: 'Sample Item 1', Type: 'Part',
         OH: 10, InventoryStatus: 'Good', Solution: 'มีในระบบ', LicensePlate: 'RP81234567890',
@@ -2083,19 +2083,19 @@ function updateUserFilterDropdown(names) {
     }
 }
 
-function updateDashboardStats(data) {
-    if (!data) return;
-    document.getElementById('statLoc').innerText  = new Set(data.map(i => i.Location).filter(Boolean)).size;
-    document.getElementById('statItem').innerText = new Set(data.map(i => i.Item).filter(Boolean)).size;
-    document.getElementById('statWork').innerText = data.reduce((s, i) => s + (parseInt(i.OH) || 0), 0);
+function updateDashboardStats(Data) {
+    if (!Data) return;
+    document.getElementById('statLoc').innerText  = new Set(Data.map(i => i.Location).filter(Boolean)).size;
+    document.getElementById('statItem').innerText = new Set(Data.map(i => i.Item).filter(Boolean)).size;
+    document.getElementById('statWork').innerText = Data.reduce((s, i) => s + (parseInt(i.OH) || 0), 0);
 }
 
 // ═══════════════════════════════════════════════════════════════
 //  RENDER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════
-function renderData(data) {
+function renderData(Data) {
     const container = document.getElementById('itemsContainer');
-    if (!data || !data.length) {
+    if (!Data || !Data.length) {
         container.innerHTML = `
             <div class="col-span-full py-20 text-center opacity-30">
                 <i class="fas fa-box-open text-6xl mb-4"></i>
@@ -2104,7 +2104,7 @@ function renderData(data) {
         return;
     }
 
-    container.innerHTML = data.map((item, index) => {
+    container.innerHTML = Data.map((item, index) => {
         const sCls = item.InventoryStatus === 'Good'   ? 'bg-green-100 text-green-600' :
                      item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600'    :
                                                           'bg-yellow-100 text-yellow-600';
@@ -2190,7 +2190,7 @@ function filterActionTable() {
     updateActionList(inventoryData);
 }
 
-function updateActionList(data) {
+function updateActionList(Data) {
     const container = document.getElementById('actionList');
     if (!container) return;
 
@@ -2198,9 +2198,9 @@ function updateActionList(data) {
         ? document.getElementById('actionFilter').value : 'Issue';
 
     let filtered;
-    if      (filterVal === 'Issue') filtered = data.filter(i => i.InventoryStatus === 'Damage' || i.InventoryStatus === 'QC');
-    else if (filterVal === 'All')   filtered = [...data];
-    else                            filtered = data.filter(i => i.InventoryStatus === filterVal);
+    if      (filterVal === 'Issue') filtered = Data.filter(i => i.InventoryStatus === 'Damage' || i.InventoryStatus === 'QC');
+    else if (filterVal === 'All')   filtered = [...Data];
+    else                            filtered = Data.filter(i => i.InventoryStatus === filterVal);
 
     if (!filtered.length) {
         container.innerHTML = `<tr><td colspan="5" class="py-16 text-center opacity-30 font-black uppercase tracking-[0.2em]">ไม่พบข้อมูลในสถานะที่เลือก</td></tr>`;
@@ -2241,19 +2241,19 @@ function updateActionList(data) {
 // ═══════════════════════════════════════════════════════════════
 //  CHARTS
 // ═══════════════════════════════════════════════════════════════
-function updateCharts(data) {
+function updateCharts(Data) {
     const ctxStatus = document.getElementById('statusChart');
     if (ctxStatus) {
         const s = { Good: 0, Damage: 0, QC: 0 };
-        data.forEach(d => { if (s[d.InventoryStatus] !== undefined) s[d.InventoryStatus]++; });
+        Data.forEach(d => { if (s[d.InventoryStatus] !== undefined) s[d.InventoryStatus]++; });
 
         if (statusChart) statusChart.destroy();
         statusChart = new Chart(ctxStatus, {
             type: 'doughnut',
-            data: {
+            Data: {
                 labels: ['GOOD', 'DAMAGE', 'QC'],
-                datasets: [{
-                    data: [s.Good, s.Damage, s.QC],
+                Datasets: [{
+                    Data: [s.Good, s.Damage, s.QC],
                     backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
                     borderWidth: 4,
                     borderColor: '#ffffff'
@@ -2265,11 +2265,11 @@ function updateCharts(data) {
                 cutout: '72%',
                 plugins: {
                     legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } } },
-                    datalabels: {
+                    Datalabels: {
                         color: '#fff',
                         font: { weight: 'black', size: 10 },
                         formatter: (v, ctx) => {
-                            const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            const sum = ctx.chart.Data.Datasets[0].Data.reduce((a, b) => a + b, 0);
                             return v > 0 ? `${v}\n(${((v * 100) / sum).toFixed(0)}%)` : '';
                         },
                         textAlign: 'center'
@@ -2282,7 +2282,7 @@ function updateCharts(data) {
     const ctxType = document.getElementById('typeChart');
     if (ctxType) {
         const typeMap = {};
-        data.forEach(d => {
+        Data.forEach(d => {
             const t = d.Type || 'อื่นๆ';
             typeMap[t] = (typeMap[t] || 0) + 1;
         });
@@ -2290,10 +2290,10 @@ function updateCharts(data) {
         if (typeChart) typeChart.destroy();
         typeChart = new Chart(ctxType, {
             type: 'doughnut',
-            data: {
+            Data: {
                 labels: Object.keys(typeMap),
-                datasets: [{
-                    data: Object.values(typeMap),
+                Datasets: [{
+                    Data: Object.values(typeMap),
                     backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#6366f1', '#14b8a6'],
                     borderWidth: 4,
                     borderColor: '#ffffff'
@@ -2305,7 +2305,7 @@ function updateCharts(data) {
                 cutout: '72%',
                 plugins: {
                     legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 9 } } },
-                    datalabels: {
+                    Datalabels: {
                         color: '#fff',
                         font: { weight: 'black', size: 10 },
                         formatter: v => v > 0 ? v : '',
@@ -2706,7 +2706,7 @@ function handleFormSubmit() {
     const action = currentItemForEdit ? 'updateInventoryItem' : 'recordInventory';
     if (currentItemForEdit) payload.oldLicensePlate = currentItemForEdit.LicensePlate;
 
-    gasCall(action, { data: payload })
+    gasCall(action, { Data: payload })
         .then(() => {
             Swal.fire({ icon: 'success', title: 'สำเร็จ!', timer: 1500, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
             logTransaction(
@@ -2758,7 +2758,7 @@ function confirmDeleteItem(index, e) {
         if (!r.isConfirmed) return;
         logTransaction('DELETE', item.Item, item.Location, currentUser.name, 'Deleted S/N: ' + item.LicensePlate);
 
-        gasCall('deleteInventoryItem', { data: item })
+        gasCall('deleteInventoryItem', { Data: item })
             .then(() => {
                 Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', timer: 1000, showConfirmButton: false });
                 loadRealData(); closeModal('detailModal');
@@ -2894,17 +2894,17 @@ function printSingleItem() {
 //  PDF GENERATION
 // ═══════════════════════════════════════════════════════════════
 function generatePDF(mode, singleData) {
-    let dataToPrint = [];
+    let DataToPrint = [];
     let titleSuffix = '';
     let fileName    = `${(globalAppName || 'Report').replace(/\s+/g, '_')}_${Date.now()}.pdf`;
 
     if (mode === 'Single' && singleData) {
-        dataToPrint = [singleData];
+        DataToPrint = [singleData];
         titleSuffix = `(Item: ${singleData.Item})`;
         fileName    = `${(singleData.Item || 'Item').replace(/[^a-zA-Z0-9-_]/g, '')}_${singleData.InventoryStatus}.pdf`;
     } else if (mode === 'Filtered') {
         const q = document.getElementById('searchInput').value.toLowerCase();
-        dataToPrint = q
+        DataToPrint = q
             ? inventoryData.filter(i =>
                 (i.Item         || '').toLowerCase().includes(q) ||
                 (i.Location     || '').toLowerCase().includes(q) ||
@@ -2912,10 +2912,10 @@ function generatePDF(mode, singleData) {
             : [...inventoryData];
         if (q) titleSuffix = `(Search: "${q}")`;
     } else {
-        dataToPrint = [...inventoryData];
+        DataToPrint = [...inventoryData];
     }
 
-    if (!dataToPrint.length) {
+    if (!DataToPrint.length) {
         Swal.fire('Error', 'ไม่พบข้อมูลสำหรับสร้างรายงาน', 'error');
         return;
     }
@@ -2947,10 +2947,10 @@ function generatePDF(mode, singleData) {
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:2px solid #e2e8f0;padding-bottom:12px;">
             <h2 style="font-size:22px;font-weight:800;color:#334155;margin:0;">FILTER: <span style="color:#e63946;">${titleSuffix || 'All Items'}</span></h2>
-            <h2 style="font-size:22px;font-weight:800;color:#334155;margin:0;">TOTAL: <span style="color:#e63946;">${dataToPrint.length}</span> Items</h2>
+            <h2 style="font-size:22px;font-weight:800;color:#334155;margin:0;">TOTAL: <span style="color:#e63946;">${DataToPrint.length}</span> Items</h2>
         </div>`;
 
-    dataToPrint.forEach(item => {
+    DataToPrint.forEach(item => {
         const statusBg    = item.InventoryStatus === 'Good'   ? '#dcfce7' : item.InventoryStatus === 'Damage' ? '#fee2e2' : '#fef3c7';
         const statusColor = item.InventoryStatus === 'Good'   ? '#166534' : item.InventoryStatus === 'Damage' ? '#991b1b' : '#b45309';
         const statusText  = item.OH <= 0 ? 'OUT OF STOCK' : item.InventoryStatus;
