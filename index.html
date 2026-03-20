@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-Datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -1365,17 +1365,43 @@ let appUsers = [
 // ═══════════════════════════════════════════════════════════════
 //  GAS API CONFIG
 // ═══════════════════════════════════════════════════════════════
+// ใส่ URL ของ Google Apps Script ของคุณที่นี่
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxAur8Y2RLdxjJ1KllnxN1lUAkz6MEYDurJfs0NhrIjweXkgV2DNVOLPjl_q9ud4jihZA/exec';
 
+// การแก้ไขส่วนที่ 1: เปลี่ยนฟังก์ชันเชื่อมต่อให้รองรับ Redirect และส่ง Error ออกมาจริงๆ
 async function gasCall(action, params) {
     const body = Object.assign({ action }, params || {});
+    
+    // ตั้งค่า redirect ให้เป็น follow เพื่อให้รองรับการเปลี่ยนเส้นทางของ Google 
     const res  = await fetch(GAS_URL, {
         method : 'POST',
-        headers: { 'Content-Type': 'text/plain' },
+        redirect: 'follow',
+        headers: {
+            'Content-Type': 'text/plain;charset=utf-8', 
+        },
         body   : JSON.stringify(body)
     });
+
+    if (!res.ok) {
+        throw new Error(`Server responded with status: ${res.status}`);
+    }
+
     const text = await res.text();
-    try { return JSON.parse(text); } catch(e) { return text; }
+    try { 
+        const json = JSON.parse(text); 
+        // เช็คว่า GAS ส่งกลับมาเป็น error หรือไม่
+        if(json && json.status === 'error') {
+            throw new Error(json.message || 'เกิดข้อผิดพลาดจากฝั่งเซิร์ฟเวอร์');
+        }
+        return json;
+    } catch(e) { 
+        // ถ้า parse json ไม่ได้ แปลว่าเกิด error หน้าเปล่าๆ จากฝั่ง Google
+        if (e.message !== 'เกิดข้อผิดพลาดจากฝั่งเซิร์ฟเวอร์') {
+             throw new Error('ไม่สามารถอ่านข้อมูลจากฐานข้อมูลได้ (Invalid Response)');
+        } else {
+             throw e;
+        }
+    }
 }
 
 window.onload = initApp;
@@ -1388,34 +1414,12 @@ function initApp() {
     setInterval(updateAppTime, 1000);
     updateAppTime();
     forceExitLoader();
-    loadDataInBackground();
+    loadRealData(); // โหลดข้อมูลเมื่อเปิดหน้าเว็บ
 }
 
 function forceExitLoader() {
     document.getElementById('loader').classList.add('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
-}
-
-async function loadDataInBackground() {
-    try {
-        const users = await gasCall('getAppUsers');
-        if (Array.isArray(users) && users.length > 0) appUsers = users;
-    } catch(e) {}
-
-    try {
-        const settings = await gasCall('getAppSettings');
-        if (settings && typeof settings === 'object') {
-            if (settings.logoBase64 !== undefined) {
-                globalAppLogo = settings.logoBase64;
-                try { localStorage.setItem('vespaAppLogo', globalAppLogo); } catch(e) {}
-            }
-            if (settings.appName) {
-                globalAppName = settings.appName;
-                try { localStorage.setItem('vespaAppName', globalAppName); } catch(e) {}
-            }
-            updateBrandUI();
-        }
-    } catch(e) {}
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1507,20 +1511,7 @@ function saveAllSettings() {
         localStorage.setItem('vespaAppName', globalAppName);
     } catch(e) {}
 
-    const btn      = document.querySelector('button[onclick="saveAllSettings()"]');
-    const origHtml = btn.innerHTML;
-    btn.innerHTML  = '<i class="fas fa-circle-notch fa-spin text-xl"></i> กำลังบันทึก...';
-    btn.disabled   = true;
-
-    gasCall('saveAppSettings', { settings: { logoBase64: globalAppLogo, appName: globalAppName } })
-        .then(() => {
-            Swal.fire({ icon: 'success', title: 'บันทึกการตั้งค่าเรียบร้อย', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
-            btn.innerHTML = origHtml; btn.disabled = false;
-        })
-        .catch(err => {
-            Swal.fire({ icon: 'success', title: 'บันทึกแล้ว (Local)', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
-            btn.innerHTML = origHtml; btn.disabled = false;
-        });
+    Swal.fire({ icon: 'success', title: 'บันทึกการตั้งค่าเรียบร้อย (Local)', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1531,21 +1522,6 @@ function handleLogin(event) {
     const u = document.getElementById('loginUser').value.trim().toLowerCase();
     const p = document.getElementById('loginPass').value.trim();
 
-    if (appUsers.length === 0) {
-        const btn = event.target.querySelector('button[type=submit]');
-        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังโหลด...'; }
-        gasCall('getAppUsers')
-            .then(res => {
-                if (btn) { btn.disabled = false; btn.innerHTML = '<span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>'; }
-                if (Array.isArray(res) && res.length > 0) appUsers = res;
-                doLogin(u, p);
-            })
-            .catch(() => {
-                if (btn) { btn.disabled = false; btn.innerHTML = '<span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>'; }
-                doLogin(u, p);
-            });
-        return;
-    }
     doLogin(u, p);
 }
 
@@ -1630,7 +1606,6 @@ function showScanState(state) {
     });
 }
 
-// ── FIX #2: startScanner เปิดกล้องเลย ไม่รอ permission state ──
 function startScanner(target) {
     currentScanTarget = target;
 
@@ -1644,11 +1619,8 @@ function startScanner(target) {
     };
     document.getElementById('scanTargetLabel').innerText = labelMap[target] || target;
 
-    // เปิด modal แล้วแสดง loading state ก่อนเลย
     document.getElementById('scannerModal').classList.add('active');
     showScanState('loading');
-
-    // เรียก requestCameraAndScan ทันที (ได้รับ user gesture จาก startScanner)
     requestCameraAndScan();
 }
 
@@ -1735,15 +1707,15 @@ async function scanFromPhoto(event) {
         bitmap.close();
 
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.Data, imageData.width, imageData.height, {
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
             inversionAttempts: 'attemptBoth'
         });
 
         if (processing) { processing.classList.add('hidden'); processing.classList.remove('flex'); }
 
-        if (code && code.Data) {
+        if (code && code.data) {
             stopScanner();
-            const val = code.Data.trim();
+            const val = code.data.trim();
             const elem = document.getElementById(currentScanTarget);
             if (elem) {
                 elem.value = val;
@@ -1820,14 +1792,14 @@ async function scanLoopBD(video) {
             const ctx     = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code      = jsQR(imageData.Data, imageData.width, imageData.height, {
+            const code      = jsQR(imageData.data, imageData.width, imageData.height, {
                 inversionAttempts: 'dontInvert'
             });
-            if (code && code.Data) {
+            if (code && code.data) {
                 const now = Date.now();
                 if (now - lastDetectedTime > 1500) {
                     lastDetectedTime = now;
-                    onScanSuccess(code.Data);
+                    onScanSuccess(code.data);
                     return;
                 }
             }
@@ -1989,7 +1961,7 @@ function toggleSidebar() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  Data LOADING — FIX #3: ไม่เช็ค google.script อีกต่อไป
+//  Data LOADING
 // ═══════════════════════════════════════════════════════════════
 function loadRealData() {
     if (!GAS_URL || GAS_URL === '') {
@@ -1997,6 +1969,7 @@ function loadRealData() {
         return;
     }
 
+    // เรียกโหลดข้อมูล แต่ถ้าติดขัดให้แจ้งเตือน
     gasCall('getInventoryData')
         .then(Data => {
             try {
@@ -2008,7 +1981,10 @@ function loadRealData() {
             updateActionList(inventoryData);
             updateDashboardStats(inventoryData);
         })
-        .catch(() => loadMockData());
+        .catch(err => {
+            console.warn("โหลดข้อมูลไม่สำเร็จ, ดึงข้อมูลจำลองมาแสดงชั่วคราว", err);
+            loadMockData(); // ใช้ Mock เพื่อให้เห็นหน้าตาเฉยๆ 
+        });
 
     gasCall('getRemarkOptions')
         .then(remarks => {
@@ -2036,7 +2012,7 @@ function loadRealData() {
 }
 
 function loadMockData() {
-    const mockImg = 'Data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAATUlEQVR4nGNkYGD4z8DAAMJkYGBgAABgAAH//wMIgAAAAABJRU5ErkJggg==';
+    const mockImg = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAATUlEQVR4nGNkYGD4z8DAAMJkYGBgAABgAAH//wMIgAAAAABJRU5ErkJggg==';
     inventoryData = [{
         Location: 'A-01-01', Item: '1B000000', Description: 'Sample Item 1', Type: 'Part',
         OH: 10, InventoryStatus: 'Good', Solution: 'มีในระบบ', LicensePlate: 'RP81234567890',
@@ -2107,7 +2083,7 @@ function renderData(Data) {
     container.innerHTML = Data.map((item, index) => {
         const sCls = item.InventoryStatus === 'Good'   ? 'bg-green-100 text-green-600' :
                      item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600'    :
-                                                          'bg-yellow-100 text-yellow-600';
+                                                         'bg-yellow-100 text-yellow-600';
         const hasPhoto   = item.Photo && item.Photo !== '';
         const deleteBtn  = (currentUser && currentUser.role === 'admin')
             ? `<button onclick="confirmDeleteItem(${index}, event)"
@@ -2250,10 +2226,10 @@ function updateCharts(Data) {
         if (statusChart) statusChart.destroy();
         statusChart = new Chart(ctxStatus, {
             type: 'doughnut',
-            Data: {
+            data: {
                 labels: ['GOOD', 'DAMAGE', 'QC'],
-                Datasets: [{
-                    Data: [s.Good, s.Damage, s.QC],
+                datasets: [{
+                    data: [s.Good, s.Damage, s.QC],
                     backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
                     borderWidth: 4,
                     borderColor: '#ffffff'
@@ -2265,11 +2241,11 @@ function updateCharts(Data) {
                 cutout: '72%',
                 plugins: {
                     legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } } },
-                    Datalabels: {
+                    datalabels: {
                         color: '#fff',
                         font: { weight: 'black', size: 10 },
                         formatter: (v, ctx) => {
-                            const sum = ctx.chart.Data.Datasets[0].Data.reduce((a, b) => a + b, 0);
+                            const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                             return v > 0 ? `${v}\n(${((v * 100) / sum).toFixed(0)}%)` : '';
                         },
                         textAlign: 'center'
@@ -2290,10 +2266,10 @@ function updateCharts(Data) {
         if (typeChart) typeChart.destroy();
         typeChart = new Chart(ctxType, {
             type: 'doughnut',
-            Data: {
+            data: {
                 labels: Object.keys(typeMap),
-                Datasets: [{
-                    Data: Object.values(typeMap),
+                datasets: [{
+                    data: Object.values(typeMap),
                     backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#6366f1', '#14b8a6'],
                     borderWidth: 4,
                     borderColor: '#ffffff'
@@ -2305,7 +2281,7 @@ function updateCharts(Data) {
                 cutout: '72%',
                 plugins: {
                     legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 9 } } },
-                    Datalabels: {
+                    datalabels: {
                         color: '#fff',
                         font: { weight: 'black', size: 10 },
                         formatter: v => v > 0 ? v : '',
@@ -2558,7 +2534,6 @@ function changePassword() {
 
 // ═══════════════════════════════════════════════════════════════
 //  INVENTORY FORM
-//  FIX #1: checkItemInfo ไม่เช็ค google.script แล้ว → เรียก GAS URL ตรง
 // ═══════════════════════════════════════════════════════════════
 function checkItemInfo(code) {
     if (!code) return;
@@ -2665,6 +2640,7 @@ function editItem() {
     checkItemInfo(currentItemForEdit.Item);
 }
 
+// การแก้ไขส่วนที่ 2: เปลี่ยนการจับ Error ตอน Submit ห้ามโชว์จำลองสำเร็จอีกต่อไป
 function handleFormSubmit() {
     const sn = document.getElementById('LicensePlate').value.trim();
     if (sn.length !== 13) {
@@ -2706,9 +2682,11 @@ function handleFormSubmit() {
     const action = currentItemForEdit ? 'updateInventoryItem' : 'recordInventory';
     if (currentItemForEdit) payload.oldLicensePlate = currentItemForEdit.LicensePlate;
 
+    // เรียก API Google Sheet
     gasCall(action, { Data: payload })
         .then(() => {
-            Swal.fire({ icon: 'success', title: 'สำเร็จ!', timer: 1500, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
+            // สำเร็จจริงๆ ค่อยโชว์
+            Swal.fire({ icon: 'success', title: 'บันทึกลง Google Sheet สำเร็จ!', timer: 1500, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
             logTransaction(
                 currentItemForEdit ? 'EDIT' : 'ADD',
                 payload.Item, payload.Location,
@@ -2719,23 +2697,14 @@ function handleFormSubmit() {
             btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
         })
         .catch(err => {
-            // Mock fallback ถ้า GAS ไม่ตอบ
-            console.warn('GAS call failed, using mock:', err);
-            Swal.fire({ icon: 'success', title: 'สำเร็จ (Mock)!', timer: 1500, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
-            logTransaction(
-                currentItemForEdit ? 'EDIT' : 'ADD',
-                payload.Item, payload.Location,
-                currentUser ? currentUser.name : 'Unknown',
-                currentItemForEdit ? 'Updated Item (Mock)' : 'Added New (Mock)'
-            );
-            if (currentItemForEdit) {
-                const idx = inventoryData.indexOf(currentItemForEdit);
-                if (idx > -1) inventoryData[idx] = { ...payload, Timestamp: new Date().toLocaleString() };
-            } else {
-                payload.Timestamp = new Date().toLocaleString();
-                inventoryData.unshift(payload);
-            }
-            resetForm(); loadRealData(); switchView('dashboard');
+            // ถ้า Error ต้องโชว์ Error สีแดง ไม่โชว์ Mock
+            console.error('GAS call failed:', err);
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'บันทึกไม่สำเร็จ', 
+                text: 'ไม่สามารถส่งข้อมูลไปที่ Google Sheet ได้ (' + err.message + ') โปรดเช็คการตั้งค่าสิทธิ์ Apps Script',
+                customClass: { popup: 'rounded-[32px]' } 
+            });
             btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
         });
 }
@@ -2756,17 +2725,16 @@ function confirmDeleteItem(index, e) {
         customClass: { popup: 'rounded-[32px]' }
     }).then(r => {
         if (!r.isConfirmed) return;
-        logTransaction('DELETE', item.Item, item.Location, currentUser.name, 'Deleted S/N: ' + item.LicensePlate);
-
+        
         gasCall('deleteInventoryItem', { Data: item })
             .then(() => {
+                logTransaction('DELETE', item.Item, item.Location, currentUser.name, 'Deleted S/N: ' + item.LicensePlate);
                 Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', timer: 1000, showConfirmButton: false });
                 loadRealData(); closeModal('detailModal');
             })
-            .catch(() => {
-                inventoryData.splice(index, 1);
-                Swal.fire({ icon: 'success', title: 'ลบสำเร็จ (Mock)', timer: 1000, showConfirmButton: false });
-                loadRealData(); closeModal('detailModal');
+            .catch((err) => {
+                Swal.fire({ icon: 'error', title: 'ลบไม่สำเร็จ', text: err.message, timer: 2000, showConfirmButton: false });
+                closeModal('detailModal');
             });
     });
 }
