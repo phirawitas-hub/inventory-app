@@ -1976,6 +1976,7 @@ function switchView(view) {
         if (navEl)  navEl.classList.add('active');
 
         if (view === 'dashboard' || view === 'report') loadRealData();
+        if (view === 'inventory') loadDropdownOptions();
         if (view === 'inventory' && !currentItemForEdit) resetForm();
         if (view === 'users')   { renderUserTable(); updateBrandUI(); }
         if (view === 'history')  renderHistoryLogs();
@@ -1997,6 +1998,32 @@ function toggleSidebar() {
 // ═══════════════════════════════════════════════════════════════
 //  DATA LOADING
 // ═══════════════════════════════════════════════════════════════
+// ✅ โหลดเฉพาะ dropdown options — เรียกตอนเปิดหน้า inventory
+function loadDropdownOptions() {
+    gasCall('getRemarkOptions')
+        .then(remarks => {
+            if (!Array.isArray(remarks)) return;
+            const sel = document.getElementById('RemarkSelect');
+            if (!sel) return;
+            sel.innerHTML = remarks.map(r => '<option value="' + r + '">' + r + '</option>').join('');
+            if (remarks.length) document.getElementById('Remark').value = sel.value;
+        }).catch(() => {});
+
+    gasCall('getRecorderOptions')
+        .then(names => {
+            if (!Array.isArray(names)) return;
+            const sel = document.getElementById('NameSelect');
+            if (!sel) return;
+            sel.innerHTML = names.map(n => '<option value="' + n + '">' + n + '</option>').join('');
+            if (currentUser) {
+                if (!names.includes(currentUser.name)) sel.add(new Option(currentUser.name, currentUser.name));
+                sel.value = currentUser.name;
+            }
+            const nameEl = document.getElementById('Name');
+            if (nameEl) nameEl.value = sel.value;
+        }).catch(() => {});
+}
+
 function loadRealData() {
     gasCall('getInventoryData')
         .then(data => {
