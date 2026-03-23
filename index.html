@@ -608,11 +608,12 @@
                     <div class="relative w-full sm:w-auto">
                         <select id="actionFilter" onchange="filterActionTable()"
                             class="w-full sm:w-56 pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-50 appearance-none cursor-pointer">
-                            <option value="Issue">⚠️ ต้องตรวจสอบ (Damage/QC)</option>
+                            <option value="Issue">⚠️ ต้องตรวจสอบ (Damage/QC/Disposal)</option>
                             <option value="All">📋 ทั้งหมด (All)</option>
                             <option value="Good">🟢 ปกติ (Good)</option>
                             <option value="Damage">🔴 เสียหาย (Damage)</option>
                             <option value="QC">🟡 รอตรวจสอบ (QC)</option>
+                            <option value="Disposal">⚫ จำหน่ายออก (Disposal)</option>
                         </select>
                         <i class="fas fa-filter absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs"></i>
                     </div>
@@ -719,7 +720,8 @@
                                     class="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-red-500 font-bold appearance-none cursor-pointer">
                                     <option value="Good">🟢 GOOD</option>
                                     <option value="Damage">🔴 DAMAGE</option>
-                                    <option value="QC">🟡 QC CHECK</option>
+                                    <option value="QC">🟡 QC</option>
+                                    <option value="Disposal">⚫ DISPOSAL</option>
                                 </select>
                                 <i class="fas fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
                             </div>
@@ -2133,9 +2135,10 @@ function renderData(data) {
     }
 
     container.innerHTML = data.map((item, index) => {
-        const sCls = item.InventoryStatus === 'Good'   ? 'bg-green-100 text-green-600' :
-                     item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600'    :
-                                                          'bg-yellow-100 text-yellow-600';
+        const sCls = item.InventoryStatus === 'Good'     ? 'bg-green-100 text-green-600'   :
+                     item.InventoryStatus === 'Damage'   ? 'bg-red-100 text-red-600'       :
+                     item.InventoryStatus === 'Disposal' ? 'bg-gray-200 text-gray-700'     :
+                                                            'bg-yellow-100 text-yellow-600';
         const hasPhoto   = item.Photo && item.Photo !== '';
         const deleteBtn  = (currentUser && currentUser.role === 'admin')
             ? `<button onclick="confirmDeleteItem(${index}, event)"
@@ -2226,7 +2229,7 @@ function updateActionList(data) {
         ? document.getElementById('actionFilter').value : 'Issue';
 
     let filtered;
-    if      (filterVal === 'Issue') filtered = data.filter(i => i.InventoryStatus === 'Damage' || i.InventoryStatus === 'QC');
+    if      (filterVal === 'Issue') filtered = data.filter(i => i.InventoryStatus === 'Damage' || i.InventoryStatus === 'QC' || i.InventoryStatus === 'Disposal');
     else if (filterVal === 'All')   filtered = [...data];
     else                            filtered = data.filter(i => i.InventoryStatus === filterVal);
 
@@ -2236,9 +2239,10 @@ function updateActionList(data) {
     }
 
     container.innerHTML = filtered.slice(0, 50).map(item => {
-        const badge = item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600' :
-                      item.InventoryStatus === 'QC'     ? 'bg-yellow-100 text-yellow-600' :
-                                                          'bg-green-100 text-green-600';
+        const badge = item.InventoryStatus === 'Damage'   ? 'bg-red-100 text-red-600'      :
+                      item.InventoryStatus === 'QC'       ? 'bg-yellow-100 text-yellow-600' :
+                      item.InventoryStatus === 'Disposal' ? 'bg-gray-200 text-gray-700'    :
+                                                             'bg-green-100 text-green-600';
         return `
         <tr class="hover:bg-slate-50 transition-colors">
             <td class="py-4 text-center">
@@ -2272,17 +2276,17 @@ function updateActionList(data) {
 function updateCharts(data) {
     const ctxStatus = document.getElementById('statusChart');
     if (ctxStatus) {
-        const s = { Good: 0, Damage: 0, QC: 0 };
+        const s = { Good: 0, Damage: 0, QC: 0, Disposal: 0 };
         data.forEach(d => { if (s[d.InventoryStatus] !== undefined) s[d.InventoryStatus]++; });
 
         if (statusChart) statusChart.destroy();
         statusChart = new Chart(ctxStatus, {
             type: 'doughnut',
             data: {
-                labels: ['GOOD', 'DAMAGE', 'QC'],
+                labels: ['GOOD', 'DAMAGE', 'QC', 'DISPOSAL'],
                 datasets: [{
-                    data: [s.Good, s.Damage, s.QC],
-                    backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
+                    data: [s.Good, s.Damage, s.QC, s.Disposal],
+                    backgroundColor: ['#10b981', '#ef4444', '#f59e0b', '#6b7280'],
                     borderWidth: 4,
                     borderColor: '#ffffff'
                 }]
