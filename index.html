@@ -12,8 +12,8 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-    <!-- ✅ BarcodeDetector Polyfill — เพิ่ม support Barcode ให้ iOS Safari -->
-    <script src="https://cdn.jsdelivr.net/npm/barcode-detector@2/dist/es2019/barcode_detector.min.js"></script>
+    <!-- ✅ Quagga2 — อ่าน Code128 Barcode บน iOS Safari ได้จริง -->
+    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800&family=Pacifico&display=swap');
@@ -1755,17 +1755,21 @@ async function scanFromPhoto(event) {
 
         let scannedText = null;
 
-        // ✅ ลอง BarcodeDetector (Polyfill รองรับ Code128 บน iOS ด้วย)
-        if ('BarcodeDetector' in window) {
+        // 1) BarcodeDetector (Android/Chrome)
+        if (barcodeDetector) {
             try {
-                const formats = ['qr_code','code_128','code_39','code_93','ean_13','ean_8','upc_a','upc_e','data_matrix','pdf417','itf','codabar'];
-                const detector = new BarcodeDetector({ formats });
-                const barcodes = await detector.detect(canvas);
+                const barcodes = await barcodeDetector.detect(canvas);
                 if (barcodes.length > 0) scannedText = barcodes[0].rawValue.trim();
-            } catch(bdErr) {}
+            } catch(e) {}
         }
 
-        // Fallback jsQR ถ้ายังไม่เจอ
+        // 2) Quagga2 (iOS — Code128 + EAN + อื่นๆ)
+        if (!scannedText) {
+            scannedText = await decodeWithQuagga(canvas);
+            if (scannedText) scannedText = scannedText.trim();
+        }
+
+        // 3) jsQR fallback (QR Code)
         if (!scannedText && typeof jsQR !== 'undefined') {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const code = jsQR(imageData.data, imageData.width, imageData.height, {
@@ -1815,25 +1819,57 @@ async function scanFromPhoto(event) {
 
 async function initBarcodeDetector() {
     if (barcodeDetector) return true;
-    if (!('BarcodeDetector' in window)) {
-        console.log('BarcodeDetector ไม่รองรับ → ใช้ jsQR แทน');
-        return false;
+    // ✅ ใช้ BarcodeDetector เฉพาะ Android/Chrome เท่านั้น
+    if ('BarcodeDetector' in window) {
+        try {
+            const formats = [
+                'qr_code','code_128','code_39','code_93',
+                'ean_13','ean_8','upc_a','upc_e',
+                'data_matrix','pdf417','aztec','itf','codabar'
+            ];
+            barcodeDetector = new BarcodeDetector({ formats });
+            console.log('BarcodeDetector พร้อมใช้งาน');
+            return true;
+        } catch(e) {}
     }
-    try {
-        // ✅ ใช้ formats กว้างๆ เพื่อรองรับ Code128 บน iOS Polyfill
-        const formats = [
-            'qr_code','code_128','code_39','code_93',
-            'ean_13','ean_8','upc_a','upc_e',
-            'data_matrix','pdf417','aztec','itf','codabar'
-        ];
-        barcodeDetector = new BarcodeDetector({ formats });
-        console.log('BarcodeDetector พร้อม — formats:', formats);
-        return true;
-    } catch(e) {
-        console.log('BarcodeDetector error:', e);
-        return false;
-    }
+    console.log('ใช้ Quagga2 + jsQR แทน (iOS mode)');
+    return false;
 }
+
+// ✅ Quagga2 decode จาก canvas — อ่าน Code128 บน iOS ได้
+function decodeWithQuagga(canvas) {
+    return new Promise((resolve) => {
+        if (typeof Quagga === 'undefined') { resolve(null); return; }
+        try {
+            Quagga.decodeSingle({
+                decoder: {
+                    readers: [
+                        'code_128_reader',
+                        'ean_reader',
+                        'ean_8_reader',
+                        'code_39_reader',
+                        'upc_reader',
+                        'codabar_reader',
+                        'i2of5_reader'
+                    ]
+                },
+                locate: true,
+                src: canvas.toDataURL('image/png')
+            }, result => {
+                if (result && result.codeResult) {
+                    resolve(result.codeResult.code);
+                } else {
+                    resolve(null);
+                }
+            });
+        } catch(e) {
+            resolve(null);
+        }
+    });
+}
+
+// จับเวลา Quagga แยกจาก BarcodeDetector
+let quaggaProcessing = false;
 
 async function scanLoopBD(video) {
     if (!scannerActive) return;
@@ -1843,8 +1879,8 @@ async function scanLoopBD(video) {
     }
 
     try {
-        // BarcodeDetector (ทำงานทั้ง Android และ iOS ที่มี Polyfill)
         if (barcodeDetector) {
+            // ── Android / Chrome: ใช้ BarcodeDetector ──
             const barcodes = await barcodeDetector.detect(video);
             if (barcodes.length > 0) {
                 const now = Date.now();
@@ -1855,19 +1891,41 @@ async function scanLoopBD(video) {
                 }
             }
         } else {
-            // Fallback jsQR สำหรับ QR เท่านั้น
+            // ── iOS / Safari: วาด canvas ก่อน ──
             const canvas  = document.createElement('canvas');
-            canvas.width  = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
-            if (code && code.data) {
-                const now = Date.now();
-                if (now - lastDetectedTime > 1500) {
-                    lastDetectedTime = now;
-                    onScanSuccess(code.data);
-                    return;
+            canvas.width  = video.videoWidth  || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx     = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // 1) ลอง Quagga2 (Code128 + EAN + อื่นๆ)
+            if (!quaggaProcessing && typeof Quagga !== 'undefined') {
+                quaggaProcessing = true;
+                const quaggaResult = await decodeWithQuagga(canvas);
+                quaggaProcessing   = false;
+                if (quaggaResult) {
+                    const now = Date.now();
+                    if (now - lastDetectedTime > 1500) {
+                        lastDetectedTime = now;
+                        onScanSuccess(quaggaResult);
+                        return;
+                    }
+                }
+            }
+
+            // 2) Fallback jsQR (QR Code)
+            if (typeof jsQR !== 'undefined') {
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code      = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: 'dontInvert'
+                });
+                if (code && code.data) {
+                    const now = Date.now();
+                    if (now - lastDetectedTime > 1500) {
+                        lastDetectedTime = now;
+                        onScanSuccess(code.data);
+                        return;
+                    }
                 }
             }
         }
