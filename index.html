@@ -2852,16 +2852,29 @@ function addNewRemark() {
     Swal.fire({
         title: 'เพิ่มหมายเหตุ',
         input: 'text',
+        inputPlaceholder: 'พิมพ์หมายเหตุใหม่...',
         showCancelButton: true,
         confirmButtonColor: '#e63946',
         customClass: { popup: 'rounded-[32px]' }
     }).then(r => {
-        if (r.isConfirmed && r.value) {
-            const sel = document.getElementById('RemarkSelect');
-            sel.add(new Option(r.value, r.value));
-            sel.value = r.value;
-            document.getElementById('Remark').value = r.value;
+        if (!r.isConfirmed || !r.value || !r.value.trim()) return;
+        const newVal = r.value.trim();
+        const sel    = document.getElementById('RemarkSelect');
+
+        // เพิ่มลง dropdown ทันที
+        if (!Array.from(sel.options).some(o => o.value === newVal)) {
+            sel.add(new Option(newVal, newVal));
         }
+        sel.value = newVal;
+        document.getElementById('Remark').value = newVal;
+
+        // ✅ บันทึกลง Sheets — ครั้งหน้าโหลดมาก็ยังอยู่
+        gasCall('addRemarkOption', { remark: newVal })
+            .then(res => {
+                const msg = (res && res.duplicate) ? 'มีหมายเหตุนี้อยู่แล้ว' : 'เพิ่มหมายเหตุสำเร็จ ✅';
+                Swal.fire({ icon: 'success', title: msg, toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+            })
+            .catch(() => {});
     });
 }
 
@@ -2869,16 +2882,29 @@ function addNewRecorder() {
     Swal.fire({
         title: 'เพิ่มชื่อผู้บันทึก',
         input: 'text',
+        inputPlaceholder: 'พิมพ์ชื่อผู้บันทึกใหม่...',
         showCancelButton: true,
         confirmButtonColor: '#e63946',
         customClass: { popup: 'rounded-[32px]' }
     }).then(r => {
-        if (r.isConfirmed && r.value) {
-            const sel = document.getElementById('NameSelect');
-            sel.add(new Option(r.value, r.value));
-            sel.value = r.value;
-            document.getElementById('Name').value = r.value;
+        if (!r.isConfirmed || !r.value || !r.value.trim()) return;
+        const newVal = r.value.trim();
+        const sel    = document.getElementById('NameSelect');
+
+        // เพิ่มลง dropdown ทันที
+        if (!Array.from(sel.options).some(o => o.value === newVal)) {
+            sel.add(new Option(newVal, newVal));
         }
+        sel.value = newVal;
+        document.getElementById('Name').value = newVal;
+
+        // ✅ บันทึกลง Sheets — ครั้งหน้าโหลดมาก็ยังอยู่
+        gasCall('addRecorderName', { name: newVal })
+            .then(res => {
+                const msg = (res && res.duplicate) ? 'มีชื่อนี้อยู่แล้ว' : 'เพิ่มผู้บันทึกสำเร็จ ✅';
+                Swal.fire({ icon: 'success', title: msg, toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+            })
+            .catch(() => {});
     });
 }
 
