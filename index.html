@@ -692,8 +692,20 @@
                         </div>
                         <div class="space-y-1">
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Type (ประเภท)</label>
+                            <!-- readonly input เมื่อเจอข้อมูล -->
                             <input type="text" id="ItemType" placeholder="-"
                                 class="w-full p-3 bg-white/50 border border-slate-100 rounded-xl text-sm font-bold text-slate-600 outline-none" readonly>
+                            <!-- dropdown เมื่อไม่เจอข้อมูล -->
+                            <select id="ItemTypeSelect"
+                                class="hidden w-full p-3 bg-white border border-red-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:border-red-500"
+                                onchange="document.getElementById('ItemType').value = this.value">
+                                <option value="">-- เลือกประเภท --</option>
+                                <option value="SPARE PART">SPARE PART</option>
+                                <option value="ACCESSORY">ACCESSORY</option>
+                                <option value="TOOL">TOOL</option>
+                                <option value="CONSUMABLE">CONSUMABLE</option>
+                                <option value="OTHER">OTHER</option>
+                            </select>
                         </div>
                     </div>
 
@@ -720,7 +732,7 @@
                                     class="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-red-500 font-bold appearance-none cursor-pointer">
                                     <option value="Good">🟢 GOOD</option>
                                     <option value="Damage">🔴 DAMAGE</option>
-                                    <option value="QC">🟡 QC</option>
+                                    <option value="QC">🟡 QC CHECK</option>
                                     <option value="Disposal">⚫ DISPOSAL</option>
                                 </select>
                                 <i class="fas fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
@@ -2596,19 +2608,31 @@ function checkItemInfo(code) {
     document.getElementById('ItemDesc').value = 'กำลังค้นหา...';
     document.getElementById('ItemType').value = '...';
 
+    // ซ่อน dropdown ระหว่างโหลด
+    document.getElementById('ItemTypeSelect').classList.add('hidden');
+
     gasCall('getItemDetails', { itemCode: code })
         .then(res => {
             if (res && res.found) {
+                // ✅ เจอข้อมูล — แสดงชื่อและ type แบบ readonly
                 document.getElementById('ItemDesc').value = res.description || '-';
                 document.getElementById('ItemType').value = res.type || '-';
+                document.getElementById('ItemType').classList.remove('hidden');
+                document.getElementById('ItemTypeSelect').classList.add('hidden');
             } else {
-                document.getElementById('ItemDesc').value = 'ไม่พบรหัสนี้ในระบบ';
-                document.getElementById('ItemType').value = '-';
+                // ❌ ไม่เจอ — เปิด dropdown ให้เลือกเอง
+                document.getElementById('ItemDesc').value = 'ไม่พบรหัสนี้ในระบบ — กรุณากรอกข้อมูลเอง';
+                document.getElementById('ItemType').value = '';
+                document.getElementById('ItemType').classList.add('hidden');
+                document.getElementById('ItemTypeSelect').classList.remove('hidden');
+                document.getElementById('ItemTypeSelect').value = '';
             }
         })
         .catch(() => {
             document.getElementById('ItemDesc').value = '-';
             document.getElementById('ItemType').value = '-';
+            document.getElementById('ItemType').classList.remove('hidden');
+            document.getElementById('ItemTypeSelect').classList.add('hidden');
         });
 }
 
@@ -2631,6 +2655,10 @@ function resetForm() {
     document.getElementById('ItemDesc').value      = '';
     document.getElementById('ItemType').value      = '';
     document.getElementById('OH').value            = '1';
+    // reset ItemType dropdown
+    const itSel = document.getElementById('ItemTypeSelect');
+    if (itSel) { itSel.value = ''; itSel.classList.add('hidden'); }
+    document.getElementById('ItemType').classList.remove('hidden');
 
     if (currentUser) {
         const nSel = document.getElementById('NameSelect');
@@ -2719,7 +2747,12 @@ function handleFormSubmit() {
         Location        : document.getElementById('Location').value,
         Item            : document.getElementById('Item').value,
         Description     : document.getElementById('ItemDesc').value,
-        Type            : document.getElementById('ItemType').value,
+        Type            : (function(){
+            const sel = document.getElementById('ItemTypeSelect');
+            // ถ้า dropdown กำลังแสดงอยู่ ให้เอาค่าจาก select แทน
+            if (sel && !sel.classList.contains('hidden')) return sel.value || '';
+            return document.getElementById('ItemType').value || '';
+        })(),
         OH              : parseInt(document.getElementById('OH').value),
         InventoryStatus : document.getElementById('InventoryStatus').value,
         OnOffStatus     : document.getElementById('OnOffStatus').value,
