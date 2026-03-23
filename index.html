@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.4/umd/index.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800&family=Pacifico&display=swap');
@@ -1743,8 +1744,6 @@ async function scanFromPhoto(event) {
     if (processing) { processing.classList.remove('hidden'); processing.classList.add('flex'); }
 
     try {
-        if (typeof jsQR === 'undefined') throw new Error('jsQR ไม่โหลด');
-
         const bitmap = await createImageBitmap(file);
         const canvas = document.createElement('canvas');
         canvas.width  = bitmap.width;
@@ -1753,34 +1752,48 @@ async function scanFromPhoto(event) {
         ctx.drawImage(bitmap, 0, 0);
         bitmap.close();
 
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {
-            inversionAttempts: 'attemptBoth'
-        });
+        let scannedText = null;
+
+        // ลอง ZXing ก่อน (รองรับ Barcode Code128, QR, EAN ทุกประเภท)
+        const reader = getZXingReader();
+        if (reader) {
+            try {
+                const result = await reader.decodeFromCanvas(canvas);
+                if (result && result.getText()) scannedText = result.getText().trim();
+            } catch(zxErr) {}
+        }
+
+        // Fallback jsQR ถ้า ZXing ไม่เจอ
+        if (!scannedText && typeof jsQR !== 'undefined') {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: 'attemptBoth'
+            });
+            if (code && code.data) scannedText = code.data.trim();
+        }
 
         if (processing) { processing.classList.add('hidden'); processing.classList.remove('flex'); }
 
-        if (code && code.data) {
+        if (scannedText) {
             stopScanner();
-            const val = code.data.trim();
             const elem = document.getElementById(currentScanTarget);
             if (elem) {
-                elem.value = val;
+                elem.value = scannedText;
                 elem.dispatchEvent(new Event('input',  { bubbles: true }));
                 elem.dispatchEvent(new Event('change', { bubbles: true }));
                 elem.style.transition = 'box-shadow 0.2s';
                 elem.style.boxShadow  = '0 0 0 3px rgba(16,185,129,0.45)';
                 setTimeout(() => { elem.style.boxShadow = ''; }, 1200);
             }
-            if (currentScanTarget === 'Item')          checkItemInfo(val);
-            if (currentScanTarget === 'LicensePlate')  document.getElementById('charCount').innerText = val.length;
+            if (currentScanTarget === 'Item')          checkItemInfo(scannedText);
+            if (currentScanTarget === 'LicensePlate')  document.getElementById('charCount').innerText = scannedText.length;
             if (currentScanTarget === 'searchInput')   filterItems();
             if (currentScanTarget === 'histFilterItem' || currentScanTarget === 'histFilterLoc') filterHistoryLogs();
         } else {
             Swal.fire({
                 icon: 'warning',
-                title: 'ไม่พบ QR Code ในรูป',
-                text: 'กรุณาถ่ายรูปใหม่ให้ QR Code อยู่ตรงกลางและชัดเจน',
+                title: 'ไม่พบบาร์โค้ดในรูป',
+                text: 'กรุณาถ่ายรูปใหม่ให้บาร์โค้ดอยู่ตรงกลางและชัดเจน',
                 confirmButtonColor: '#e63946',
                 customClass: { popup: 'rounded-[32px]' }
             });
@@ -1814,6 +1827,19 @@ async function initBarcodeDetector() {
     }
 }
 
+// ✅ ZXing reader สำหรับ iOS (รองรับ Barcode Code128 ด้วย)
+let zxingReader = null;
+
+function getZXingReader() {
+    if (zxingReader) return zxingReader;
+    try {
+        if (typeof ZXingBrowser !== 'undefined') {
+            zxingReader = new ZXingBrowser.BrowserMultiFormatReader();
+        }
+    } catch(e) {}
+    return zxingReader;
+}
+
 async function scanLoopBD(video) {
     if (!scannerActive) return;
     if (video.readyState < 2) {
@@ -1822,6 +1848,7 @@ async function scanLoopBD(video) {
     }
 
     try {
+        // Priority 1: BarcodeDetector (Android/Chrome)
         if (barcodeDetector) {
             const barcodes = await barcodeDetector.detect(video);
             if (barcodes.length > 0) {
@@ -1832,22 +1859,45 @@ async function scanLoopBD(video) {
                     return;
                 }
             }
-        } else if (typeof jsQR !== 'undefined') {
+        } else {
+            // Priority 2: ZXing (iOS + ทุก browser — รองรับ Code128, QR, EAN, etc.)
             const canvas  = document.createElement('canvas');
             canvas.width  = video.videoWidth;
             canvas.height = video.videoHeight;
             const ctx     = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code      = jsQR(imageData.data, imageData.width, imageData.height, {
-                inversionAttempts: 'dontInvert'
-            });
-            if (code && code.data) {
-                const now = Date.now();
-                if (now - lastDetectedTime > 1500) {
-                    lastDetectedTime = now;
-                    onScanSuccess(code.data);
-                    return;
+
+            // ลอง ZXing ก่อน
+            const reader = getZXingReader();
+            if (reader) {
+                try {
+                    const result = await reader.decodeFromCanvas(canvas);
+                    if (result && result.getText()) {
+                        const now = Date.now();
+                        if (now - lastDetectedTime > 1500) {
+                            lastDetectedTime = now;
+                            onScanSuccess(result.getText());
+                            return;
+                        }
+                    }
+                } catch(zxErr) {
+                    // ZXing throw error เมื่อหาไม่เจอ — ไม่ต้อง log
+                }
+            }
+
+            // Fallback: jsQR สำหรับ QR Code
+            if (typeof jsQR !== 'undefined') {
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code      = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: 'dontInvert'
+                });
+                if (code && code.data) {
+                    const now = Date.now();
+                    if (now - lastDetectedTime > 1500) {
+                        lastDetectedTime = now;
+                        onScanSuccess(code.data);
+                        return;
+                    }
                 }
             }
         }
