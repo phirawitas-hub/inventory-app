@@ -1992,7 +1992,7 @@ function switchView(view) {
         if (view === 'inventory') loadDropdownOptions();
         if (view === 'inventory' && !currentItemForEdit) resetForm();
         if (view === 'users')   { renderUserTable(); updateBrandUI(); }
-        if (view === 'history')  renderHistoryLogs();
+        if (view === 'history')  loadHistoryLogs();
         if (view === 'profile')  loadProfileData();
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2363,16 +2363,53 @@ function updateCharts(data) {
 // ═══════════════════════════════════════════════════════════════
 //  HISTORY
 // ═══════════════════════════════════════════════════════════════
+// ✅ โหลดประวัติจาก Sheets ทุกครั้งที่เปิดหน้า History
+function loadHistoryLogs() {
+    const container = document.getElementById('historyTableBody');
+    if (container) {
+        container.innerHTML = `<tr><td colspan="5" class="py-10 text-center">
+            <i class="fas fa-circle-notch fa-spin text-red-400 text-2xl"></i>
+            <p class="text-slate-400 font-bold mt-2">กำลังโหลดประวัติ...</p>
+        </td></tr>`;
+    }
+
+    gasCall('getTransactionLogs')
+        .then(logs => {
+            if (Array.isArray(logs) && logs.length > 0) {
+                // Merge กับ memory logs (ป้องกันซ้ำด้วย Timestamp+Item)
+                const existingKeys = new Set(transactionLogs.map(l => l.Timestamp + l.Item));
+                logs.forEach(l => {
+                    if (!existingKeys.has(l.Timestamp + l.Item)) {
+                        transactionLogs.push(l);
+                    }
+                });
+                // เรียงใหม่สุดก่อน
+                transactionLogs.sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp));
+            }
+            renderHistoryLogs();
+            updateUserFilterDropdown(transactionLogs.map(l => l.User).filter(Boolean));
+        })
+        .catch(() => {
+            renderHistoryLogs();
+        });
+}
+
 function logTransaction(action, itemCode, location, user, details) {
-    transactionLogs.unshift({
+    const log = {
         Timestamp : new Date().toLocaleString('th-TH'),
         User      : user,
         Action    : action,
         Item      : itemCode,
         Location  : location,
         Details   : details
-    });
+    };
+
+    // เพิ่มลง memory ทันที
+    transactionLogs.unshift(log);
     renderHistoryLogs();
+
+    // ✅ บันทึกลง Google Sheets ด้วย
+    gasCall('saveTransactionLog', { log: log }).catch(() => {});
 }
 
 function renderHistoryLogs() {
