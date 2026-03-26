@@ -254,17 +254,42 @@
         }
         .remark-pill .pill-check { font-size: 10px; opacity: 0.8; }
 
-        /* ── FIX 5: iPad portrait layout fix ── */
+        /* ── iPad portrait layout fix ── */
         @media (min-width: 768px) and (max-width: 1024px) {
-            main { padding: 20px !important; }
-            #view-inventory .grid-cols-1.md\:grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
-            #view-inventory .grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3 { grid-template-columns: 1fr 1fr 1fr !important; }
-            #view-report   .md\:grid-cols-2 { grid-template-columns: 1fr !important; }
+            /* sidebar shown → main has ml-72; shrink padding so form fits in remaining space */
+            main { padding: 16px 16px 40px 16px !important; }
+
+            /* inventory form: never overflow the content area */
+            #view-inventory {
+                max-width: 100% !important;
+                width: 100% !important;
+                box-sizing: border-box;
+            }
+            #view-inventory .glass-card {
+                padding: 20px !important;
+                border-radius: 20px;
+            }
+            #view-inventory .space-y-8 > * { margin-top: 20px; }
+
+            /* QTY/Status/OnOff 3-col → 2-col on iPad */
+            #view-inventory .grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3 {
+                grid-template-columns: 1fr 1fr !important;
+            }
+
+            /* report list: 1 col */
+            #view-report .grid { grid-template-columns: 1fr !important; }
+
+            /* dashboard 3-chart row: 1 col so charts don't squish */
+            #view-dashboard .lg\:grid-cols-3 { grid-template-columns: 1fr !important; }
+
             .glass-card { border-radius: 20px; }
-        }
-        @media (min-width: 768px) and (max-width: 900px) {
-            #view-inventory .grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3 { grid-template-columns: 1fr 1fr !important; }
             .modal-content { max-width: 95vw; }
+        }
+
+        /* very narrow iPad / large phone landscape */
+        @media (min-width: 768px) and (max-width: 860px) {
+            main { padding: 12px 12px 40px 12px !important; }
+            #view-inventory .glass-card { padding: 14px !important; }
         }
 
         /* ── FIX 2: field error highlight ── */
@@ -1771,63 +1796,153 @@ function updateActionList(data) {
 }
 
 // ─────────────────────────────────────────
-//  FIX 3: CHARTS (เพิ่ม remarkChart)
+// ─────────────────────────────────────────
+//  CHARTS
 // ─────────────────────────────────────────
 function updateCharts(data) {
-    // Status chart
+
+    // ── FIX 3: นับ unique Item Code per group (ไม่นับซ้ำ) ──
+    // Status chart — นับ unique Item ต่อแต่ละ InventoryStatus
     const ctxStatus = document.getElementById('statusChart');
     if (ctxStatus) {
-        const s = { Good: 0, Damage: 0, QC: 0, Disposal: 0 };
-        data.forEach(d => { if (s[d.InventoryStatus] !== undefined) s[d.InventoryStatus]++; });
+        const s = { Good: new Set(), Damage: new Set(), QC: new Set(), Disposal: new Set() };
+        data.forEach(d => {
+            if (s[d.InventoryStatus] !== undefined && d.Item)
+                s[d.InventoryStatus].add(d.Item);
+        });
+        const counts = [s.Good.size, s.Damage.size, s.QC.size, s.Disposal.size];
         if (statusChart) statusChart.destroy();
         statusChart = new Chart(ctxStatus, {
             type: 'doughnut',
-            data: { labels: ['GOOD','DAMAGE','QC','DISPOSAL'], datasets: [{ data: [s.Good,s.Damage,s.QC,s.Disposal], backgroundColor: ['#10b981','#ef4444','#f59e0b','#6b7280'], borderWidth: 4, borderColor: '#ffffff' }] },
-            options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } } }, datalabels: { color: '#fff', font: { weight: 'black', size: 10 }, formatter: (v, ctx) => { const sum = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0); return v > 0 ? `${v}\n(${((v*100)/sum).toFixed(0)}%)` : ''; }, textAlign: 'center' } } }
+            data: {
+                labels: ['GOOD','DAMAGE','QC','DISPOSAL'],
+                datasets: [{ data: counts, backgroundColor: ['#10b981','#ef4444','#f59e0b','#6b7280'], borderWidth: 4, borderColor: '#ffffff' }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '72%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } } },
+                    datalabels: {
+                        color: '#fff', font: { weight: 'black', size: 10 }, textAlign: 'center',
+                        formatter: (v, ctx) => {
+                            const sum = ctx.chart.data.datasets[0].data.reduce((a,b) => a+b, 0);
+                            return v > 0 ? `${v}\n(${((v*100)/sum).toFixed(0)}%)` : '';
+                        }
+                    }
+                }
+            }
         });
     }
 
-    // Type chart
+    // Type chart — นับ unique Item ต่อแต่ละ Type
     const ctxType = document.getElementById('typeChart');
     if (ctxType) {
-        const typeMap = {};
-        data.forEach(d => { const t = d.Type || 'อื่นๆ'; typeMap[t] = (typeMap[t] || 0) + 1; });
+        const typeMap = {};   // type -> Set of Item codes
+        data.forEach(d => {
+            const t = d.Type || 'อื่นๆ';
+            if (!typeMap[t]) typeMap[t] = new Set();
+            if (d.Item) typeMap[t].add(d.Item);
+        });
+        const labels  = Object.keys(typeMap);
+        const counts  = labels.map(k => typeMap[k].size);
         if (typeChart) typeChart.destroy();
         typeChart = new Chart(ctxType, {
             type: 'doughnut',
-            data: { labels: Object.keys(typeMap), datasets: [{ data: Object.values(typeMap), backgroundColor: ['#3b82f6','#8b5cf6','#ec4899','#f97316','#6366f1','#14b8a6'], borderWidth: 4, borderColor: '#ffffff' }] },
-            options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 9 } } }, datalabels: { color: '#fff', font: { weight: 'black', size: 10 }, formatter: v => v > 0 ? v : '', textAlign: 'center' } } }
+            data: {
+                labels,
+                datasets: [{ data: counts, backgroundColor: ['#3b82f6','#8b5cf6','#ec4899','#f97316','#6366f1','#14b8a6'], borderWidth: 4, borderColor: '#ffffff' }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '72%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 9 } } },
+                    datalabels: {
+                        color: '#fff', font: { weight: 'black', size: 10 }, textAlign: 'center',
+                        formatter: (v, ctx) => {
+                            const sum = ctx.chart.data.datasets[0].data.reduce((a,b) => a+b, 0);
+                            return v > 0 ? `${v}\n(${((v*100)/sum).toFixed(0)}%)` : '';
+                        }
+                    }
+                }
+            }
         });
     }
 
-    // FIX 3: Remark chart — นับจาก Remark field (รองรับ multi-value คั่นด้วย ", ")
+    // ── FIX 1: Remark chart → Horizontal Bar ──
     const ctxRemark = document.getElementById('remarkChart');
     if (ctxRemark) {
         const remarkMap = {};
         data.forEach(d => {
             if (!d.Remark) return;
-            // รองรับทั้ง single value และ multi-value คั่น ", "
-            const parts = d.Remark.split(',').map(r => r.trim()).filter(Boolean);
-            parts.forEach(r => { remarkMap[r] = (remarkMap[r] || 0) + 1; });
+            d.Remark.split(',').map(r => r.trim()).filter(Boolean)
+                .forEach(r => { remarkMap[r] = (remarkMap[r] || 0) + 1; });
         });
-        const colors = ['#a855f7','#7c3aed','#ec4899','#f43f5e','#f97316','#eab308','#06b6d4','#10b981','#6366f1','#64748b'];
+
         if (remarkChart) remarkChart.destroy();
+
         if (!Object.keys(remarkMap).length) {
-            // no data placeholder
-            ctxRemark.parentElement.innerHTML = `<div class="h-full flex items-center justify-center opacity-30 flex-col gap-2"><i class="fas fa-comment-slash text-3xl text-purple-300"></i><p class="text-xs font-bold text-slate-400 uppercase tracking-widest">ยังไม่มีข้อมูล Remark</p></div>`;
+            ctxRemark.parentElement.innerHTML = `<div class="h-full flex items-center justify-center opacity-30 flex-col gap-2">
+                <i class="fas fa-comment-slash text-3xl text-purple-300"></i>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">ยังไม่มีข้อมูล Remark</p>
+            </div>`;
         } else {
+            // เรียงจากมากไปน้อย
+            const sorted = Object.entries(remarkMap).sort((a,b) => b[1] - a[1]);
+            const labels = sorted.map(e => e[0]);
+            const values = sorted.map(e => e[1]);
+            const barColors = [
+                '#a855f7','#7c3aed','#ec4899','#f43f5e',
+                '#f97316','#eab308','#06b6d4','#10b981','#6366f1','#64748b'
+            ].slice(0, labels.length);
+
             remarkChart = new Chart(ctxRemark, {
-                type: 'doughnut',
+                type: 'bar',
                 data: {
-                    labels: Object.keys(remarkMap),
-                    datasets: [{ data: Object.values(remarkMap), backgroundColor: colors.slice(0, Object.keys(remarkMap).length), borderWidth: 4, borderColor: '#ffffff' }]
+                    labels,
+                    datasets: [{
+                        label: 'จำนวน',
+                        data: values,
+                        backgroundColor: barColors,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        barThickness: Math.max(14, Math.min(28, Math.floor(200 / labels.length)))
+                    }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '68%',
+                    indexAxis: 'y',   // horizontal bar
+                    responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 9 }, boxWidth: 8 } },
-                        datalabels: { color: '#fff', font: { weight: 'black', size: 10 }, formatter: (v, ctx) => { const sum = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0); return v > 0 ? `${v}\n(${((v*100)/sum).toFixed(0)}%)` : ''; }, textAlign: 'center' }
-                    }
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'end',
+                            color: '#475569',
+                            font: { weight: 'black', size: 11 },
+                            formatter: v => v
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(0,0,0,0.04)' },
+                            ticks: {
+                                font: { weight: 'bold', size: 10 },
+                                color: '#94a3b8',
+                                stepSize: 1,
+                                precision: 0
+                            },
+                            border: { display: false }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { weight: '700', size: 11 },
+                                color: '#334155'
+                            },
+                            border: { display: false }
+                        }
+                    },
+                    layout: { padding: { right: 24 } }
                 }
             });
         }
