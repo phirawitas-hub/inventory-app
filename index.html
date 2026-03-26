@@ -254,10 +254,80 @@
         }
         .remark-pill .pill-check { font-size: 10px; opacity: 0.8; }
 
+        /* ── Collapsible Sidebar ── */
+        #sidebar {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        width 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        opacity 0.3s ease;
+        }
+
+        /* Desktop: sidebar collapsed state */
+        #sidebar.sidebar-collapsed {
+            transform: translateX(-100%) !important;
+        }
+
+        /* Main shifts when sidebar open/closed on desktop */
+        /* mainContent shifts with sidebar on desktop */
+        @media (min-width: 768px) {
+            #mainContent {
+                transition: padding-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                padding-left: 288px; /* matches w-72 sidebar */
+            }
+            #mainContent.sidebar-closed {
+                padding-left: 0 !important;
+            }
+        }
+        @media (max-width: 767px) {
+            #mainContent { padding-left: 0; }
+        }
+
+        /* Floating toggle button — desktop only */
+        #sidebarToggleBtn {
+            position: fixed;
+            top: 28px;
+            left: 16px;
+            z-index: 80;
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+            display: none;          /* hidden until desktop */
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #334155;
+        }
+        #sidebarToggleBtn:hover {
+            background: #e63946;
+            color: white;
+            border-color: #e63946;
+            box-shadow: 0 4px 20px rgba(230,57,70,0.3);
+            transform: scale(1.05);
+        }
+        #sidebarToggleBtn:active { transform: scale(0.92); }
+
+        /* Button position transitions with sidebar */
+        @media (min-width: 768px) {
+            #sidebarToggleBtn.sidebar-open  { left: 300px; }
+            #sidebarToggleBtn.sidebar-closed { left: 16px; }
+        }
+        #sidebarToggleBtn {
+            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
+        }
+
+        /* Show toggle btn only on md+ */
+        @media (min-width: 768px) {
+            #sidebarToggleBtn { display: flex; }
+        }
+
         /* ── iPad portrait layout fix ── */
         @media (min-width: 768px) and (max-width: 1024px) {
-            /* sidebar shown → main has ml-72; shrink padding so form fits in remaining space */
-            main { padding: 16px 16px 40px 16px !important; }
+            /* sidebar shown → mainContent has padding-left 288px; keep inner padding tight */
+            main { padding: 14px 14px 40px 14px !important; }
 
             /* inventory form: never overflow the content area */
             #view-inventory {
@@ -434,6 +504,11 @@
     <div id="sidebarOverlay" onclick="toggleSidebar()"
         class="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm hidden transition-opacity opacity-0"></div>
 
+    <!-- Desktop Sidebar Toggle Floating Button -->
+    <button id="sidebarToggleBtn" class="sidebar-open" onclick="toggleDesktopSidebar()" title="แสดง/ซ่อนเมนู">
+        <i id="sidebarToggleIcon" class="fas fa-chevron-left text-sm"></i>
+    </button>
+
     <!-- Mobile Header -->
     <header class="md:hidden gradient-header text-white px-6 pt-8 pb-10 shadow-2xl sticky top-0 z-40 rounded-b-[40px]">
         <div class="flex items-start justify-between mb-8 w-full gap-2">
@@ -470,7 +545,27 @@
     </header>
 
     <!-- Main Content -->
-    <main class="md:ml-72 p-4 md:p-10 max-w-7xl mx-auto space-y-8">
+    <div id="mainContent" class="sidebar-open">
+    <!-- Desktop breadcrumb bar — visible only when sidebar is hidden -->
+    <div id="desktopBreadcrumb"
+        class="hidden md:hidden items-center gap-3 px-6 py-4 bg-white border-b border-slate-100 sticky top-0 z-30 shadow-sm">
+        <button onclick="toggleDesktopSidebar()"
+            class="flex items-center gap-2 text-slate-500 hover:text-red-500 transition-colors font-bold text-sm">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="text-slate-200 font-light">|</span>
+        <div class="flex items-center gap-2">
+            <img class="brand-logo-img hidden h-6 w-auto object-contain" src="">
+            <span class="brand-default-icon brand-name-text text-base font-black text-slate-700" style="font-family:'Pacifico',cursive;">Vespa</span>
+        </div>
+        <span class="text-slate-200 font-light">›</span>
+        <span id="breadcrumbCurrentPage" class="text-sm font-black text-red-500 uppercase tracking-wider">Dashboard</span>
+        <div class="ml-auto flex items-center gap-3">
+            <span class="text-xs font-bold text-slate-400 uppercase" id="breadcrumbUser"></span>
+        </div>
+    </div>
+
+    <main class="p-4 md:p-10 max-w-7xl mx-auto space-y-8 transition-all">
 
         <!-- VIEW: DASHBOARD -->
         <div id="view-dashboard" class="space-y-8 animate-view">
@@ -1067,6 +1162,8 @@
         </button>
     </nav>
 
+    </div><!-- /mainContent -->
+
 </div><!-- /mainApp -->
 
 
@@ -1592,15 +1689,81 @@ function switchView(view) {
         if (view === 'users')   { renderUserTable(); updateBrandUI(); }
         if (view === 'history')  loadHistoryLogs();
         if (view === 'profile')  loadProfileData();
+        updateBreadcrumb(view);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch(err) { console.error('switchView error:', err); }
 }
 
+// ─── Desktop sidebar collapse ───
+let desktopSidebarOpen = true;
+
+const PAGE_LABELS = {
+    dashboard : 'สรุปภาพรวม',
+    inventory : 'บันทึกสต็อก',
+    report    : 'รายการสินค้า',
+    history   : 'ประวัติการใช้งาน',
+    profile   : 'โปรไฟล์',
+    users     : 'จัดการผู้ใช้ & ตั้งค่า'
+};
+
+function updateBreadcrumb(view) {
+    const el = document.getElementById('breadcrumbCurrentPage');
+    if (el) el.innerText = PAGE_LABELS[view] || view;
+    const uEl = document.getElementById('breadcrumbUser');
+    if (uEl && currentUser) uEl.innerText = currentUser.name || '';
+}
+
+function toggleDesktopSidebar() {
+    desktopSidebarOpen = !desktopSidebarOpen;
+    const sidebar   = document.getElementById('sidebar');
+    const mainCont  = document.getElementById('mainContent');
+    const btn       = document.getElementById('sidebarToggleBtn');
+    const icon      = document.getElementById('sidebarToggleIcon');
+    const breadcrumb = document.getElementById('desktopBreadcrumb');
+
+    if (desktopSidebarOpen) {
+        sidebar.classList.remove('sidebar-collapsed');
+        mainCont.classList.remove('sidebar-closed');
+        mainCont.classList.add('sidebar-open');
+        btn.classList.remove('sidebar-closed');
+        btn.classList.add('sidebar-open');
+        icon.className = 'fas fa-chevron-left text-sm';
+        btn.title = 'ซ่อนเมนู';
+        // hide breadcrumb on desktop when sidebar visible
+        if (window.innerWidth >= 768) {
+            breadcrumb.classList.add('hidden');
+            breadcrumb.classList.remove('md:flex');
+        }
+    } else {
+        sidebar.classList.add('sidebar-collapsed');
+        mainCont.classList.remove('sidebar-open');
+        mainCont.classList.add('sidebar-closed');
+        btn.classList.remove('sidebar-open');
+        btn.classList.add('sidebar-closed');
+        icon.className = 'fas fa-bars text-sm';
+        btn.title = 'แสดงเมนู';
+        // show breadcrumb on desktop when sidebar hidden
+        if (window.innerWidth >= 768) {
+            breadcrumb.classList.remove('hidden');
+            breadcrumb.classList.add('flex');
+        }
+    }
+}
+
+// ─── Mobile sidebar toggle ───
 function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('-translate-x-full');
+    const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
-    overlay.classList.toggle('hidden');
-    setTimeout(() => overlay.classList.toggle('opacity-0'), 10);
+    const isOpen  = !sidebar.classList.contains('-translate-x-full');
+    if (isOpen) {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+        setTimeout(() => overlay.classList.add('opacity-0'), 10);
+    } else {
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+        setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+    }
 }
 
 // ─────────────────────────────────────────
