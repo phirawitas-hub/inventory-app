@@ -1512,6 +1512,8 @@ function startScanner(target) {
     document.getElementById('scanTargetLabel').innerText = labelMap[target] || target;
     document.getElementById('scannerModal').classList.add('active');
     showScanState('loading');
+    // reset iOS confidence gate state
+    lastCandidateText = ''; lastCandidateTime = 0; candidateCount = 0; frameSkip = 0;
     requestCameraAndScan();
 }
 
@@ -1555,9 +1557,27 @@ async function scanFromPhoto(event) {
         const canvas = document.createElement('canvas'); canvas.width = bitmap.width; canvas.height = bitmap.height;
         const ctx = canvas.getContext('2d'); ctx.drawImage(bitmap, 0, 0); bitmap.close();
         let scannedText = null;
-        if (barcodeDetector) { try { const barcodes = await barcodeDetector.detect(canvas); if (barcodes.length > 0) scannedText = barcodes[0].rawValue.trim(); } catch(e) {} }
-        if (!scannedText) { scannedText = await decodeWithQuagga(canvas); if (scannedText) scannedText = scannedText.trim(); }
-        if (!scannedText && typeof jsQR !== 'undefined') { const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' }); if (code && code.data) scannedText = code.data.trim(); }
+
+        // 1) BarcodeDetector (Android/Chrome)
+        if (barcodeDetector) {
+            try {
+                const barcodes = await barcodeDetector.detect(canvas);
+                if (barcodes.length > 0) scannedText = barcodes[0].rawValue.trim();
+            } catch(e) {}
+        }
+
+        // 2) Quagga2 multi-angle (iOS FIX — รองรับบาร์โค้ดหมุน 90°)
+        if (!scannedText && typeof Quagga !== 'undefined') {
+            scannedText = await decodeWithQuaggaMultiAngle(canvas);
+        }
+
+        // 3) jsQR fallback (QR Code)
+        if (!scannedText && typeof jsQR !== 'undefined') {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height,
+                              { inversionAttempts: 'attemptBoth' });
+            if (code && code.data) scannedText = code.data.trim();
+        }
         if (processing) { processing.classList.add('hidden'); processing.classList.remove('flex'); }
         if (scannedText) {
             stopScanner();
@@ -1578,63 +1598,231 @@ async function scanFromPhoto(event) {
 
 async function initBarcodeDetector() {
     if (barcodeDetector) return true;
+    // BarcodeDetector: Android/Chrome เท่านั้น — iOS Safari ไม่มี
     if ('BarcodeDetector' in window) {
-        try { barcodeDetector = new BarcodeDetector({ formats: ['qr_code','code_128','code_39','code_93','ean_13','ean_8','upc_a','upc_e','data_matrix','pdf417','aztec','itf','codabar'] }); return true; } catch(e) {}
+        try {
+            barcodeDetector = new BarcodeDetector({
+                formats: ['qr_code','code_128','code_39','code_93',
+                          'ean_13','ean_8','upc_a','upc_e',
+                          'data_matrix','pdf417','aztec','itf','codabar']
+            });
+            return true;
+        } catch(e) {}
     }
     return false;
 }
 
+// ── iOS FIX: สร้าง canvas หมุน 4 ทิศ (0°, 90°, 180°, 270°) ──
+function getRotatedCanvases(srcCanvas) {
+    const w = srcCanvas.width, h = srcCanvas.height;
+    const rotations = [
+        { angle: 0,   cw: w, ch: h },
+        { angle: 90,  cw: h, ch: w },
+        { angle: 180, cw: w, ch: h },
+        { angle: 270, cw: h, ch: w }
+    ];
+    return rotations.map(r => {
+        const c   = document.createElement('canvas');
+        c.width   = r.cw; c.height = r.ch;
+        const ctx = c.getContext('2d');
+        ctx.translate(r.cw / 2, r.ch / 2);
+        ctx.rotate(r.angle * Math.PI / 180);
+        ctx.drawImage(srcCanvas, -w / 2, -h / 2);
+        return c;
+    });
+}
+
+// ── Quagga2 decode — ลอง canvas ที่ส่งมาโดยตรง ──
 function decodeWithQuagga(canvas) {
     return new Promise((resolve) => {
         if (typeof Quagga === 'undefined') { resolve(null); return; }
         try {
-            Quagga.decodeSingle({ decoder: { readers: ['code_128_reader','ean_reader','ean_8_reader','code_39_reader','upc_reader','codabar_reader','i2of5_reader'] }, locate: true, src: canvas.toDataURL('image/png') }, result => { if (result && result.codeResult) resolve(result.codeResult.code); else resolve(null); });
+            Quagga.decodeSingle({
+                decoder: {
+                    readers: [
+                        'code_128_reader', 'ean_reader', 'ean_8_reader',
+                        'code_39_reader',  'upc_reader', 'codabar_reader', 'i2of5_reader'
+                    ],
+                    multiple: false
+                },
+                locate   : true,
+                patchSize: 'medium',   // medium อ่าน Code128 บน iOS ดีกว่า large
+                halfSample: false,
+                src: canvas.toDataURL('image/png')
+            }, result => {
+                if (result && result.codeResult && result.codeResult.code) {
+                    resolve(result.codeResult.code.trim());
+                } else {
+                    resolve(null);
+                }
+            });
         } catch(e) { resolve(null); }
     });
 }
 
+// ── iOS FIX: ลอง decode หลายมุมหมุน + หลาย crop ──
+async function decodeWithQuaggaMultiAngle(srcCanvas) {
+    // 1) ลองตรงๆ ก่อน
+    let result = await decodeWithQuagga(srcCanvas);
+    if (result) return result;
+
+    // 2) ลอง 90°, 180°, 270°
+    const rotated = getRotatedCanvases(srcCanvas);
+    for (let i = 1; i < rotated.length; i++) {
+        result = await decodeWithQuagga(rotated[i]);
+        if (result) return result;
+    }
+
+    // 3) ลอง crop กลางภาพ (บาร์โค้ดมักอยู่ตรงกลาง)
+    const cw = Math.floor(srcCanvas.width  * 0.7);
+    const ch = Math.floor(srcCanvas.height * 0.7);
+    const cx = Math.floor((srcCanvas.width  - cw) / 2);
+    const cy = Math.floor((srcCanvas.height - ch) / 2);
+    const cropped = document.createElement('canvas');
+    cropped.width  = cw; cropped.height = ch;
+    cropped.getContext('2d').drawImage(srcCanvas, cx, cy, cw, ch, 0, 0, cw, ch);
+
+    result = await decodeWithQuagga(cropped);
+    if (result) return result;
+
+    // 4) ลอง crop หมุน 90°
+    const croppedRotated = getRotatedCanvases(cropped);
+    for (let i = 1; i <= 1; i++) {     // 90° เท่านั้น (บาร์โค้ดในภาพนี้เป็นแนวตั้ง)
+        result = await decodeWithQuagga(croppedRotated[i]);
+        if (result) return result;
+    }
+
+    return null;
+}
+
+// ── Confidence gate: ต้องได้ผลเดิม 2 ครั้งติดกันก่อน confirm (ป้องกันเด้งผิด) ──
+let lastCandidateText = '';
+let lastCandidateTime = 0;
+let candidateCount    = 0;
+const CONFIRM_THRESHOLD = 2;    // ต้องเห็น 2 ครั้งภายใน 1.5 วิ
+const CONFIRM_WINDOW_MS = 1500;
+
+function tryConfirmCandidate(text) {
+    const now = Date.now();
+    const clean = text.trim();
+    if (!clean) return;
+
+    if (clean === lastCandidateText && (now - lastCandidateTime) < CONFIRM_WINDOW_MS) {
+        candidateCount++;
+    } else {
+        // result เปลี่ยน หรือ timeout → reset
+        lastCandidateText = clean;
+        lastCandidateTime = now;
+        candidateCount    = 1;
+    }
+
+    // อัปเดต status bar ให้ผู้ใช้เห็น progress
+    const statusEl = document.getElementById('scannerStatus');
+    if (statusEl) {
+        if (candidateCount < CONFIRM_THRESHOLD) {
+            statusEl.innerText = `กำลังยืนยัน… (${candidateCount}/${CONFIRM_THRESHOLD})`;
+        }
+    }
+
+    if (candidateCount >= CONFIRM_THRESHOLD) {
+        // reset ก่อน confirm เพื่อป้องกัน double-fire
+        lastCandidateText = ''; candidateCount = 0;
+        onScanSuccess(clean);
+    }
+}
+
 let quaggaProcessing = false;
+let frameSkip        = 0;   // iOS: ข้าม frame เพื่อประหยัด CPU
 
 async function scanLoopBD(video) {
     if (!scannerActive) return;
     if (video.readyState < 2) { scannerRAF = requestAnimationFrame(() => scanLoopBD(video)); return; }
+
     try {
         if (barcodeDetector) {
+            // ── Android / Chrome path ──
             const barcodes = await barcodeDetector.detect(video);
-            if (barcodes.length > 0) { const now = Date.now(); if (now - lastDetectedTime > 1500) { lastDetectedTime = now; onScanSuccess(barcodes[0].rawValue); return; } }
+            if (barcodes.length > 0) {
+                tryConfirmCandidate(barcodes[0].rawValue);
+            }
         } else {
-            const canvas = document.createElement('canvas'); canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
-            const ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // ── iOS / Safari path: Quagga2 + jsQR ──
+            // ข้าม frame เพื่อไม่ให้ Quagga รัน 60fps (ทำให้ผลพลิกไปมา)
+            frameSkip++;
+            if (frameSkip % 4 !== 0) {          // ประมวลผล ~15fps แทน 60fps
+                scannerRAF = requestAnimationFrame(() => scanLoopBD(video));
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width  = video.videoWidth  || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // 1) Quagga2 — หลายมุมหมุน (iOS FIX หลัก)
             if (!quaggaProcessing && typeof Quagga !== 'undefined') {
                 quaggaProcessing = true;
-                const quaggaResult = await decodeWithQuagga(canvas); quaggaProcessing = false;
-                if (quaggaResult) { const now = Date.now(); if (now - lastDetectedTime > 1500) { lastDetectedTime = now; onScanSuccess(quaggaResult); return; } }
+                const qResult = await decodeWithQuaggaMultiAngle(canvas);
+                quaggaProcessing = false;
+                if (qResult) {
+                    tryConfirmCandidate(qResult);
+                    scannerRAF = requestAnimationFrame(() => scanLoopBD(video));
+                    return;
+                }
             }
+
+            // 2) jsQR fallback (QR Code)
             if (typeof jsQR !== 'undefined') {
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
-                if (code && code.data) { const now = Date.now(); if (now - lastDetectedTime > 1500) { lastDetectedTime = now; onScanSuccess(code.data); return; } }
+                const code = jsQR(imageData.data, imageData.width, imageData.height,
+                                  { inversionAttempts: 'attemptBoth' });
+                if (code && code.data) {
+                    tryConfirmCandidate(code.data);
+                    scannerRAF = requestAnimationFrame(() => scanLoopBD(video));
+                    return;
+                }
             }
         }
-    } catch(e) {}
+    } catch(e) { /* silent */ }
+
     scannerRAF = requestAnimationFrame(() => scanLoopBD(video));
 }
 
 function onScanSuccess(text) {
+    if (!scannerActive) return;   // guard ป้องกัน double-fire
     const flash = document.getElementById('scanFlash');
     if (flash) { flash.classList.add('scan-success-flash'); setTimeout(() => flash.classList.remove('scan-success-flash'), 500); }
-    try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(), gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.value = 1200; osc.type = 'sine'; gain.gain.setValueAtTime(0.3, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15); osc.start(); osc.stop(ctx.currentTime + 0.15); } catch(e) {}
-    document.getElementById('scannerStatus').innerText = '✅ สแกนเจอแล้ว!';
+    try {
+        const actx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = actx.createOscillator(), gain = actx.createGain();
+        osc.connect(gain); gain.connect(actx.destination);
+        osc.frequency.value = 1200; osc.type = 'sine';
+        gain.gain.setValueAtTime(0.3, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.15);
+        osc.start(); osc.stop(actx.currentTime + 0.15);
+    } catch(e) {}
+
+    document.getElementById('scannerStatus').innerText = '✅ สแกนสำเร็จ!';
+    frameSkip = 0;   // reset frame counter
+
     setTimeout(() => {
         stopScanner();
         const val = text.trim();
         const elem = document.getElementById(currentScanTarget);
-        if (elem) { elem.value = val; elem.dispatchEvent(new Event('input', { bubbles: true })); elem.dispatchEvent(new Event('change', { bubbles: true })); elem.style.transition = 'box-shadow 0.2s'; elem.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.45)'; setTimeout(() => { elem.style.boxShadow = ''; }, 1200); }
-        if (currentScanTarget === 'Item') checkItemInfo(val);
-        if (currentScanTarget === 'LicensePlate') document.getElementById('charCount').innerText = val.length;
-        if (currentScanTarget === 'searchInput') filterItems();
+        if (elem) {
+            elem.value = val;
+            elem.dispatchEvent(new Event('input',  { bubbles: true }));
+            elem.dispatchEvent(new Event('change', { bubbles: true }));
+            elem.style.transition = 'box-shadow 0.2s';
+            elem.style.boxShadow  = '0 0 0 3px rgba(16,185,129,0.45)';
+            setTimeout(() => { elem.style.boxShadow = ''; }, 1200);
+        }
+        if (currentScanTarget === 'Item')          checkItemInfo(val);
+        if (currentScanTarget === 'LicensePlate')  document.getElementById('charCount').innerText = val.length;
+        if (currentScanTarget === 'searchInput')   filterItems();
         if (currentScanTarget === 'histFilterItem' || currentScanTarget === 'histFilterLoc') filterHistoryLogs();
-    }, 400);
+    }, 350);
 }
 
 async function stopScannerStream() {
