@@ -26,6 +26,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.min.js"></script>
 
     <style>
@@ -674,6 +675,59 @@
                     </div>
                 </div>
                 <div class="chart-container" style="height:220px;"><canvas id="solutionChart"></canvas></div>
+            </div>
+
+            <!-- Dashboard Export / Share row -->
+            <div class="flex flex-col sm:flex-row gap-4 pb-4" id="dashShareRow">
+                <!-- Screenshot → Share to LINE -->
+                <button onclick="shareDashboardToLine()"
+                    class="flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-black text-sm transition-all active:scale-[0.97]
+                           bg-[#06C755] hover:bg-[#05b04b] text-white shadow-lg shadow-green-200">
+                    <i class="fab fa-line text-xl"></i>
+                    <span>แชร์ Dashboard → LINE</span>
+                </button>
+
+                <!-- Export Dashboard PDF -->
+                <button onclick="exportDashboardPDF()"
+                    class="flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-black text-sm transition-all active:scale-[0.97]
+                           bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-200">
+                    <i class="fas fa-file-pdf text-xl"></i>
+                    <span>Export Dashboard PDF</span>
+                </button>
+            </div>
+
+            <!-- Screenshot preview modal -->
+            <div id="screenshotModal" class="hidden fixed inset-0 z-[3000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onclick="closeScreenshotModal(event)">
+                <div class="bg-white rounded-[32px] overflow-hidden shadow-2xl max-w-2xl w-full" onclick="event.stopPropagation()">
+                    <div class="p-5 flex justify-between items-center border-b border-slate-100">
+                        <div>
+                            <h3 class="font-black text-slate-800 text-lg">พรีวิว Dashboard</h3>
+                            <p class="text-xs text-slate-400 font-bold mt-0.5">กดบันทึกรูปแล้วส่งใน LINE ได้เลย</p>
+                        </div>
+                        <button onclick="document.getElementById('screenshotModal').classList.add('hidden')"
+                            class="w-9 h-9 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                            <i class="fas fa-times text-sm"></i>
+                        </button>
+                    </div>
+                    <div class="p-4 bg-slate-50">
+                        <img id="screenshotPreview" src="" class="w-full rounded-2xl shadow-sm border border-slate-200">
+                    </div>
+                    <div class="p-5 flex gap-3">
+                        <!-- Save image (download) -->
+                        <a id="screenshotDownloadBtn" href="#" download="dashboard.png"
+                            class="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-800 text-white rounded-2xl font-black text-sm active:scale-95 transition-all">
+                            <i class="fas fa-download"></i> บันทึกรูป
+                        </a>
+                        <!-- Native share (iOS/Android) -->
+                        <button onclick="nativeShareScreenshot()"
+                            class="flex-1 flex items-center justify-center gap-2 py-3 bg-[#06C755] text-white rounded-2xl font-black text-sm active:scale-95 transition-all">
+                            <i class="fab fa-line"></i> แชร์ไป LINE
+                        </button>
+                    </div>
+                    <p class="text-center text-[10px] text-slate-400 font-bold pb-4 uppercase tracking-widest">
+                        iOS: กดค้างที่รูป → บันทึก / แชร์ ก็ได้เช่นกัน
+                    </p>
+                </div>
             </div>
         </div>
 
@@ -2706,6 +2760,242 @@ function renderStatusListView() {
 
     const footerEl = document.getElementById('statusListFooter');
     if (footerEl) footerEl.innerText = `แสดง ${Math.min(filtered.length, filtered.length)} จาก ${inventoryData.length} รายการทั้งหมด`;
+}
+
+// ─────────────────────────────────────────
+//  DASHBOARD SHARE / EXPORT
+// ─────────────────────────────────────────
+
+let screenshotBlob = null;
+
+async function captureDashboard() {
+    // Elements to temporarily hide during capture
+    const hideEls = [
+        document.getElementById('dashShareRow'),
+        document.getElementById('screenshotModal'),
+        document.querySelector('#sidebarToggleBtn'),
+        document.querySelector('nav.md\\:hidden')   // mobile bottom nav
+    ];
+
+    // Store original styles
+    hideEls.forEach(el => { if (el) el.style.visibility = 'hidden'; });
+
+    const dashEl = document.getElementById('view-dashboard');
+    if (!dashEl) { hideEls.forEach(el => { if (el) el.style.visibility = ''; }); return null; }
+
+    try {
+        const canvas = await html2canvas(dashEl, {
+            scale          : 2,
+            useCORS        : true,
+            allowTaint     : true,
+            backgroundColor: '#f1f5f9',
+            scrollY        : -window.scrollY,
+            windowWidth    : dashEl.scrollWidth,
+            logging        : false,
+            ignoreElements : (el) => el.id === 'dashShareRow' || el.id === 'screenshotModal'
+        });
+        return canvas;
+    } finally {
+        hideEls.forEach(el => { if (el) el.style.visibility = ''; });
+    }
+}
+
+async function shareDashboardToLine() {
+    const btn = document.querySelector('button[onclick="shareDashboardToLine()"]');
+    const origHtml = btn?.innerHTML;
+    if (btn) { btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังสร้างรูป...'; btn.disabled = true; }
+
+    try {
+        const canvas = await captureDashboard();
+        if (!canvas) throw new Error('ไม่สามารถ capture ได้');
+
+        const dataURL = canvas.toDataURL('image/png', 1.0);
+
+        // Show preview modal
+        const previewImg  = document.getElementById('screenshotPreview');
+        const downloadBtn = document.getElementById('screenshotDownloadBtn');
+        const modal       = document.getElementById('screenshotModal');
+
+        previewImg.src   = dataURL;
+        downloadBtn.href = dataURL;
+
+        // Store blob for native share
+        canvas.toBlob(blob => { screenshotBlob = blob; }, 'image/png', 1.0);
+
+        modal.classList.remove('hidden');
+    } catch(err) {
+        Swal.fire({ icon: 'error', title: 'ไม่สามารถสร้างรูปได้', text: err.message, customClass: { popup: 'rounded-[32px]' } });
+    } finally {
+        if (btn) { btn.innerHTML = origHtml; btn.disabled = false; }
+    }
+}
+
+async function nativeShareScreenshot() {
+    // Web Share API — iOS Safari + Android Chrome รองรับ
+    if (!screenshotBlob) {
+        // fallback: regenerate
+        const canvas = await captureDashboard();
+        canvas.toBlob(async blob => {
+            screenshotBlob = blob;
+            await doNativeShare();
+        }, 'image/png', 1.0);
+        return;
+    }
+    await doNativeShare();
+}
+
+async function doNativeShare() {
+    const appN = globalAppName || 'Vespa Stock';
+    const file = new File([screenshotBlob], 'dashboard.png', { type: 'image/png' });
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({
+                title : `${appN} — Dashboard`,
+                text  : `รายงาน Dashboard จาก ${appN}`,
+                files : [file]
+            });
+        } catch(err) {
+            if (err.name !== 'AbortError') {
+                Swal.fire({ icon: 'info', title: 'ใช้ปุ่ม "บันทึกรูป" แทน', text: 'แชร์ไฟล์โดยตรงไม่รองรับใน browser นี้', customClass: { popup: 'rounded-[32px]' } });
+            }
+        }
+    } else {
+        // Fallback: trigger download
+        const a = document.createElement('a');
+        a.href     = URL.createObjectURL(screenshotBlob);
+        a.download = 'dashboard.png';
+        a.click();
+        Swal.fire({ icon: 'success', title: 'บันทึกรูปแล้ว!', text: 'นำรูปไปแชร์ใน LINE ได้เลยครับ', timer: 2000, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
+    }
+}
+
+function closeScreenshotModal(e) {
+    if (e && e.target !== document.getElementById('screenshotModal')) return;
+    document.getElementById('screenshotModal').classList.add('hidden');
+}
+
+async function exportDashboardPDF() {
+    const btn = document.querySelector('button[onclick="exportDashboardPDF()"]');
+    const origHtml = btn?.innerHTML;
+    if (btn) { btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังสร้าง PDF...'; btn.disabled = true; }
+
+    const appN    = globalAppName || 'Vespa Stock';
+    const dateStr = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    // Build a dedicated print-ready div for the dashboard summary
+    const loc    = document.getElementById('statLoc')?.innerText   || '0';
+    const items  = document.getElementById('statItem')?.innerText  || '0';
+    const qty    = document.getElementById('statWork')?.innerText  || '0';
+    const inTxt  = document.getElementById('solutionInCount')?.innerText  || '0';
+    const outTxt = document.getElementById('solutionOutCount')?.innerText || '0';
+    const logoHtml = globalAppLogo ? `<img src="${globalAppLogo}" style="max-height:48px;border-radius:8px;object-fit:contain;margin-right:14px;">` : '';
+
+    // Capture charts as images
+    let statusImg = '', typeImg = '', remarkImg = '', solutionImg = '';
+    try {
+        const sc = document.getElementById('statusChart');
+        if (sc) statusImg = sc.toDataURL('image/png');
+        const tc = document.getElementById('typeChart');
+        if (tc) typeImg   = tc.toDataURL('image/png');
+        const rc = document.getElementById('remarkChart');
+        if (rc) remarkImg = rc.toDataURL('image/png');
+        const sol = document.getElementById('solutionChart');
+        if (sol) solutionImg = sol.toDataURL('image/png');
+    } catch(e) {}
+
+    const chartCard = (title, imgSrc, icon, color) => `
+        <div style="background:#fff;border-radius:16px;padding:20px;border:1px solid #e2e8f0;flex:1;min-width:200px;">
+            <div style="font-size:11px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+                <span style="width:28px;height:28px;border-radius:8px;background:${color}20;color:${color};display:inline-flex;align-items:center;justify-content:center;font-size:12px;">
+                    <i class="${icon}"></i>
+                </span>${title}
+            </div>
+            ${imgSrc ? `<img src="${imgSrc}" style="width:100%;height:180px;object-fit:contain;">` : '<div style="height:180px;background:#f8fafc;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#cbd5e1;">No data</div>'}
+        </div>`;
+
+    const html = `
+    <div style="width:260mm;padding:16mm 20mm;box-sizing:border-box;background:white;font-family:'Kanit',sans-serif;color:#334155;">
+        <!-- Header -->
+        <div style="background:#1e293b;padding:20px 28px;border-radius:12px 12px 0 0;border-bottom:5px solid #e63946;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+            <div style="display:flex;align-items:center;color:white;">
+                ${logoHtml}
+                <div>
+                    <div style="font-size:26px;font-weight:900;font-family:'Pacifico',cursive;">${appN}</div>
+                    <div style="font-size:12px;opacity:0.7;font-weight:700;text-transform:uppercase;letter-spacing:2px;">Dashboard Report</div>
+                </div>
+            </div>
+            <div style="text-align:right;color:white;">
+                <div style="font-size:11px;opacity:0.6;font-weight:700;margin-bottom:4px;">Generated</div>
+                <div style="font-size:14px;font-weight:700;">${dateStr}</div>
+            </div>
+        </div>
+
+        <!-- Stats row -->
+        <div style="display:flex;gap:16px;margin-bottom:20px;">
+            <div style="flex:1;background:#eff6ff;border-radius:16px;padding:20px;border:1px solid #bfdbfe;">
+                <div style="font-size:10px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">📍 Location</div>
+                <div style="font-size:42px;font-weight:900;color:#1e293b;">${loc}</div>
+            </div>
+            <div style="flex:1;background:#fff7ed;border-radius:16px;padding:20px;border:1px solid #fed7aa;">
+                <div style="font-size:10px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">📦 Item Code</div>
+                <div style="font-size:42px;font-weight:900;color:#1e293b;">${items}</div>
+            </div>
+            <div style="flex:2;background:linear-gradient(135deg,#e63946,#dc2626);border-radius:16px;padding:20px;">
+                <div style="font-size:10px;font-weight:900;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">📊 Quantity</div>
+                <div style="font-size:42px;font-weight:900;color:white;">${qty}</div>
+            </div>
+            <div style="flex:2;background:linear-gradient(135deg,#10b981,#059669);border-radius:16px;padding:20px;">
+                <div style="font-size:10px;font-weight:900;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">✅ Solution</div>
+                <div style="font-size:15px;font-weight:900;color:white;margin-top:8px;">มีในระบบ: ${inTxt}</div>
+                <div style="font-size:15px;font-weight:900;color:rgba(255,255,255,0.8);margin-top:4px;">ไม่มี: ${outTxt}</div>
+            </div>
+        </div>
+
+        <!-- Charts 3-col -->
+        <div style="display:flex;gap:16px;margin-bottom:20px;">
+            ${chartCard('Inventory Status', statusImg,  'fas fa-chart-pie', '#3b82f6')}
+            ${chartCard('Product Types',    typeImg,    'fas fa-tags',      '#f97316')}
+            ${chartCard('Issue',            remarkImg,  'fas fa-comment-alt','#a855f7')}
+        </div>
+
+        <!-- Solution chart full width -->
+        <div style="background:#fff;border-radius:16px;padding:20px;border:1px solid #e2e8f0;margin-bottom:16px;">
+            <div style="font-size:11px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">✔ Solution Overview</div>
+            ${solutionImg ? `<img src="${solutionImg}" style="width:100%;height:120px;object-fit:contain;">` : ''}
+        </div>
+
+        <div style="text-align:center;font-size:10px;color:#cbd5e1;font-weight:700;">Generated by ${appN} — Inventory Pro</div>
+    </div>`;
+
+    const pdfContainer = document.getElementById('pdf-container');
+    pdfContainer.innerHTML = html;
+    document.getElementById('mainApp').classList.add('hidden');
+    pdfContainer.style.display = 'block';
+
+    const fileName = `${appN.replace(/\s+/g,'_')}_Dashboard_${Date.now()}.pdf`;
+    Swal.fire({ title: 'กำลังสร้าง PDF...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    setTimeout(() => {
+        html2pdf().set({
+            margin      : 0,
+            filename    : fileName,
+            image       : { type: 'jpeg', quality: 0.98 },
+            html2canvas : { scale: 2, useCORS: true, logging: false, scrollY: 0 },
+            jsPDF       : { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        }).from(pdfContainer).save().then(() => {
+            Swal.close();
+            pdfContainer.innerHTML = '';
+            pdfContainer.style.display = 'none';
+            document.getElementById('mainApp').classList.remove('hidden');
+            if (btn) { btn.innerHTML = origHtml; btn.disabled = false; }
+        }).catch(err => {
+            Swal.fire('Error', 'PDF failed: ' + err.message, 'error');
+            pdfContainer.style.display = 'none';
+            document.getElementById('mainApp').classList.remove('hidden');
+            if (btn) { btn.innerHTML = origHtml; btn.disabled = false; }
+        });
+    }, 800);
 }
 
 function filterHistoryLogs() { renderHistoryLogs(); }
