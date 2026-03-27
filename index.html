@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Inventory Pro</title>
 
+    <!-- Open Graph / LINE Share Preview -->
+    <meta property="og:type"        content="website">
+    <meta property="og:title"       content="Vespa Stock — Inventory System">
+    <meta property="og:description" content="ระบบจัดการสต็อกสินค้า Vespa Stock">
+    <meta property="og:image"       content="https://placehold.co/1200x630/e63946/ffffff?text=Vespa+Stock+Inventory">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="theme-color"        content="#e63946">
+
+    <!-- iOS Web App -->
+    <meta name="apple-mobile-web-app-capable"          content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title"            content="Vespa Stock">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1443,14 +1457,46 @@ function initApp() {
 
 function forceExitLoader() {
     document.getElementById('loader').classList.add('hidden');
-    document.getElementById('loginScreen').classList.remove('hidden');
+    // ยังไม่แสดง loginScreen ทันที — รอ users โหลดก่อน (แก้ race condition)
+    showLoginAfterUsersLoad();
 }
 
-async function loadDataInBackground() {
+async function showLoginAfterUsersLoad() {
+    // แสดง loader spinner เบาๆ ระหว่างรอ (max 3 วิ)
+    const loader    = document.getElementById('loader');
+    const loaderTxt = document.getElementById('loaderText');
+    const loginScr  = document.getElementById('loginScreen');
+
+    // แสดง loader พร้อมข้อความ
+    if (loader)    loader.classList.remove('hidden');
+    if (loaderTxt) loaderTxt.innerText = 'กำลังโหลดข้อมูลผู้ใช้...';
+
+    const MAX_WAIT = 4000;
+    const t0 = Date.now();
+
     try {
-        const users = await gasCall('getAppUsers');
-        if (Array.isArray(users) && users.length > 0) appUsers = users;
-    } catch(e) {}
+        // โหลด users ก่อน login เสมอ — ป้องกัน race condition
+        const usersResult = await Promise.race([
+            gasCall('getAppUsers'),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), MAX_WAIT))
+        ]);
+        if (Array.isArray(usersResult) && usersResult.length > 0) {
+            appUsers = usersResult;
+        }
+    } catch(e) {
+        // timeout หรือ network error → ใช้ default appUsers ต่อไป
+        console.log('Users load timeout/error — using defaults');
+    }
+
+    // โหลด settings (non-blocking)
+    loadAppSettings();
+
+    // แสดง login form
+    if (loader)   loader.classList.add('hidden');
+    if (loginScr) loginScr.classList.remove('hidden');
+}
+
+async function loadAppSettings() {
     try {
         const settings = await gasCall('getAppSettings');
         if (settings && typeof settings === 'object') {
@@ -1458,6 +1504,14 @@ async function loadDataInBackground() {
             if (settings.appName) { globalAppName = settings.appName; try { localStorage.setItem('vespaAppName', globalAppName); } catch(e) {} }
             updateBrandUI();
         }
+    } catch(e) {}
+}
+
+async function loadDataInBackground() {
+    // ฟังก์ชันนี้ถูกเรียกหลัง login แล้ว — reload users ถ้าจำเป็น
+    try {
+        const users = await gasCall('getAppUsers');
+        if (Array.isArray(users) && users.length > 0) appUsers = users;
     } catch(e) {}
 }
 
@@ -2414,8 +2468,8 @@ function updateCharts(data) {
         const outRec   = solMap['ไม่มีในระบบ'] ? solMap['ไม่มีในระบบ'].records : 0;
         const inEl  = document.getElementById('solutionInCount');
         const outEl = document.getElementById('solutionOutCount');
-        if (inEl)  inEl.innerText  = `${inItems} items / ${inRec} งาน`;
-        if (outEl) outEl.innerText = `${outItems} items / ${outRec} งาน`;
+        if (inEl)  inEl.innerText  = `${inItems} items / ${inRec} Pcs`;
+        if (outEl) outEl.innerText = `${outItems} items / ${outRec} Pcs`;
 
         // Colour map
         const colorMap = {
@@ -2456,7 +2510,7 @@ function updateCharts(data) {
                         formatter: (v, ctx) => {
                             const pct  = total > 0 ? ((v / total) * 100).toFixed(0) : 0;
                             const rec  = records[ctx.dataIndex] || 0;
-                            return v > 0 ? `${v} items (${pct}%)   |   ${rec} งาน` : '';
+                            return v > 0 ? `${v} items (${pct}%)   |   ${rec} Pcs` : '';
                         }
                     },
                     tooltip: {
@@ -2464,7 +2518,7 @@ function updateCharts(data) {
                             label: (ctx) => {
                                 const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0;
                                 const rec = records[ctx.dataIndex] || 0;
-                                return [` ${ctx.raw} unique items (${pct}%)`, ` ${rec} งาน (records)`];
+                                return [` ${ctx.raw} unique items (${pct}%)`, ` ${rec} Pcs`];
                             }
                         }
                     }
