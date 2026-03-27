@@ -485,6 +485,10 @@
                     class="hidden sidebar-item w-full flex items-center gap-5 px-6 py-4 rounded-2xl transition-all font-semibold text-slate-400 hover:bg-slate-50 text-left">
                     <i class="fas fa-cog text-lg"></i><span>จัดการผู้ใช้ & ตั้งค่า</span>
                 </button>
+                <button onclick="switchView('statuslist')" id="side-statuslist"
+                    class="sidebar-item w-full flex items-center gap-5 px-6 py-4 rounded-2xl transition-all font-semibold text-slate-400 hover:bg-slate-50 text-left">
+                    <i class="fas fa-clipboard-check text-lg"></i><span>ตรวจสอบสถานะ</span>
+                </button>
             </nav>
             <div class="mt-auto pt-6 border-t border-slate-100 flex items-center gap-4">
                 <div class="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-200 overflow-hidden shadow-sm flex-shrink-0">
@@ -637,39 +641,25 @@
                 </div>
             </div>
 
+            <!-- Solution Chart -->
             <div class="glass-card p-8 overflow-hidden">
-                <div class="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
-                    <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider flex items-center gap-3 self-start sm:self-center">
-                        <span class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shadow-sm"><i class="fas fa-clipboard-check"></i></span>
-                        ตรวจสอบสถานะสินค้า (Status List)
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+                    <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider flex items-center gap-3">
+                        <span class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm">
+                            <i class="fas fa-check-double"></i>
+                        </span>
+                        Solution Overview
                     </h4>
-                    <div class="relative w-full sm:w-auto">
-                        <select id="actionFilter" onchange="filterActionTable()"
-                            class="w-full sm:w-56 pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-50 appearance-none cursor-pointer">
-                            <option value="Issue">⚠️ ต้องตรวจสอบ (Damage/QC/Disposal)</option>
-                            <option value="All">📋 ทั้งหมด (All)</option>
-                            <option value="Good">🟢 ปกติ (Good)</option>
-                            <option value="Damage">🔴 เสียหาย (Damage)</option>
-                            <option value="QC">🟡 รอตรวจสอบ (QC)</option>
-                            <option value="Disposal">⚫ จำหน่ายออก (Disposal)</option>
-                        </select>
-                        <i class="fas fa-filter absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs"></i>
+                    <div class="flex items-center gap-3">
+                        <span id="solutionSummaryIn"  class="flex items-center gap-2 text-xs font-black px-4 py-2 bg-green-50  text-green-700  rounded-xl border border-green-100">
+                            <i class="fas fa-check-circle"></i> <span id="solutionInCount">0</span> มีในระบบ
+                        </span>
+                        <span id="solutionSummaryOut" class="flex items-center gap-2 text-xs font-black px-4 py-2 bg-red-50    text-red-700    rounded-xl border border-red-100">
+                            <i class="fas fa-times-circle"></i> <span id="solutionOutCount">0</span> ไม่มีในระบบ
+                        </span>
                     </div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="text-[10px] text-slate-400 border-b border-slate-100 uppercase font-black tracking-widest">
-                                <th class="pb-4 pl-2 w-20 text-center">Image</th>
-                                <th class="pb-4 px-4">Item Details</th>
-                                <th class="pb-4">Status</th>
-                                <th class="pb-4">Location</th>
-                                <th class="pb-4 text-right pr-4">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="actionList" class="text-sm text-slate-600 divide-y divide-slate-50"></tbody>
-                    </table>
-                </div>
+                <div class="chart-container" style="height:220px;"><canvas id="solutionChart"></canvas></div>
             </div>
         </div>
 
@@ -1129,6 +1119,95 @@
             </div>
         </div>
 
+        <!-- VIEW: STATUS LIST (ย้ายออกจาก dashboard) -->
+        <div id="view-statuslist" class="hidden space-y-6 animate-view">
+            <!-- Header -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h3 class="font-black text-slate-800 text-3xl flex items-center gap-4 tracking-tight leading-none">
+                        <i class="fas fa-clipboard-check text-red-500"></i> ตรวจสอบสถานะสินค้า
+                    </h3>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">Item Status Review</p>
+                </div>
+                <!-- Filter badge counts -->
+                <div id="statusListBadges" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <!-- Filter bar -->
+            <div class="glass-card p-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Status filter -->
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">สถานะสินค้า</label>
+                        <div class="relative">
+                            <select id="slFilterStatus" onchange="renderStatusListView()"
+                                class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none focus:border-red-500 appearance-none cursor-pointer">
+                                <option value="Issue">⚠️ ต้องตรวจสอบ</option>
+                                <option value="All">📋 ทั้งหมด</option>
+                                <option value="Good">🟢 Good</option>
+                                <option value="Damage">🔴 Damage</option>
+                                <option value="QC">🟡 QC</option>
+                                <option value="Disposal">⚫ Disposal</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs"></i>
+                        </div>
+                    </div>
+                    <!-- Remark filter -->
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">หมายเหตุ (Remark)</label>
+                        <div class="relative">
+                            <select id="slFilterRemark" onchange="renderStatusListView()"
+                                class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none focus:border-red-500 appearance-none cursor-pointer">
+                                <option value="All">— ทั้งหมด —</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs"></i>
+                        </div>
+                    </div>
+                    <!-- Location filter -->
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Location</label>
+                        <div class="relative">
+                            <i class="fas fa-map-marker-alt absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none text-xs"></i>
+                            <input type="text" id="slFilterLoc" onkeyup="renderStatusListView()"
+                                placeholder="เช่น B-IVS-010"
+                                class="w-full pl-9 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-red-500">
+                        </div>
+                    </div>
+                    <!-- Item search -->
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">ค้นหา Item / LPN</label>
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none text-xs"></i>
+                            <input type="text" id="slFilterItem" onkeyup="renderStatusListView()"
+                                placeholder="รหัสสินค้า หรือ LPN"
+                                class="w-full pl-9 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-red-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="glass-card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-[10px] text-slate-400 border-b border-slate-100 uppercase font-black tracking-widest bg-slate-50/60">
+                                <th class="py-4 pl-4 w-20 text-center">Image</th>
+                                <th class="py-4 px-4">Item Details</th>
+                                <th class="py-4 px-3">Status</th>
+                                <th class="py-4 px-3">Location</th>
+                                <th class="py-4 px-3">Remark</th>
+                                <th class="py-4 px-3">Solution</th>
+                                <th class="py-4 text-right pr-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statusListBody" class="text-sm text-slate-600 divide-y divide-slate-50"></tbody>
+                    </table>
+                </div>
+                <div id="statusListFooter" class="px-6 py-3 bg-slate-50/50 border-t border-slate-100 text-xs font-bold text-slate-400 text-right"></div>
+            </div>
+        </div>
+
     </main>
 
     <!-- Mobile Bottom Nav -->
@@ -1154,6 +1233,11 @@
             class="nav-bottom-item flex flex-col items-center gap-1.5 w-14 transition-all">
             <i class="fas fa-history text-lg"></i>
             <span class="text-[8px] font-black uppercase tracking-widest">Logs</span>
+        </button>
+        <button onclick="switchView('statuslist')" id="nav-statuslist"
+            class="nav-bottom-item flex flex-col items-center gap-1.5 w-14 transition-all">
+            <i class="fas fa-clipboard-check text-lg"></i>
+            <span class="text-[8px] font-black uppercase tracking-widest">Status</span>
         </button>
         <button onclick="switchView('profile')" id="nav-profile"
             class="nav-bottom-item flex flex-col items-center gap-1.5 w-14 transition-all">
@@ -1301,7 +1385,8 @@ let inventoryData       = [];
 let transactionLogs     = [];
 let statusChart         = null;
 let typeChart           = null;
-let remarkChart         = null;   // FIX 3
+let remarkChart         = null;
+let solutionChart       = null;
 let currentPhotoBase64  = '';
 let currentItemForEdit  = null;
 let currentUser         = null;
@@ -1858,7 +1943,7 @@ function updateAppTime() {
 function switchView(view) {
     try {
         if (view === 'users' && (!currentUser || currentUser.role !== 'admin')) return;
-        const views = ['dashboard', 'inventory', 'report', 'users', 'history', 'profile'];
+        const views = ['dashboard', 'inventory', 'report', 'users', 'history', 'profile', 'statuslist'];
         views.forEach(v => {
             const ve = document.getElementById('view-' + v), se = document.getElementById('side-' + v), ne = document.getElementById('nav-' + v);
             if (ve) ve.classList.add('hidden');
@@ -1875,8 +1960,9 @@ function switchView(view) {
         if (view === 'inventory') loadDropdownOptions();
         if (view === 'inventory' && !currentItemForEdit) resetForm();
         if (view === 'users')   { renderUserTable(); updateBrandUI(); }
-        if (view === 'history')  loadHistoryLogs();
-        if (view === 'profile')  loadProfileData();
+        if (view === 'history')    loadHistoryLogs();
+        if (view === 'profile')    loadProfileData();
+        if (view === 'statuslist') loadStatusListView();
         updateBreadcrumb(view);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch(err) { console.error('switchView error:', err); }
@@ -1886,12 +1972,13 @@ function switchView(view) {
 let desktopSidebarOpen = true;
 
 const PAGE_LABELS = {
-    dashboard : 'สรุปภาพรวม',
-    inventory : 'บันทึกสต็อก',
-    report    : 'รายการสินค้า',
-    history   : 'ประวัติการใช้งาน',
-    profile   : 'โปรไฟล์',
-    users     : 'จัดการผู้ใช้ & ตั้งค่า'
+    dashboard  : 'สรุปภาพรวม',
+    inventory  : 'บันทึกสต็อก',
+    report     : 'รายการสินค้า',
+    history    : 'ประวัติการใช้งาน',
+    profile    : 'โปรไฟล์',
+    users      : 'จัดการผู้ใช้ & ตั้งค่า',
+    statuslist : 'ตรวจสอบสถานะสินค้า'
 };
 
 function updateBreadcrumb(view) {
@@ -1976,6 +2063,8 @@ function loadRealData() {
     gasCall('getInventoryData').then(data => {
         try { inventoryData = typeof data === 'string' ? JSON.parse(data) : data; if (!Array.isArray(inventoryData)) throw new Error('not array'); } catch(e) { inventoryData = []; }
         renderData(inventoryData); updateCharts(inventoryData); updateActionList(inventoryData); updateDashboardStats(inventoryData);
+    // refresh statuslist if that view is currently active
+    if (!document.getElementById('view-statuslist').classList.contains('hidden')) loadStatusListView();
     }).catch(() => loadMockData());
 
     gasCall('getRemarkOptions').then(remarks => {
@@ -2001,6 +2090,8 @@ function loadMockData() {
     ];
     transactionLogs = [{ Timestamp: '27/10/2023 10:00:00', User: 'Admin', Action: 'ADD', Item: '1B000000', Location: 'A-01-01', Details: 'Initial Entry' }];
     renderData(inventoryData); updateCharts(inventoryData); updateActionList(inventoryData); updateDashboardStats(inventoryData);
+    // refresh statuslist if that view is currently active
+    if (!document.getElementById('view-statuslist').classList.contains('hidden')) loadStatusListView();
 
     const defaultRemarks = ['สินค้าปกติ', 'มีรอยขีดข่วน', 'กล่องแตก', 'รอตรวจสอบ', 'อะไหล่ใหม่', 'ของเก่าสต็อก'];
     renderRemarkPills(defaultRemarks);
@@ -2298,6 +2389,99 @@ function updateCharts(data) {
             });
         }
     }
+
+    // ── Solution Chart (เท่ๆ — Horizontal Gauge-style bars) ──
+    const ctxSolution = document.getElementById('solutionChart');
+    if (ctxSolution) {
+        // นับ unique Item per solution value
+        const solMap = {};
+        data.forEach(d => {
+            const sol = (d.Solution || 'ไม่ระบุ').trim();
+            if (!solMap[sol]) solMap[sol] = new Set();
+            if (d.Item) solMap[sol].add(d.Item);
+        });
+        const labels  = Object.keys(solMap);
+        const counts  = labels.map(k => solMap[k].size);
+        const total   = counts.reduce((a, b) => a + b, 0);
+
+        // Update summary badges
+        const inCount  = solMap['มีในระบบ']    ? solMap['มีในระบบ'].size    : 0;
+        const outCount = solMap['ไม่มีในระบบ'] ? solMap['ไม่มีในระบบ'].size : 0;
+        const inEl  = document.getElementById('solutionInCount');
+        const outEl = document.getElementById('solutionOutCount');
+        if (inEl)  inEl.innerText  = inCount;
+        if (outEl) outEl.innerText = outCount;
+
+        // Colour map
+        const colorMap = {
+            'มีในระบบ'   : { bg: 'rgba(16,185,129,0.85)',  border: '#10b981' },
+            'ไม่มีในระบบ': { bg: 'rgba(239,68,68,0.85)',   border: '#ef4444' },
+            'ไม่ระบุ'    : { bg: 'rgba(148,163,184,0.65)', border: '#94a3b8' }
+        };
+        const bgColors     = labels.map(l => (colorMap[l] || colorMap['ไม่ระบุ']).bg);
+        const borderColors = labels.map(l => (colorMap[l] || colorMap['ไม่ระบุ']).border);
+
+        if (solutionChart) solutionChart.destroy();
+        solutionChart = new Chart(ctxSolution, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'จำนวน Item (unique)',
+                    data: counts,
+                    backgroundColor: bgColors,
+                    borderColor    : borderColors,
+                    borderWidth    : 2,
+                    borderRadius   : 12,
+                    borderSkipped  : false,
+                    barThickness   : 40
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        anchor: 'center',
+                        align : 'center',
+                        color : '#ffffff',
+                        font  : { weight: 'black', size: 16 },
+                        formatter: (v, ctx) => {
+                            const pct = total > 0 ? ((v / total) * 100).toFixed(0) : 0;
+                            return v > 0 ? `${v} items  (${pct}%)` : '';
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0;
+                                return ` ${ctx.raw} รายการ (${pct}%)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid   : { color: 'rgba(0,0,0,0.04)' },
+                        ticks  : { font: { weight: 'bold', size: 11 }, color: '#94a3b8', precision: 0 },
+                        border : { display: false }
+                    },
+                    y: {
+                        grid   : { display: false },
+                        ticks  : { font: { weight: '800', size: 13 }, color: '#334155' },
+                        border : { display: false }
+                    }
+                },
+                layout: { padding: { right: 20 } },
+                animation: {
+                    duration: 900,
+                    easing  : 'easeOutQuart'
+                }
+            }
+        });
+    }
 }
 
 // ─────────────────────────────────────────
@@ -2343,6 +2527,126 @@ function renderHistoryLogs() {
         </tr>`;
     }).join('');
 }
+// ─────────────────────────────────────────
+//  STATUS LIST VIEW
+// ─────────────────────────────────────────
+function loadStatusListView() {
+    // populate remark dropdown from live data
+    const remarkSel = document.getElementById('slFilterRemark');
+    if (remarkSel) {
+        const allRemarks = new Set();
+        inventoryData.forEach(d => {
+            if (!d.Remark) return;
+            d.Remark.split(',').map(r => r.trim()).filter(Boolean).forEach(r => allRemarks.add(r));
+        });
+        remarkSel.innerHTML = '<option value="All">— ทั้งหมด —</option>' +
+            Array.from(allRemarks).sort().map(r => `<option value="${r}">${r}</option>`).join('');
+    }
+    renderStatusListView();
+}
+
+function renderStatusListView() {
+    const fStatus = document.getElementById('slFilterStatus')?.value || 'Issue';
+    const fRemark = document.getElementById('slFilterRemark')?.value || 'All';
+    const fLoc    = (document.getElementById('slFilterLoc')?.value || '').toLowerCase();
+    const fItem   = (document.getElementById('slFilterItem')?.value || '').toLowerCase();
+
+    let filtered = [...inventoryData];
+
+    // Status filter
+    if      (fStatus === 'Issue')   filtered = filtered.filter(i => ['Damage','QC','Disposal'].includes(i.InventoryStatus));
+    else if (fStatus !== 'All')     filtered = filtered.filter(i => i.InventoryStatus === fStatus);
+
+    // Remark filter (multi-value aware)
+    if (fRemark !== 'All') {
+        filtered = filtered.filter(i => {
+            if (!i.Remark) return false;
+            return i.Remark.split(',').map(r => r.trim()).includes(fRemark);
+        });
+    }
+
+    // Location & item text search
+    if (fLoc)  filtered = filtered.filter(i => (i.Location || '').toLowerCase().includes(fLoc));
+    if (fItem) filtered = filtered.filter(i =>
+        (i.Item || '').toLowerCase().includes(fItem) ||
+        (i.LicensePlate || '').toLowerCase().includes(fItem)
+    );
+
+    // Badge counts
+    const badgesEl = document.getElementById('statusListBadges');
+    if (badgesEl) {
+        const total   = filtered.length;
+        const damage  = filtered.filter(i => i.InventoryStatus === 'Damage').length;
+        const qc      = filtered.filter(i => i.InventoryStatus === 'QC').length;
+        const disposal= filtered.filter(i => i.InventoryStatus === 'Disposal').length;
+        const good    = filtered.filter(i => i.InventoryStatus === 'Good').length;
+        badgesEl.innerHTML = [
+            total   ? `<span class="text-[10px] font-black px-3 py-1 bg-slate-800 text-white rounded-full">${total} รายการ</span>` : '',
+            damage  ? `<span class="text-[10px] font-black px-3 py-1 bg-red-100    text-red-700    rounded-full">🔴 Damage ${damage}</span>`   : '',
+            qc      ? `<span class="text-[10px] font-black px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full">🟡 QC ${qc}</span>`            : '',
+            disposal? `<span class="text-[10px] font-black px-3 py-1 bg-gray-200   text-gray-700   rounded-full">⚫ Disposal ${disposal}</span>` : '',
+            good    ? `<span class="text-[10px] font-black px-3 py-1 bg-green-100  text-green-700  rounded-full">🟢 Good ${good}</span>`         : '',
+        ].filter(Boolean).join('');
+    }
+
+    const body = document.getElementById('statusListBody');
+    if (!body) return;
+
+    if (!filtered.length) {
+        body.innerHTML = `<tr><td colspan="7" class="py-16 text-center opacity-30 font-black uppercase tracking-[0.2em]">ไม่พบข้อมูลที่ตรงกับเงื่อนไข</td></tr>`;
+        document.getElementById('statusListFooter').innerText = '';
+        return;
+    }
+
+    const statusBadge = (s) => {
+        const map = {
+            Good    : 'bg-green-100 text-green-700',
+            Damage  : 'bg-red-100 text-red-700',
+            QC      : 'bg-yellow-100 text-yellow-700',
+            Disposal: 'bg-gray-200 text-gray-700'
+        };
+        return `<span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${map[s] || 'bg-slate-100 text-slate-500'}">${s}</span>`;
+    };
+
+    const solutionBadge = (sol) => {
+        const isIn = (sol || '').includes('มีในระบบ') && !(sol || '').includes('ไม่มี');
+        return isIn
+            ? `<span class="px-2.5 py-1 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700">✔ มีในระบบ</span>`
+            : `<span class="px-2.5 py-1 rounded-full text-[9px] font-black bg-rose-100 text-rose-700">✘ ไม่มีในระบบ</span>`;
+    };
+
+    body.innerHTML = filtered.map(item => {
+        const idx = inventoryData.indexOf(item);
+        const remarkTags = (item.Remark || '-').split(',').map(r => r.trim()).filter(Boolean)
+            .map(r => `<span class="inline-block text-[9px] font-bold bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full mr-1 mb-0.5">${r}</span>`).join('');
+        return `<tr class="hover:bg-slate-50/80 transition-colors">
+            <td class="py-3 pl-4 text-center">
+                ${item.Photo
+                    ? `<img src="${item.Photo}" class="w-12 h-12 rounded-xl object-cover border border-slate-100 mx-auto shadow-sm">`
+                    : `<div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-300 mx-auto"><i class="fas fa-camera text-sm"></i></div>`}
+            </td>
+            <td class="py-3 px-4">
+                <div class="font-black text-slate-800 text-sm">${item.Item || '-'}</div>
+                <div class="text-[10px] text-slate-400 font-mono">${item.LicensePlate || '-'}</div>
+                ${item.Description ? `<div class="text-[10px] text-slate-500 font-semibold mt-0.5">${item.Description}</div>` : ''}
+            </td>
+            <td class="py-3 px-3">${statusBadge(item.InventoryStatus)}</td>
+            <td class="py-3 px-3 text-xs font-mono font-bold text-slate-500">${item.Location || '-'}</td>
+            <td class="py-3 px-3 max-w-[160px]">${remarkTags || '<span class="text-slate-300 text-xs">-</span>'}</td>
+            <td class="py-3 px-3">${solutionBadge(item.Solution)}</td>
+            <td class="py-3 pr-4 text-right">
+                <button onclick="showDetail(${idx})"
+                    class="w-9 h-9 rounded-full border border-slate-200 text-slate-400 hover:bg-slate-800 hover:text-white transition-all shadow-sm">
+                    <i class="fas fa-search text-xs"></i>
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    const footerEl = document.getElementById('statusListFooter');
+    if (footerEl) footerEl.innerText = `แสดง ${Math.min(filtered.length, filtered.length)} จาก ${inventoryData.length} รายการทั้งหมด`;
+}
+
 function filterHistoryLogs() { renderHistoryLogs(); }
 
 // ─────────────────────────────────────────
