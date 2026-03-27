@@ -35,12 +35,65 @@
         :root {
             --vespa-red: #e63946;
             --vespa-dark: #1e293b;
+            --bg-base    : #f1f5f9;
+            --text-base  : #334155;
+            --card-bg    : rgba(255,255,255,0.98);
+            --card-border: rgba(255,255,255,0.5);
+            --sidebar-bg : #ffffff;
+            --sidebar-border: #e2e8f0;
+            --input-bg   : #f8fafc;
+            --input-border: #e2e8f0;
+        }
+
+        /* ── DARK MODE ── */
+        body.dark-mode {
+            --bg-base    : #0f172a;
+            --text-base  : #e2e8f0;
+            --card-bg    : rgba(30,41,59,0.98);
+            --card-border: rgba(255,255,255,0.08);
+            --sidebar-bg : #1e293b;
+            --sidebar-border: rgba(255,255,255,0.08);
+            --input-bg   : #1e293b;
+            --input-border: rgba(255,255,255,0.12);
+        }
+        body.dark-mode { background-color: var(--bg-base); color: var(--text-base); }
+        body.dark-mode .glass-card {
+            background: var(--card-bg);
+            border-color: var(--card-border);
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.4);
+        }
+        body.dark-mode #sidebar {
+            background: var(--sidebar-bg);
+            border-color: var(--sidebar-border);
+        }
+        body.dark-mode .sidebar-item:not(.active) { color: #94a3b8; }
+        body.dark-mode .sidebar-item:not(.active):hover { background: rgba(255,255,255,0.05); }
+        body.dark-mode input:not([type=file]), body.dark-mode select, body.dark-mode textarea {
+            background-color: var(--input-bg) !important;
+            border-color: var(--input-border) !important;
+            color: var(--text-base) !important;
+        }
+        body.dark-mode .bg-white  { background-color: #1e293b !important; }
+        body.dark-mode .bg-slate-50 { background-color: #0f172a !important; }
+        body.dark-mode .bg-slate-100 { background-color: #1e293b !important; }
+        body.dark-mode .text-slate-800 { color: #e2e8f0 !important; }
+        body.dark-mode .text-slate-700 { color: #cbd5e1 !important; }
+        body.dark-mode .text-slate-600 { color: #94a3b8 !important; }
+        body.dark-mode .text-slate-400 { color: #64748b !important; }
+        body.dark-mode .border-slate-100, body.dark-mode .border-slate-200 { border-color: rgba(255,255,255,0.08) !important; }
+        body.dark-mode .bg-slate-800 { background-color: #0f172a !important; }
+        body.dark-mode #mainContent { background-color: var(--bg-base); }
+        body.dark-mode .profile-input { background-color: #1e293b !important; border-color: rgba(255,255,255,0.1) !important; color: #e2e8f0 !important; }
+
+        /* Smooth transition for theme switch */
+        body, .glass-card, #sidebar, input, select, .bg-white, .bg-slate-50 {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
         body {
             font-family: 'Kanit', sans-serif;
-            background-color: #f1f5f9;
-            color: #334155;
+            background-color: var(--bg-base);
+            color: var(--text-base);
             overscroll-behavior-y: contain;
             -webkit-tap-highlight-color: transparent;
         }
@@ -1122,7 +1175,7 @@
                     <div class="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
                     ตั้งค่าระบบ (System Settings)
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                     <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col">
                         <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 block border-l-4 border-indigo-500 pl-2">ชื่อระบบ (System Name)</label>
                         <p class="text-xs text-slate-400 mb-4">เปลี่ยนชื่อแบรนด์ที่จะแสดงบนหน้า Login, เมนู และหัวรายงาน PDF</p>
@@ -1154,8 +1207,34 @@
                         </div>
                     </div>
                 </div>
+                <!-- Theme toggle card -->
+                <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
+                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 block border-l-4 border-violet-500 pl-2">
+                        ธีมสี (Theme)
+                    </label>
+                    <p class="text-xs text-slate-400 mb-5">เลือกธีมสว่างหรือมืดตามความชอบ</p>
+                    <div class="flex gap-3">
+                        <!-- Light -->
+                        <button id="themeLight" onclick="setTheme('light')"
+                            class="flex-1 flex flex-col items-center gap-3 p-4 rounded-2xl border-2 border-indigo-500 bg-indigo-50 transition-all">
+                            <div class="w-14 h-10 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center">
+                                <i class="fas fa-sun text-yellow-500 text-xl"></i>
+                            </div>
+                            <span class="text-xs font-black text-slate-700 uppercase tracking-widest">Light</span>
+                        </button>
+                        <!-- Dark -->
+                        <button id="themeDark" onclick="setTheme('dark')"
+                            class="flex-1 flex flex-col items-center gap-3 p-4 rounded-2xl border-2 border-slate-200 bg-slate-50 transition-all">
+                            <div class="w-14 h-10 rounded-xl bg-slate-800 border border-slate-700 shadow-sm flex items-center justify-center">
+                                <i class="fas fa-moon text-indigo-400 text-xl"></i>
+                            </div>
+                            <span class="text-xs font-black text-slate-600 uppercase tracking-widest">Dark</span>
+                        </button>
+                    </div>
+                </div>
+
                 <button onclick="saveAllSettings()"
-                    class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 active:scale-[0.98] flex items-center justify-center gap-2">
+                    class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 active:scale-[0.98] flex items-center justify-center gap-2 md:col-span-2">
                     <i class="fas fa-save text-xl"></i> บันทึกการตั้งค่าระบบทั้งหมด
                 </button>
             </div>
@@ -1500,8 +1579,43 @@ async function gasCall(action, params) {
 
 window.onload = initApp;
 
+// ─── Theme Management ───
+function setTheme(mode) {
+    const body = document.body;
+    if (mode === 'dark') {
+        body.classList.add('dark-mode');
+        try { localStorage.setItem('vespaTheme', 'dark'); } catch(e) {}
+    } else {
+        body.classList.remove('dark-mode');
+        try { localStorage.setItem('vespaTheme', 'light'); } catch(e) {}
+    }
+    // Update toggle button states
+    const lightBtn = document.getElementById('themeLight');
+    const darkBtn  = document.getElementById('themeDark');
+    if (lightBtn && darkBtn) {
+        if (mode === 'dark') {
+            lightBtn.className = lightBtn.className.replace('border-indigo-500 bg-indigo-50','border-slate-200 bg-slate-50');
+            darkBtn.className  = darkBtn.className.replace('border-slate-200 bg-slate-50','border-violet-500 bg-violet-50');
+        } else {
+            darkBtn.className  = darkBtn.className.replace('border-violet-500 bg-violet-50','border-slate-200 bg-slate-50');
+            lightBtn.className = lightBtn.className.replace('border-slate-200 bg-slate-50','border-indigo-500 bg-indigo-50');
+        }
+    }
+}
+
+function initTheme() {
+    let saved = 'light';
+    try { saved = localStorage.getItem('vespaTheme') || 'light'; } catch(e) {}
+    // Also detect system preference if no saved setting
+    if (!localStorage.getItem('vespaTheme') && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        saved = 'dark';
+    }
+    setTheme(saved);
+}
+
 function initApp() {
     if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
+    initTheme();
     updateBrandUI();
     setInterval(updateAppTime, 1000);
     updateAppTime();
@@ -2768,61 +2882,161 @@ function renderStatusListView() {
 
 let screenshotBlob = null;
 
-async function captureDashboard() {
-    // Elements to temporarily hide during capture
-    const hideEls = [
-        document.getElementById('dashShareRow'),
-        document.getElementById('screenshotModal'),
-        document.querySelector('#sidebarToggleBtn'),
-        document.querySelector('nav.md\\:hidden')   // mobile bottom nav
-    ];
+// ─── Build beautiful dashboard HTML (same as PDF, used for both LINE share + PDF) ───
+function buildDashboardHTML(W, H) {
+    const appN    = globalAppName || 'Vespa Stock';
+    const dateStr = new Date().toLocaleDateString('th-TH', {
+        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+    const loc   = document.getElementById('statLoc')?.innerText  || '0';
+    const items = document.getElementById('statItem')?.innerText || '0';
+    const qty   = document.getElementById('statWork')?.innerText || '0';
+    const inTxt  = document.getElementById('solutionInCount')?.innerText  || '0';
+    const outTxt = document.getElementById('solutionOutCount')?.innerText || '0';
 
-    // Store original styles
-    hideEls.forEach(el => { if (el) el.style.visibility = 'hidden'; });
-
-    const dashEl = document.getElementById('view-dashboard');
-    if (!dashEl) { hideEls.forEach(el => { if (el) el.style.visibility = ''; }); return null; }
-
+    let statusImg = '', typeImg = '', remarkImg = '', solutionImg = '';
     try {
-        const canvas = await html2canvas(dashEl, {
-            scale          : 2,
-            useCORS        : true,
-            allowTaint     : true,
-            backgroundColor: '#f1f5f9',
-            scrollY        : -window.scrollY,
-            windowWidth    : dashEl.scrollWidth,
-            logging        : false,
-            ignoreElements : (el) => el.id === 'dashShareRow' || el.id === 'screenshotModal'
+        const sc = document.getElementById('statusChart');   if (sc)  statusImg  = sc.toDataURL('image/png');
+        const tc = document.getElementById('typeChart');     if (tc)  typeImg    = tc.toDataURL('image/png');
+        const rc = document.getElementById('remarkChart');   if (rc)  remarkImg  = rc.toDataURL('image/png');
+        const sl = document.getElementById('solutionChart'); if (sl)  solutionImg = sl.toDataURL('image/png');
+    } catch(e) {}
+
+    const logoHtml = globalAppLogo
+        ? `<img src="${globalAppLogo}" style="max-height:44px;border-radius:8px;object-fit:contain;margin-right:12px;">`
+        : `<div style="width:44px;height:44px;border-radius:10px;background:rgba(230,57,70,0.2);display:flex;align-items:center;justify-content:center;margin-right:12px;font-size:22px;">🏍</div>`;
+
+    const chartCard = (title, imgSrc, color, icon) => `
+        <div style="background:#1e293b;border-radius:14px;padding:16px;flex:1;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
+            <div style="font-size:10px;font-weight:900;color:${color};text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                <span style="width:24px;height:24px;border-radius:6px;background:${color}25;display:inline-flex;align-items:center;justify-content:center;font-size:11px;">${icon}</span>${title}
+            </div>
+            ${imgSrc
+                ? `<img src="${imgSrc}" style="width:100%;height:${Math.round(H*0.17)}px;object-fit:contain;">`
+                : `<div style="height:${Math.round(H*0.17)}px;background:#0f172a;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#475569;font-size:11px;">No data</div>`}
+        </div>`;
+
+    return `<div style="width:${W}px;height:${H}px;padding:${Math.round(H*0.035)}px ${Math.round(W*0.026)}px;
+        box-sizing:border-box;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
+        font-family:'Kanit',sans-serif;color:#e2e8f0;overflow:hidden;display:flex;flex-direction:column;gap:${Math.round(H*0.013)}px;">
+
+        <!-- Header -->
+        <div style="background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);padding:${Math.round(H*0.018)}px ${Math.round(W*0.018)}px;
+            border-radius:14px;border:1px solid rgba(255,255,255,0.1);border-left:5px solid #e63946;
+            display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:0;">
+                ${logoHtml}
+                <div>
+                    <div style="font-size:${Math.round(W*0.013)}px;font-weight:900;color:#fff;font-family:'Pacifico',cursive;line-height:1;">${appN}</div>
+                    <div style="font-size:9px;color:rgba(255,255,255,0.5);font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-top:3px;">DASHBOARD REPORT</div>
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:9px;color:rgba(255,255,255,0.4);font-weight:700;margin-bottom:2px;">Generated</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.8);font-weight:700;">${dateStr}</div>
+                <div style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.3);border-radius:20px;padding:3px 10px;">
+                    <span style="width:6px;height:6px;background:#4ade80;border-radius:50%;display:inline-block;"></span>
+                    <span style="font-size:9px;font-weight:900;color:#4ade80;text-transform:uppercase;letter-spacing:1px;">ACTIVE</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats row -->
+        <div style="display:flex;gap:${Math.round(W*0.008)}px;flex-shrink:0;">
+            <div style="flex:1;background:rgba(59,130,246,0.12);border-radius:14px;padding:${Math.round(H*0.016)}px ${Math.round(W*0.012)}px;border:1px solid rgba(59,130,246,0.25);">
+                <div style="font-size:9px;font-weight:900;color:#60a5fa;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">📍 LOCATION</div>
+                <div style="font-size:${Math.round(H*0.055)}px;font-weight:900;color:#fff;line-height:1;">${loc}</div>
+            </div>
+            <div style="flex:1;background:rgba(249,115,22,0.12);border-radius:14px;padding:${Math.round(H*0.016)}px ${Math.round(W*0.012)}px;border:1px solid rgba(249,115,22,0.25);">
+                <div style="font-size:9px;font-weight:900;color:#fb923c;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">📦 ITEM CODE</div>
+                <div style="font-size:${Math.round(H*0.055)}px;font-weight:900;color:#fff;line-height:1;">${items}</div>
+            </div>
+            <div style="flex:2;background:linear-gradient(135deg,rgba(230,57,70,0.85),rgba(220,38,38,0.85));border-radius:14px;padding:${Math.round(H*0.016)}px ${Math.round(W*0.012)}px;border:1px solid rgba(230,57,70,0.4);">
+                <div style="font-size:9px;font-weight:900;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">📊 QUANTITY</div>
+                <div style="font-size:${Math.round(H*0.055)}px;font-weight:900;color:#fff;line-height:1;">${qty}</div>
+            </div>
+            <div style="flex:2.2;background:rgba(255,255,255,0.04);border-radius:14px;padding:${Math.round(H*0.014)}px ${Math.round(W*0.012)}px;border:1px solid rgba(255,255,255,0.08);">
+                <div style="font-size:9px;font-weight:900;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">✔ SOLUTION</div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    <div style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:6px 12px;display:flex;align-items:center;justify-content:space-between;">
+                        <span style="font-size:11px;font-weight:900;color:#34d399;">✔ มีในระบบ</span>
+                        <span style="font-size:14px;font-weight:900;color:#fff;">${inTxt}</span>
+                    </div>
+                    <div style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:6px 12px;display:flex;align-items:center;justify-content:space-between;">
+                        <span style="font-size:11px;font-weight:900;color:#f87171;">✘ ไม่มีในระบบ</span>
+                        <span style="font-size:14px;font-weight:900;color:#fff;">${outTxt}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts row -->
+        <div style="display:flex;gap:${Math.round(W*0.008)}px;flex:1;min-height:0;overflow:hidden;">
+            ${chartCard('Inventory Status', statusImg, '#60a5fa', '🔵')}
+            ${chartCard('Product Types',    typeImg,   '#fb923c', '🟠')}
+            ${chartCard('Issue',            remarkImg, '#c084fc', '🟣')}
+            <div style="flex:1.5;background:#1e293b;border-radius:14px;padding:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
+                <div style="font-size:10px;font-weight:900;color:#34d399;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                    <span style="width:24px;height:24px;border-radius:6px;background:rgba(52,211,153,0.2);display:inline-flex;align-items:center;justify-content:center;">✔</span>Solution Overview
+                </div>
+                ${solutionImg
+                    ? `<img src="${solutionImg}" style="width:100%;height:${Math.round(H*0.17)}px;object-fit:contain;filter:brightness(1.1);">`
+                    : `<div style="height:${Math.round(H*0.17)}px;background:#0f172a;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#475569;">No data</div>`}
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align:center;font-size:9px;color:rgba(255,255,255,0.25);font-weight:700;flex-shrink:0;">
+            ${appN} — Inventory Pro &nbsp;•&nbsp; ${dateStr}
+        </div>
+    </div>`;
+}
+
+// ─── Render HTML to canvas (used for both LINE share and screenshot preview) ───
+async function captureDashboard(W, H) {
+    W = W || 1200; H = H || 630;
+    const html = buildDashboardHTML(W, H);
+    const div  = document.createElement('div');
+    div.style.cssText = `position:fixed;left:-9999px;top:-9999px;width:${W}px;height:${H}px;z-index:-1;`;
+    div.innerHTML = html;
+    document.body.appendChild(div);
+    try {
+        const canvas = await html2canvas(div, {
+            scale: 2, useCORS: true, allowTaint: true, logging: false,
+            width: W, height: H, windowWidth: W, windowHeight: H,
+            backgroundColor: null
         });
         return canvas;
     } finally {
-        hideEls.forEach(el => { if (el) el.style.visibility = ''; });
+        document.body.removeChild(div);
     }
 }
 
+// ──────────────────────────────────────────────────────
+//  SHARE DASHBOARD TO LINE
+//  iOS FIX: ต้อง pre-capture ก่อน แล้วค่อย share จาก
+//  synchronous gesture (กดปุ่มในModal) เพื่อให้ Web Share API ทำงาน
+// ──────────────────────────────────────────────────────
 async function shareDashboardToLine() {
-    const btn = document.querySelector('button[onclick="shareDashboardToLine()"]');
+    const btn      = document.querySelector('button[onclick="shareDashboardToLine()"]');
     const origHtml = btn?.innerHTML;
     if (btn) { btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังสร้างรูป...'; btn.disabled = true; }
 
     try {
-        const canvas = await captureDashboard();
-        if (!canvas) throw new Error('ไม่สามารถ capture ได้');
+        // 1200×630 = LINE optimal OG image size
+        const canvas = await captureDashboard(1200, 630);
+        if (!canvas) throw new Error('ไม่สามารถ capture dashboard ได้');
 
-        const dataURL = canvas.toDataURL('image/png', 1.0);
+        const dataURL = canvas.toDataURL('image/jpeg', 0.92);
 
-        // Show preview modal
-        const previewImg  = document.getElementById('screenshotPreview');
-        const downloadBtn = document.getElementById('screenshotDownloadBtn');
-        const modal       = document.getElementById('screenshotModal');
+        // Pre-build blob ทันที (ก่อนแสดง modal) เพื่อให้พร้อมสำหรับ Web Share gesture
+        screenshotBlob = await new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/jpeg', 0.92));
 
-        previewImg.src   = dataURL;
-        downloadBtn.href = dataURL;
+        // แสดง preview modal
+        document.getElementById('screenshotPreview').src   = dataURL;
+        document.getElementById('screenshotDownloadBtn').href = dataURL;
+        document.getElementById('screenshotModal').classList.remove('hidden');
 
-        // Store blob for native share
-        canvas.toBlob(blob => { screenshotBlob = blob; }, 'image/png', 1.0);
-
-        modal.classList.remove('hidden');
     } catch(err) {
         Swal.fire({ icon: 'error', title: 'ไม่สามารถสร้างรูปได้', text: err.message, customClass: { popup: 'rounded-[32px]' } });
     } finally {
@@ -2830,24 +3044,19 @@ async function shareDashboardToLine() {
     }
 }
 
+// เรียกตรงจากปุ่มใน modal — synchronous gesture context → Web Share ทำงานได้บน iOS
 async function nativeShareScreenshot() {
-    // Web Share API — iOS Safari + Android Chrome รองรับ
+    const appN = globalAppName || 'Vespa Stock';
+
+    // ถ้าไม่มี blob (ไม่ควรเกิด) fallback download
     if (!screenshotBlob) {
-        // fallback: regenerate
-        const canvas = await captureDashboard();
-        canvas.toBlob(async blob => {
-            screenshotBlob = blob;
-            await doNativeShare();
-        }, 'image/png', 1.0);
+        Swal.fire({ icon: 'warning', title: 'กรุณากด "แชร์ Dashboard → LINE" ใหม่', customClass: { popup: 'rounded-[32px]' } });
         return;
     }
-    await doNativeShare();
-}
 
-async function doNativeShare() {
-    const appN = globalAppName || 'Vespa Stock';
-    const file = new File([screenshotBlob], 'dashboard.png', { type: 'image/png' });
+    const file = new File([screenshotBlob], 'dashboard.jpg', { type: 'image/jpeg' });
 
+    // ✅ iOS Safari + Android Chrome: Web Share API with file
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
             await navigator.share({
@@ -2855,24 +3064,36 @@ async function doNativeShare() {
                 text  : `รายงาน Dashboard จาก ${appN}`,
                 files : [file]
             });
+            return;
         } catch(err) {
-            if (err.name !== 'AbortError') {
-                Swal.fire({ icon: 'info', title: 'ใช้ปุ่ม "บันทึกรูป" แทน', text: 'แชร์ไฟล์โดยตรงไม่รองรับใน browser นี้', customClass: { popup: 'rounded-[32px]' } });
-            }
+            if (err.name === 'AbortError') return;  // user ยกเลิกเอง — ไม่ต้อง error
+            // Web Share ล้มเหลว → fallback download
         }
-    } else {
-        // Fallback: trigger download
-        const a = document.createElement('a');
-        a.href     = URL.createObjectURL(screenshotBlob);
-        a.download = 'dashboard.png';
-        a.click();
-        Swal.fire({ icon: 'success', title: 'บันทึกรูปแล้ว!', text: 'นำรูปไปแชร์ใน LINE ได้เลยครับ', timer: 2000, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
     }
+
+    // Fallback: download แล้วแจ้ง user
+    const a = document.createElement('a');
+    a.href     = URL.createObjectURL(screenshotBlob);
+    a.download = 'dashboard.jpg';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+
+    Swal.fire({
+        icon: 'success',
+        title: 'บันทึกรูปแล้ว! 📸',
+        html: 'เปิด LINE → กด <b>+</b> → เลือก <b>รูปภาพ</b> → เลือกรูปที่บันทึกไว้',
+        confirmButtonColor: '#06C755',
+        confirmButtonText: 'เข้าใจแล้ว',
+        customClass: { popup: 'rounded-[32px]' }
+    });
 }
 
 function closeScreenshotModal(e) {
     if (e && e.target !== document.getElementById('screenshotModal')) return;
     document.getElementById('screenshotModal').classList.add('hidden');
+    screenshotBlob = null;   // free memory
 }
 
 async function exportDashboardPDF() {
@@ -2914,58 +3135,74 @@ async function exportDashboardPDF() {
             ${imgSrc ? `<img src="${imgSrc}" style="width:100%;height:180px;object-fit:contain;">` : '<div style="height:180px;background:#f8fafc;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#cbd5e1;">No data</div>'}
         </div>`;
 
+    // A4 Landscape = 297 x 210 mm
+    // html2pdf scale=1.5, so effective px ≈ 297mm × 3.78px/mm × 1.5 ≈ 1685px wide
+    // ทำ container กว้าง 1680px สูง max 1050px (พอดี 1 หน้า landscape)
+    const W = 1680, H = 1050;
+
+    const chartCardHTML = (title, imgSrc, color, icon) => `
+        <div style="background:#fff;border-radius:12px;padding:14px;border:1px solid #e2e8f0;flex:1;overflow:hidden;">
+            <div style="font-size:10px;font-weight:900;color:${color};text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                <span style="width:22px;height:22px;border-radius:6px;background:${color}20;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:${color};">${icon}</span>${title}
+            </div>
+            ${imgSrc
+                ? `<img src="${imgSrc}" style="width:100%;height:150px;object-fit:contain;">`
+                : `<div style="height:150px;background:#f8fafc;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:11px;">No data</div>`}
+        </div>`;
+
     const html = `
-    <div style="width:260mm;padding:16mm 20mm;box-sizing:border-box;background:white;font-family:'Kanit',sans-serif;color:#334155;">
-        <!-- Header -->
-        <div style="background:#1e293b;padding:20px 28px;border-radius:12px 12px 0 0;border-bottom:5px solid #e63946;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
-            <div style="display:flex;align-items:center;color:white;">
+    <div style="width:${W}px;height:${H}px;padding:36px 44px 28px;box-sizing:border-box;background:#f8fafc;font-family:'Kanit',sans-serif;color:#334155;overflow:hidden;display:flex;flex-direction:column;gap:14px;">
+
+        <!-- Header bar -->
+        <div style="background:#1e293b;padding:16px 26px;border-radius:14px;border-left:6px solid #e63946;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+            <div style="display:flex;align-items:center;color:white;gap:14px;">
                 ${logoHtml}
                 <div>
-                    <div style="font-size:26px;font-weight:900;font-family:'Pacifico',cursive;">${appN}</div>
-                    <div style="font-size:12px;opacity:0.7;font-weight:700;text-transform:uppercase;letter-spacing:2px;">Dashboard Report</div>
+                    <div style="font-size:22px;font-weight:900;font-family:'Pacifico',cursive;line-height:1;">${appN}</div>
+                    <div style="font-size:10px;opacity:0.6;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-top:2px;">Dashboard Report</div>
                 </div>
             </div>
             <div style="text-align:right;color:white;">
-                <div style="font-size:11px;opacity:0.6;font-weight:700;margin-bottom:4px;">Generated</div>
-                <div style="font-size:14px;font-weight:700;">${dateStr}</div>
+                <div style="font-size:10px;opacity:0.5;font-weight:700;">Generated</div>
+                <div style="font-size:12px;font-weight:700;margin-top:2px;">${dateStr}</div>
             </div>
         </div>
 
         <!-- Stats row -->
-        <div style="display:flex;gap:16px;margin-bottom:20px;">
-            <div style="flex:1;background:#eff6ff;border-radius:16px;padding:20px;border:1px solid #bfdbfe;">
-                <div style="font-size:10px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">📍 Location</div>
-                <div style="font-size:42px;font-weight:900;color:#1e293b;">${loc}</div>
+        <div style="display:flex;gap:12px;flex-shrink:0;">
+            <div style="flex:1;background:#eff6ff;border-radius:14px;padding:14px 18px;border:1px solid #bfdbfe;">
+                <div style="font-size:9px;font-weight:900;color:#3b82f6;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">📍 Location</div>
+                <div style="font-size:38px;font-weight:900;color:#1e293b;line-height:1;">${loc}</div>
             </div>
-            <div style="flex:1;background:#fff7ed;border-radius:16px;padding:20px;border:1px solid #fed7aa;">
-                <div style="font-size:10px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">📦 Item Code</div>
-                <div style="font-size:42px;font-weight:900;color:#1e293b;">${items}</div>
+            <div style="flex:1;background:#fff7ed;border-radius:14px;padding:14px 18px;border:1px solid #fed7aa;">
+                <div style="font-size:9px;font-weight:900;color:#f97316;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">📦 Item Code</div>
+                <div style="font-size:38px;font-weight:900;color:#1e293b;line-height:1;">${items}</div>
             </div>
-            <div style="flex:2;background:linear-gradient(135deg,#e63946,#dc2626);border-radius:16px;padding:20px;">
-                <div style="font-size:10px;font-weight:900;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">📊 Quantity</div>
-                <div style="font-size:42px;font-weight:900;color:white;">${qty}</div>
+            <div style="flex:2;background:linear-gradient(135deg,#e63946,#dc2626);border-radius:14px;padding:14px 18px;">
+                <div style="font-size:9px;font-weight:900;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">📊 Quantity</div>
+                <div style="font-size:38px;font-weight:900;color:white;line-height:1;">${qty}</div>
             </div>
-            <div style="flex:2;background:linear-gradient(135deg,#10b981,#059669);border-radius:16px;padding:20px;">
-                <div style="font-size:10px;font-weight:900;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">✅ Solution</div>
-                <div style="font-size:15px;font-weight:900;color:white;margin-top:8px;">มีในระบบ: ${inTxt}</div>
-                <div style="font-size:15px;font-weight:900;color:rgba(255,255,255,0.8);margin-top:4px;">ไม่มี: ${outTxt}</div>
+
+        </div>
+
+        <!-- Charts row (3 doughnut) + Solution bar side-by-side -->
+        <div style="display:flex;gap:12px;flex:1;min-height:0;overflow:hidden;">
+            ${chartCardHTML('Inventory Status', statusImg, '#3b82f6', '🔵')}
+            ${chartCardHTML('Product Types',    typeImg,   '#f97316', '🟠')}
+            ${chartCardHTML('Issue',            remarkImg, '#a855f7', '🟣')}
+            <!-- Solution bar chart — wider -->
+            <div style="flex:1.4;background:#fff;border-radius:12px;padding:14px;border:1px solid #e2e8f0;overflow:hidden;">
+                <div style="font-size:10px;font-weight:900;color:#10b981;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">✔ Solution Overview</div>
+                ${solutionImg
+                    ? `<img src="${solutionImg}" style="width:100%;height:150px;object-fit:contain;">`
+                    : `<div style="height:150px;background:#f8fafc;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#cbd5e1;">No data</div>`}
             </div>
         </div>
 
-        <!-- Charts 3-col -->
-        <div style="display:flex;gap:16px;margin-bottom:20px;">
-            ${chartCard('Inventory Status', statusImg,  'fas fa-chart-pie', '#3b82f6')}
-            ${chartCard('Product Types',    typeImg,    'fas fa-tags',      '#f97316')}
-            ${chartCard('Issue',            remarkImg,  'fas fa-comment-alt','#a855f7')}
+        <!-- Footer -->
+        <div style="text-align:center;font-size:9px;color:#94a3b8;font-weight:700;flex-shrink:0;">
+            Generated by ${appN} — Inventory Pro &nbsp;•&nbsp; ${dateStr}
         </div>
-
-        <!-- Solution chart full width -->
-        <div style="background:#fff;border-radius:16px;padding:20px;border:1px solid #e2e8f0;margin-bottom:16px;">
-            <div style="font-size:11px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">✔ Solution Overview</div>
-            ${solutionImg ? `<img src="${solutionImg}" style="width:100%;height:120px;object-fit:contain;">` : ''}
-        </div>
-
-        <div style="text-align:center;font-size:10px;color:#cbd5e1;font-weight:700;">Generated by ${appN} — Inventory Pro</div>
     </div>`;
 
     const pdfContainer = document.getElementById('pdf-container');
@@ -2980,8 +3217,8 @@ async function exportDashboardPDF() {
         html2pdf().set({
             margin      : 0,
             filename    : fileName,
-            image       : { type: 'jpeg', quality: 0.98 },
-            html2canvas : { scale: 2, useCORS: true, logging: false, scrollY: 0 },
+            image       : { type: 'jpeg', quality: 0.97 },
+            html2canvas : { scale: 1.5, useCORS: true, logging: false, scrollY: 0, windowWidth: 1680, windowHeight: 1050 },
             jsPDF       : { unit: 'mm', format: 'a4', orientation: 'landscape' }
         }).from(pdfContainer).save().then(() => {
             Swal.close();
