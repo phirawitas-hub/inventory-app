@@ -631,11 +631,11 @@
                     </h4>
                     <div class="chart-container"><canvas id="typeChart"></canvas></div>
                 </div>
-                <!-- FIX 3: Remark Chart -->
+                <!-- Issue Chart -->
                 <div class="glass-card p-8">
                     <h4 class="text-sm font-black text-slate-700 uppercase tracking-wider flex items-center gap-3 mb-8">
                         <span class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fas fa-comment-alt"></i></span>
-                        Remarks
+                        Issue
                     </h4>
                     <div class="chart-container"><canvas id="remarkChart"></canvas></div>
                 </div>
@@ -2325,7 +2325,7 @@ function updateCharts(data) {
         if (!Object.keys(remarkMap).length) {
             ctxRemark.parentElement.innerHTML = `<div class="h-full flex items-center justify-center opacity-30 flex-col gap-2">
                 <i class="fas fa-comment-slash text-3xl text-purple-300"></i>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">ยังไม่มีข้อมูล Remark</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">ยังไม่มีข้อมูล Issue</p>
             </div>`;
         } else {
             // เรียงจากมากไปน้อย
@@ -2393,24 +2393,29 @@ function updateCharts(data) {
     // ── Solution Chart (เท่ๆ — Horizontal Gauge-style bars) ──
     const ctxSolution = document.getElementById('solutionChart');
     if (ctxSolution) {
-        // นับ unique Item per solution value
-        const solMap = {};
+        // นับ unique Item + จำนวนงาน (records) per solution value
+        const solMap = {};          // key -> { items: Set, records: count }
         data.forEach(d => {
             const sol = (d.Solution || 'ไม่ระบุ').trim();
-            if (!solMap[sol]) solMap[sol] = new Set();
-            if (d.Item) solMap[sol].add(d.Item);
+            if (!solMap[sol]) solMap[sol] = { items: new Set(), records: 0 };
+            if (d.Item) solMap[sol].items.add(d.Item);
+            solMap[sol].records++;
         });
-        const labels  = Object.keys(solMap);
-        const counts  = labels.map(k => solMap[k].size);
-        const total   = counts.reduce((a, b) => a + b, 0);
+        const labels   = Object.keys(solMap);
+        const counts   = labels.map(k => solMap[k].items.size);   // unique items
+        const records  = labels.map(k => solMap[k].records);       // total records
+        const total    = counts.reduce((a, b) => a + b, 0);
+        const totalRec = records.reduce((a, b) => a + b, 0);
 
-        // Update summary badges
-        const inCount  = solMap['มีในระบบ']    ? solMap['มีในระบบ'].size    : 0;
-        const outCount = solMap['ไม่มีในระบบ'] ? solMap['ไม่มีในระบบ'].size : 0;
+        // Update summary badges — show items + งาน
+        const inItems  = solMap['มีในระบบ']    ? solMap['มีในระบบ'].items.size    : 0;
+        const outItems = solMap['ไม่มีในระบบ'] ? solMap['ไม่มีในระบบ'].items.size : 0;
+        const inRec    = solMap['มีในระบบ']    ? solMap['มีในระบบ'].records    : 0;
+        const outRec   = solMap['ไม่มีในระบบ'] ? solMap['ไม่มีในระบบ'].records : 0;
         const inEl  = document.getElementById('solutionInCount');
         const outEl = document.getElementById('solutionOutCount');
-        if (inEl)  inEl.innerText  = inCount;
-        if (outEl) outEl.innerText = outCount;
+        if (inEl)  inEl.innerText  = `${inItems} items / ${inRec} งาน`;
+        if (outEl) outEl.innerText = `${outItems} items / ${outRec} งาน`;
 
         // Colour map
         const colorMap = {
@@ -2447,17 +2452,19 @@ function updateCharts(data) {
                         anchor: 'center',
                         align : 'center',
                         color : '#ffffff',
-                        font  : { weight: 'black', size: 16 },
+                        font  : { weight: 'black', size: 14 },
                         formatter: (v, ctx) => {
-                            const pct = total > 0 ? ((v / total) * 100).toFixed(0) : 0;
-                            return v > 0 ? `${v} items  (${pct}%)` : '';
+                            const pct  = total > 0 ? ((v / total) * 100).toFixed(0) : 0;
+                            const rec  = records[ctx.dataIndex] || 0;
+                            return v > 0 ? `${v} items (${pct}%)   |   ${rec} งาน` : '';
                         }
                     },
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
                                 const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0;
-                                return ` ${ctx.raw} รายการ (${pct}%)`;
+                                const rec = records[ctx.dataIndex] || 0;
+                                return [` ${ctx.raw} unique items (${pct}%)`, ` ${rec} งาน (records)`];
                             }
                         }
                     }
