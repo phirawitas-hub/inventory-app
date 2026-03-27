@@ -2615,29 +2615,29 @@ function updateCharts(data) {
     // ── Solution Chart (เท่ๆ — Horizontal Gauge-style bars) ──
     const ctxSolution = document.getElementById('solutionChart');
     if (ctxSolution) {
-        // นับ unique Item + จำนวนงาน (records) per solution value
-        const solMap = {};          // key -> { items: Set, records: count }
+        // นับ unique Item + SUM of OH (Pcs) per solution value
+        const solMap = {};   // key -> { items: Set, pcs: number }
         data.forEach(d => {
             const sol = (d.Solution || 'ไม่ระบุ').trim();
-            if (!solMap[sol]) solMap[sol] = { items: new Set(), records: 0 };
+            if (!solMap[sol]) solMap[sol] = { items: new Set(), pcs: 0 };
             if (d.Item) solMap[sol].items.add(d.Item);
-            solMap[sol].records++;
+            solMap[sol].pcs += (parseInt(d.OH) || 0);   // ← SUM of OH
         });
         const labels   = Object.keys(solMap);
-        const counts   = labels.map(k => solMap[k].items.size);   // unique items
-        const records  = labels.map(k => solMap[k].records);       // total records
+        const counts   = labels.map(k => solMap[k].items.size);  // unique items (x-axis)
+        const records  = labels.map(k => solMap[k].pcs);         // SUM OH = Pcs
         const total    = counts.reduce((a, b) => a + b, 0);
         const totalRec = records.reduce((a, b) => a + b, 0);
 
-        // Update summary badges — show items + งาน
-        const inItems  = solMap['มีในระบบ']    ? solMap['มีในระบบ'].items.size    : 0;
+        // Update summary badges — items + SUM Pcs
+        const inItems  = solMap['มีในระบบ']    ? solMap['มีในระบบ'].items.size : 0;
         const outItems = solMap['ไม่มีในระบบ'] ? solMap['ไม่มีในระบบ'].items.size : 0;
-        const inRec    = solMap['มีในระบบ']    ? solMap['มีในระบบ'].records    : 0;
-        const outRec   = solMap['ไม่มีในระบบ'] ? solMap['ไม่มีในระบบ'].records : 0;
+        const inPcs    = solMap['มีในระบบ']    ? solMap['มีในระบบ'].pcs    : 0;
+        const outPcs   = solMap['ไม่มีในระบบ'] ? solMap['ไม่มีในระบบ'].pcs : 0;
         const inEl  = document.getElementById('solutionInCount');
         const outEl = document.getElementById('solutionOutCount');
-        if (inEl)  inEl.innerText  = `${inItems} items / ${inRec} Pcs`;
-        if (outEl) outEl.innerText = `${outItems} items / ${outRec} Pcs`;
+        if (inEl)  inEl.innerText  = `${inItems} items / ${inPcs} Pcs`;
+        if (outEl) outEl.innerText = `${outItems} items / ${outPcs} Pcs`;
 
         // Colour map
         const colorMap = {
