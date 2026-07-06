@@ -662,6 +662,39 @@
                 </div>
             </div>
 
+            <!-- Dashboard Date Range Filter -->
+            <div class="glass-card p-5 md:p-6">
+                <div class="flex flex-col lg:flex-row lg:items-end gap-4">
+                    <div class="flex items-center gap-2 flex-shrink-0 lg:pb-3">
+                        <span class="w-9 h-9 rounded-xl bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0"><i class="fas fa-calendar-alt text-sm"></i></span>
+                        <span class="text-xs font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">กรองตามวันที่</span>
+                    </div>
+                    <div class="flex flex-1 flex-col sm:flex-row gap-3">
+                        <div class="flex-1">
+                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">จากวันที่</label>
+                            <input type="date" id="dashDateFrom" onchange="applyDashboardDateFilter()"
+                                class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-red-500 font-bold text-sm text-slate-700">
+                        </div>
+                        <div class="flex-1">
+                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">ถึงวันที่</label>
+                            <input type="date" id="dashDateTo" onchange="applyDashboardDateFilter()"
+                                class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-red-500 font-bold text-sm text-slate-700">
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 flex-shrink-0">
+                        <button onclick="setDashboardDatePreset('today')" class="px-3 py-3 bg-slate-100 hover:bg-red-100 hover:text-red-600 text-slate-500 rounded-xl text-[11px] font-black uppercase transition-all active:scale-95">วันนี้</button>
+                        <button onclick="setDashboardDatePreset('7d')" class="px-3 py-3 bg-slate-100 hover:bg-red-100 hover:text-red-600 text-slate-500 rounded-xl text-[11px] font-black uppercase transition-all active:scale-95">7 วัน</button>
+                        <button onclick="setDashboardDatePreset('30d')" class="px-3 py-3 bg-slate-100 hover:bg-red-100 hover:text-red-600 text-slate-500 rounded-xl text-[11px] font-black uppercase transition-all active:scale-95">30 วัน</button>
+                        <button onclick="setDashboardDatePreset('month')" class="px-3 py-3 bg-slate-100 hover:bg-red-100 hover:text-red-600 text-slate-500 rounded-xl text-[11px] font-black uppercase transition-all active:scale-95">เดือนนี้</button>
+                        <button onclick="clearDashboardDateFilter()" class="px-3 py-3 bg-red-50 hover:bg-red-500 hover:text-white text-red-500 rounded-xl text-[11px] font-black uppercase transition-all active:scale-95"><i class="fas fa-times mr-1"></i>ล้าง</button>
+                    </div>
+                </div>
+                <div id="dashDateFilterInfo" class="hidden mt-4 pt-4 border-t border-slate-100 items-center gap-2 text-xs font-bold text-slate-500">
+                    <i class="fas fa-filter text-red-400"></i>
+                    <span id="dashDateFilterText"></span>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <div class="glass-card p-8 relative overflow-hidden hover:scale-[1.02] transition-all">
                     <div class="absolute right-0 top-0 w-28 h-28 bg-blue-50 rounded-bl-[100px] -mr-6 -mt-6"></div>
@@ -1238,6 +1271,65 @@
                     <i class="fas fa-save text-xl"></i> บันทึกการตั้งค่าระบบทั้งหมด
                 </button>
             </div>
+
+            <!-- Discord Notification Settings -->
+            <div class="glass-card p-8 border border-slate-200">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-[#5865F2]/10 text-[#5865F2] flex items-center justify-center">
+                            <i class="fab fa-discord text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-slate-800 text-xl">แจ้งเตือนผ่าน Discord</h3>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Discord Webhook Notifications</p>
+                        </div>
+                    </div>
+                    <button type="button" id="discordEnabledToggle" onclick="toggleDiscordEnabled()"
+                        class="relative w-14 h-8 rounded-full bg-slate-300 transition-colors duration-300 flex-shrink-0">
+                        <span id="discordToggleDot" class="absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 translate-x-0"></span>
+                    </button>
+                </div>
+
+                <div id="discordConfigPanel" class="space-y-5 transition-opacity duration-300">
+                    <div>
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Webhook URL</label>
+                        <div class="relative">
+                            <input type="password" id="discordWebhookUrl" placeholder="https://discord.com/api/webhooks/..."
+                                class="w-full p-4 pr-14 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 font-mono text-sm text-slate-700 transition-all">
+                            <button type="button" onclick="toggleDiscordUrlVisibility()"
+                                class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-all">
+                                <i id="discordUrlEyeIcon" class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">สร้าง Webhook ได้จาก Discord: Server Settings → Integrations → Webhooks</p>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 block">แจ้งเตือนเมื่อ</label>
+                        <div class="flex flex-wrap gap-3">
+                            <label class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:border-indigo-300 transition-all">
+                                <input type="checkbox" id="discordNotifyAdd" class="w-4 h-4 accent-indigo-600" checked>
+                                <span class="text-xs font-bold text-slate-600">เพิ่มรายการใหม่</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:border-indigo-300 transition-all">
+                                <input type="checkbox" id="discordNotifyEdit" class="w-4 h-4 accent-indigo-600" checked>
+                                <span class="text-xs font-bold text-slate-600">แก้ไขรายการ</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:border-indigo-300 transition-all">
+                                <input type="checkbox" id="discordNotifyDelete" class="w-4 h-4 accent-indigo-600" checked>
+                                <span class="text-xs font-bold text-slate-600">ลบรายการ</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="testDiscordWebhook()"
+                        class="w-full py-3.5 bg-[#5865F2] hover:bg-[#4752c4] text-white rounded-2xl font-black text-sm shadow-lg shadow-indigo-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                        <i class="fab fa-discord"></i> ทดสอบส่งข้อความ
+                    </button>
+                    <p class="text-[9px] text-slate-400 text-center">กดปุ่ม "บันทึกการตั้งค่าระบบทั้งหมด" ด้านบนเพื่อบันทึก Webhook URL และตัวเลือกแจ้งเตือน</p>
+                </div>
+            </div>
+
             <div class="glass-card p-8">
                 <div class="flex justify-between items-center mb-6">
                     <div>
@@ -1538,6 +1630,8 @@ let currentPhotoBase64  = '';
 let currentItemForEdit  = null;
 let currentUser         = null;
 let selectedRemarks     = [];     // FIX 4: multi-select state
+let dashDateFrom        = '';     // Dashboard date filter: yyyy-mm-dd หรือ '' = ไม่กรอง
+let dashDateTo          = '';
 
 let globalAppLogo = '';
 let globalAppName = 'Vespa Stock';
@@ -1545,6 +1639,13 @@ try {
     globalAppLogo = localStorage.getItem('vespaAppLogo') || '';
     globalAppName = localStorage.getItem('vespaAppName') || 'Vespa Stock';
 } catch(e) {}
+
+// ─── Discord Webhook Notification settings ───
+let discordWebhookUrl    = '';
+let discordEnabled       = false;
+let discordNotifyAdd     = true;
+let discordNotifyEdit    = true;
+let discordNotifyDelete  = true;
 
 let appUsers = [
     { username: 'admin', password: '1234', name: 'Admin', role: 'admin', empId: 'EMP8855', email: 'admin@vespa.co.th', phone: '081-123-4567', position: 'System Administrator', avatar: '' },
@@ -1670,6 +1771,12 @@ async function loadAppSettings() {
         if (settings && typeof settings === 'object') {
             if (settings.logoBase64 !== undefined) { globalAppLogo = settings.logoBase64; try { localStorage.setItem('vespaAppLogo', globalAppLogo); } catch(e) {} }
             if (settings.appName) { globalAppName = settings.appName; try { localStorage.setItem('vespaAppName', globalAppName); } catch(e) {} }
+            // Discord webhook settings
+            discordWebhookUrl   = settings.discordWebhookUrl || '';
+            discordEnabled      = settings.discordEnabled === 'true' || settings.discordEnabled === true;
+            discordNotifyAdd    = settings.discordNotifyAdd    !== 'false';
+            discordNotifyEdit   = settings.discordNotifyEdit   !== 'false';
+            discordNotifyDelete = settings.discordNotifyDelete !== 'false';
             updateBrandUI();
         }
     } catch(e) {}
@@ -1739,11 +1846,133 @@ function saveAllSettings() {
     if (!newName) { Swal.fire({ icon: 'warning', title: 'กรุณาระบุชื่อระบบ', customClass: { popup: 'rounded-[32px]' } }); return; }
     globalAppName = newName; updateBrandUI();
     try { localStorage.setItem('vespaAppLogo', globalAppLogo); localStorage.setItem('vespaAppName', globalAppName); } catch(e) {}
+
+    // เก็บค่า Discord settings จากฟอร์ม
+    discordWebhookUrl   = (document.getElementById('discordWebhookUrl')?.value || '').trim();
+    discordNotifyAdd    = document.getElementById('discordNotifyAdd')?.checked    ?? true;
+    discordNotifyEdit   = document.getElementById('discordNotifyEdit')?.checked   ?? true;
+    discordNotifyDelete = document.getElementById('discordNotifyDelete')?.checked ?? true;
+    if (discordEnabled && !discordWebhookUrl) {
+        Swal.fire({ icon: 'warning', title: 'กรุณากรอก Discord Webhook URL', text: 'หรือปิดสวิตช์แจ้งเตือนก่อนบันทึก', customClass: { popup: 'rounded-[32px]' } });
+        return;
+    }
+
     const btn = document.querySelector('button[onclick="saveAllSettings()"]');
     const origHtml = btn.innerHTML; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin text-xl"></i> กำลังบันทึก...'; btn.disabled = true;
-    gasCall('saveAppSettings', { settings: { logoBase64: globalAppLogo, appName: globalAppName } })
+    gasCall('saveAppSettings', { settings: {
+        logoBase64          : globalAppLogo,
+        appName             : globalAppName,
+        discordWebhookUrl   : discordWebhookUrl,
+        discordEnabled      : discordEnabled      ? 'true' : 'false',
+        discordNotifyAdd    : discordNotifyAdd    ? 'true' : 'false',
+        discordNotifyEdit   : discordNotifyEdit   ? 'true' : 'false',
+        discordNotifyDelete : discordNotifyDelete ? 'true' : 'false'
+    } })
         .then(() => { Swal.fire({ icon: 'success', title: 'บันทึกการตั้งค่าเรียบร้อย', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 }); btn.innerHTML = origHtml; btn.disabled = false; })
         .catch(() => { Swal.fire({ icon: 'success', title: 'บันทึกแล้ว (Local)', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 }); btn.innerHTML = origHtml; btn.disabled = false; });
+}
+
+// ─────────────────────────────────────────
+//  DISCORD WEBHOOK NOTIFICATIONS
+// ─────────────────────────────────────────
+function loadDiscordSettingsUI() {
+    const urlEl  = document.getElementById('discordWebhookUrl');
+    const addEl  = document.getElementById('discordNotifyAdd');
+    const editEl = document.getElementById('discordNotifyEdit');
+    const delEl  = document.getElementById('discordNotifyDelete');
+    if (urlEl)  urlEl.value = discordWebhookUrl;
+    if (addEl)  addEl.checked  = discordNotifyAdd;
+    if (editEl) editEl.checked = discordNotifyEdit;
+    if (delEl)  delEl.checked  = discordNotifyDelete;
+    setDiscordToggleUI(discordEnabled);
+}
+
+function setDiscordToggleUI(enabled) {
+    discordEnabled = enabled;
+    const toggle = document.getElementById('discordEnabledToggle');
+    const dot    = document.getElementById('discordToggleDot');
+    const panel  = document.getElementById('discordConfigPanel');
+    if (toggle) { toggle.classList.toggle('bg-[#5865F2]', enabled); toggle.classList.toggle('bg-slate-300', !enabled); }
+    if (dot)    { dot.classList.toggle('translate-x-6', enabled); dot.classList.toggle('translate-x-0', !enabled); }
+    if (panel)  { panel.classList.toggle('opacity-40', !enabled); panel.classList.toggle('pointer-events-none', !enabled); }
+}
+
+function toggleDiscordEnabled() { setDiscordToggleUI(!discordEnabled); }
+
+function toggleDiscordUrlVisibility() {
+    const input = document.getElementById('discordWebhookUrl');
+    const icon  = document.getElementById('discordUrlEyeIcon');
+    if (!input || !icon) return;
+    if (input.type === 'password') { input.type = 'text'; icon.className = 'fas fa-eye-slash'; }
+    else { input.type = 'password'; icon.className = 'fas fa-eye'; }
+}
+
+function testDiscordWebhook() {
+    const url = (document.getElementById('discordWebhookUrl')?.value || '').trim();
+    if (!url) { Swal.fire({ icon: 'warning', title: 'กรุณากรอก Webhook URL ก่อนทดสอบ', customClass: { popup: 'rounded-[32px]' } }); return; }
+
+    const btn = document.querySelector('button[onclick="testDiscordWebhook()"]');
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) { btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังส่ง...'; btn.disabled = true; }
+
+    const payload = {
+        username: globalAppName || 'Vespa Stock',
+        embeds: [{
+            title: '🔔 ทดสอบการแจ้งเตือน',
+            description: `เชื่อมต่อ Discord Webhook จาก **${globalAppName || 'Vespa Stock'}** สำเร็จแล้ว!`,
+            color: 5793266,
+            timestamp: new Date().toISOString(),
+            footer: { text: 'Inventory Pro — Discord Integration' }
+        }]
+    };
+
+    gasCall('sendDiscordNotification', { webhookUrl: url, payload })
+        .then(res => {
+            if (res && res.success) {
+                Swal.fire({ icon: 'success', title: 'ส่งข้อความทดสอบสำเร็จ ✅', text: 'กรุณาตรวจสอบช่อง Discord ของคุณ', customClass: { popup: 'rounded-[32px]' } });
+            } else {
+                throw new Error((res && res.error) || 'ไม่ทราบสาเหตุ');
+            }
+        })
+        .catch(err => {
+            Swal.fire({ icon: 'error', title: 'ส่งข้อความไม่สำเร็จ ❌', text: err.message || 'กรุณาตรวจสอบ Webhook URL', customClass: { popup: 'rounded-[32px]' } });
+        })
+        .finally(() => { if (btn) { btn.innerHTML = origHtml; btn.disabled = false; } });
+}
+
+function notifyDiscord(action, item) {
+    try {
+        if (!discordEnabled || !discordWebhookUrl) return;
+        if (action === 'ADD'    && !discordNotifyAdd)    return;
+        if (action === 'EDIT'   && !discordNotifyEdit)   return;
+        if (action === 'DELETE' && !discordNotifyDelete) return;
+
+        const meta = {
+            ADD   : { label: '✅ เพิ่มรายการใหม่', color: 3066993  },
+            EDIT  : { label: '✏️ แก้ไขรายการ',     color: 3447003  },
+            DELETE: { label: '🗑️ ลบรายการ',        color: 15158332 }
+        }[action] || { label: action, color: 9807270 };
+
+        const payload = {
+            username: globalAppName || 'Vespa Stock',
+            embeds: [{
+                title: meta.label,
+                color: meta.color,
+                fields: [
+                    { name: 'Item Code',     value: item.Item || '-',                                          inline: true },
+                    { name: 'Location',      value: item.Location || '-',                                      inline: true },
+                    { name: 'Status',        value: item.InventoryStatus || '-',                                inline: true },
+                    { name: 'Quantity',      value: String(item.OH !== undefined ? item.OH : '-'),               inline: true },
+                    { name: 'Recorder',      value: (currentUser && currentUser.name) || item.Name || '-',      inline: true },
+                    { name: 'License Plate', value: item.LicensePlate || '-',                                   inline: true }
+                ],
+                timestamp: new Date().toISOString(),
+                footer: { text: globalAppName || 'Vespa Stock' }
+            }]
+        };
+
+        gasCall('sendDiscordNotification', { webhookUrl: discordWebhookUrl, payload }).catch(() => {});
+    } catch(e) { /* silent — ไม่ให้กระทบ flow หลัก */ }
 }
 
 // ─────────────────────────────────────────
@@ -2181,7 +2410,7 @@ function switchView(view) {
         if (view === 'dashboard' || view === 'report') loadRealData();
         if (view === 'inventory') loadDropdownOptions();
         if (view === 'inventory' && !currentItemForEdit) resetForm();
-        if (view === 'users')   { renderUserTable(); updateBrandUI(); }
+        if (view === 'users')   { renderUserTable(); updateBrandUI(); loadDiscordSettingsUI(); }
         if (view === 'history')    loadHistoryLogs();
         if (view === 'profile')    loadProfileData();
         if (view === 'statuslist') loadStatusListView();
@@ -2284,7 +2513,8 @@ function loadDropdownOptions() {
 function loadRealData() {
     gasCall('getInventoryData').then(data => {
         try { inventoryData = typeof data === 'string' ? JSON.parse(data) : data; if (!Array.isArray(inventoryData)) throw new Error('not array'); } catch(e) { inventoryData = []; }
-        renderData(inventoryData); updateCharts(inventoryData); updateActionList(inventoryData); updateDashboardStats(inventoryData);
+        renderData(inventoryData); updateActionList(inventoryData);
+        refreshDashboardView();
     // refresh statuslist if that view is currently active
     if (!document.getElementById('view-statuslist').classList.contains('hidden')) loadStatusListView();
     }).catch(() => loadMockData());
@@ -2311,7 +2541,8 @@ function loadMockData() {
         { Location: 'B-02-03', Item: '2C999999', Description: 'Sample Item 2', Type: 'CONSUMABLES', OH: 5, InventoryStatus: 'Damage', Solution: 'ไม่มีในระบบ', LicensePlate: 'XY99876543210', Name: 'Staff A', Remark: 'มีรอยขีดข่วน', Photo: '', Timestamp: '28/10/2023 09:00:00', ActualDate: '2023-10-28T09:00:00.000Z', OnOffStatus: 'ON' }
     ];
     transactionLogs = [{ Timestamp: '27/10/2023 10:00:00', User: 'Admin', Action: 'ADD', Item: '1B000000', Location: 'A-01-01', Details: 'Initial Entry' }];
-    renderData(inventoryData); updateCharts(inventoryData); updateActionList(inventoryData); updateDashboardStats(inventoryData);
+    renderData(inventoryData); updateActionList(inventoryData);
+    refreshDashboardView();
     // refresh statuslist if that view is currently active
     if (!document.getElementById('view-statuslist').classList.contains('hidden')) loadStatusListView();
 
@@ -2340,6 +2571,85 @@ function updateDashboardStats(data) {
     document.getElementById('statLoc').innerText  = new Set(data.map(i => i.Location).filter(Boolean)).size;
     document.getElementById('statItem').innerText = new Set(data.map(i => i.Item).filter(Boolean)).size;
     document.getElementById('statWork').innerText = data.reduce((s, i) => s + (parseInt(i.OH) || 0), 0);
+}
+
+// ─────────────────────────────────────────
+//  DASHBOARD DATE RANGE FILTER
+// ─────────────────────────────────────────
+function getDashboardFilteredData() {
+    if (!dashDateFrom && !dashDateTo) return inventoryData;
+    const fromDate = dashDateFrom ? new Date(dashDateFrom + 'T00:00:00') : null;
+    const toDate   = dashDateTo   ? new Date(dashDateTo   + 'T23:59:59') : null;
+    return inventoryData.filter(item => {
+        const d = new Date(item.ActualDate);
+        if (isNaN(d.getTime())) return false;
+        if (fromDate && d < fromDate) return false;
+        if (toDate   && d > toDate)   return false;
+        return true;
+    });
+}
+
+function refreshDashboardView() {
+    const filtered = getDashboardFilteredData();
+    updateCharts(filtered);
+    updateDashboardStats(filtered);
+    updateDashboardDateFilterInfo(filtered.length);
+}
+
+function applyDashboardDateFilter() {
+    dashDateFrom = document.getElementById('dashDateFrom').value || '';
+    dashDateTo   = document.getElementById('dashDateTo').value   || '';
+    // ถ้าเลือกวันที่สลับกัน (from มากกว่า to) ให้สลับให้อัตโนมัติ
+    if (dashDateFrom && dashDateTo && dashDateFrom > dashDateTo) {
+        const tmp = dashDateFrom; dashDateFrom = dashDateTo; dashDateTo = tmp;
+        document.getElementById('dashDateFrom').value = dashDateFrom;
+        document.getElementById('dashDateTo').value   = dashDateTo;
+    }
+    refreshDashboardView();
+}
+
+function setDashboardDatePreset(preset) {
+    const now = new Date();
+    const fmt = (d) => {
+        const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), dd = String(d.getDate()).padStart(2,'0');
+        return `${y}-${m}-${dd}`;
+    };
+    let from = fmt(now);
+    const to = fmt(now);
+
+    if (preset === '7d') {
+        const d = new Date(now); d.setDate(d.getDate() - 6); from = fmt(d);
+    } else if (preset === '30d') {
+        const d = new Date(now); d.setDate(d.getDate() - 29); from = fmt(d);
+    } else if (preset === 'month') {
+        from = fmt(new Date(now.getFullYear(), now.getMonth(), 1));
+    }
+    // preset === 'today' ใช้ from = to = วันนี้ (ค่าเริ่มต้นด้านบน)
+
+    dashDateFrom = from;
+    dashDateTo   = to;
+    document.getElementById('dashDateFrom').value = dashDateFrom;
+    document.getElementById('dashDateTo').value   = dashDateTo;
+    refreshDashboardView();
+}
+
+function clearDashboardDateFilter() {
+    dashDateFrom = ''; dashDateTo = '';
+    const fEl = document.getElementById('dashDateFrom'), tEl = document.getElementById('dashDateTo');
+    if (fEl) fEl.value = ''; if (tEl) tEl.value = '';
+    refreshDashboardView();
+}
+
+function updateDashboardDateFilterInfo(count) {
+    const infoEl = document.getElementById('dashDateFilterInfo');
+    const textEl = document.getElementById('dashDateFilterText');
+    if (!infoEl || !textEl) return;
+    if (!dashDateFrom && !dashDateTo) { infoEl.classList.add('hidden'); infoEl.classList.remove('flex'); return; }
+    const opt = { day: 'numeric', month: 'short', year: 'numeric' };
+    const fromTxt = dashDateFrom ? new Date(dashDateFrom + 'T00:00:00').toLocaleDateString('th-TH', opt) : 'เริ่มต้น';
+    const toTxt   = dashDateTo   ? new Date(dashDateTo   + 'T00:00:00').toLocaleDateString('th-TH', opt) : 'ปัจจุบัน';
+    textEl.innerText = `แสดงข้อมูลช่วง ${fromTxt} — ${toTxt} (พบ ${count} รายการ)`;
+    infoEl.classList.remove('hidden'); infoEl.classList.add('flex');
 }
 
 // ─────────────────────────────────────────
@@ -3566,6 +3876,7 @@ function handleFormSubmit() {
             if (result && result.success === false) throw new Error(result.error || 'บันทึกไม่สำเร็จ');
             Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ! ✅', text: 'ข้อมูลถูกบันทึกลงชีต Data แล้ว', timer: 2000, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
             logTransaction(currentItemForEdit ? 'EDIT' : 'ADD', payload.Item, payload.Location, currentUser ? currentUser.name : 'Unknown', currentItemForEdit ? 'Updated' : 'Added');
+            notifyDiscord(currentItemForEdit ? 'EDIT' : 'ADD', payload);
             resetForm(); loadRealData(); switchView('dashboard');
             btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
         })
@@ -3588,6 +3899,7 @@ function confirmDeleteItem(index, e) {
         gasCall('deleteInventoryItem', { data: item }).then(result => {
             if (result && result.error) throw new Error(result.error);
             Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', timer: 1000, showConfirmButton: false });
+            notifyDiscord('DELETE', item);
             loadRealData(); closeModal('detailModal');
         }).catch(err => { Swal.fire({ icon: 'error', title: 'ลบไม่สำเร็จ', text: err.message, customClass: { popup: 'rounded-[32px]' } }); });
     });
