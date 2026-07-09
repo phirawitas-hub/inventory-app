@@ -860,6 +860,10 @@
                                     <i class="fas fa-barcode"></i>
                                 </button>
                             </div>
+                            <button type="button" onclick="fillUnknownItemCode()"
+                                class="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-slate-200 hover:border-red-300 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-[0.98]">
+                                <i class="fas fa-question-circle"></i> ไม่ทราบรหัสสินค้า
+                            </button>
                         </div>
                     </div>
 
@@ -3664,6 +3668,31 @@ function checkItemInfo(code) {
     });
 }
 
+// ─── ปุ่ม "ไม่ทราบรหัสสินค้า" — เติมรหัสอัตโนมัติ ไม่ทราบรหัสสินค้า N (รันเลขไม่ซ้ำกับที่มีอยู่ในชีต) ───
+function fillUnknownItemCode() {
+    const prefix  = 'ไม่ทราบรหัสสินค้า';
+    const pattern = new RegExp('^' + prefix + '\\s*(\\d+)$');
+    const existingNumbers = (inventoryData || [])
+        .map(item => {
+            const m = String(item.Item || '').trim().match(pattern);
+            return m ? parseInt(m[1], 10) : null;
+        })
+        .filter(n => n !== null && !isNaN(n));
+    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+    const newCode = `${prefix} ${nextNumber}`;
+
+    const itemInput = document.getElementById('Item');
+    if (!itemInput) return;
+    itemInput.value = newCode;
+    itemInput.dispatchEvent(new Event('input',  { bubbles: true }));
+    itemInput.dispatchEvent(new Event('change', { bubbles: true }));
+    itemInput.style.transition = 'box-shadow 0.2s';
+    itemInput.style.boxShadow  = '0 0 0 3px rgba(16,185,129,0.45)';
+    setTimeout(() => { itemInput.style.boxShadow = ''; }, 1000);
+
+    checkItemInfo(newCode);
+}
+
 // ─── FIX 1: resetForm — ล้างค่าว่างทั้งหมด ───
 function resetForm() {
     currentItemForEdit = null;
@@ -3877,7 +3906,8 @@ function handleFormSubmit() {
             Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ! ✅', text: 'ข้อมูลถูกบันทึกลงชีต Data แล้ว', timer: 2000, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
             logTransaction(currentItemForEdit ? 'EDIT' : 'ADD', payload.Item, payload.Location, currentUser ? currentUser.name : 'Unknown', currentItemForEdit ? 'Updated' : 'Added');
             notifyDiscord(currentItemForEdit ? 'EDIT' : 'ADD', payload);
-            resetForm(); loadRealData(); switchView('dashboard');
+            resetForm(); loadRealData();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
         })
         .catch(err => {
