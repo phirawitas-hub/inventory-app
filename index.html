@@ -307,20 +307,58 @@
         }
         .flip-btn:active { transform: scale(0.88); }
 
-        /* ── FIX 4: Remark multi-select pill UI ── */
-        .remark-pills { display: flex; flex-wrap: wrap; gap: 8px; }
-        .remark-pill {
+        /* ── Remark Dropdown (multi-select, redesigned) ── */
+        .remark-dropdown-trigger {
+            width: 100%; min-height: 64px; padding: 12px 16px;
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px;
+            outline: none; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        }
+        .remark-dropdown-trigger:hover, .remark-dropdown-trigger.open {
+            border-color: #e63946; box-shadow: 0 0 0 4px rgba(230,57,70,0.08);
+        }
+        .remark-dropdown-trigger .chevron { transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); }
+        .remark-dropdown-trigger.open .chevron { transform: rotate(180deg); }
+
+        .remark-selected-chip {
             display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 700;
-            border: 2px solid #e2e8f0; background: #f8fafc; color: #64748b;
-            cursor: pointer; transition: all 0.18s; user-select: none;
+            padding: 5px 6px 5px 12px; border-radius: 999px; font-size: 11px; font-weight: 800;
+            background: #e63946; color: white; box-shadow: 0 2px 6px rgba(230,57,70,0.25);
         }
-        .remark-pill:hover { border-color: #e63946; color: #e63946; background: #fff5f5; }
-        .remark-pill.selected {
-            background: #e63946; border-color: #e63946; color: white;
-            box-shadow: 0 2px 8px rgba(230,57,70,0.25);
+        .remark-selected-chip i {
+            font-size: 9px; opacity: 0.85; cursor: pointer;
+            width: 16px; height: 16px; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: background 0.15s;
         }
-        .remark-pill .pill-check { font-size: 10px; opacity: 0.8; }
+        .remark-selected-chip i:hover { background: rgba(255,255,255,0.25); opacity: 1; }
+
+        .remark-dropdown-panel {
+            position: absolute; z-index: 40; left: 0; right: 0; top: calc(100% + 8px);
+            background: white; border: 1px solid #e2e8f0; border-radius: 20px;
+            box-shadow: 0 20px 40px -12px rgba(0,0,0,0.18);
+            max-height: 260px; overflow-y: auto; padding: 8px;
+            animation: remarkPanelIn 0.16s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes remarkPanelIn {
+            from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .remark-option {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 12px; border-radius: 14px; cursor: pointer;
+            transition: background 0.15s; user-select: none;
+        }
+        .remark-option:hover { background: #f8fafc; }
+        .remark-option.selected { background: #fff5f5; }
+        .remark-option-box {
+            width: 20px; height: 20px; border-radius: 7px; flex-shrink: 0;
+            border: 2px solid #e2e8f0; background: white;
+            display: flex; align-items: center; justify-content: center;
+            color: transparent; font-size: 10px; transition: all 0.15s;
+        }
+        .remark-option.selected .remark-option-box { background: #e63946; border-color: #e63946; color: white; }
+        .remark-option-label { font-size: 13px; font-weight: 700; color: #334155; }
 
         /* ── Collapsible Sidebar ── */
         #sidebar {
@@ -971,7 +1009,7 @@
                         </div>
                     </div>
 
-                    <!-- FIX 4: Remark — multi-select pill UI -->
+                    <!-- Remark — dropdown multi-select (redesigned) -->
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
                             <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">หมายเหตุ (Remark) <span class="text-red-500">*</span></label>
@@ -980,11 +1018,20 @@
                                 <i class="fas fa-plus text-[10px]"></i> เพิ่มหมายเหตุ
                             </button>
                         </div>
-                        <div id="remarkPillsContainer" class="remark-pills min-h-[48px] p-3 bg-slate-50 border border-slate-200 rounded-2xl">
-                            <!-- pills rendered here by JS -->
+                        <div class="relative" id="remarkDropdownWrapper">
+                            <button type="button" id="remarkPillsContainer" onclick="toggleRemarkDropdownPanel(event)"
+                                class="remark-dropdown-trigger">
+                                <div id="remarkSelectedDisplay" class="flex flex-wrap gap-1.5 flex-1 min-w-0">
+                                    <span class="text-slate-400 font-semibold text-sm">-- เลือกหมายเหตุ --</span>
+                                </div>
+                                <i class="fas fa-chevron-down text-slate-400 text-sm chevron flex-shrink-0"></i>
+                            </button>
+                            <div id="remarkDropdownPanel" class="remark-dropdown-panel hidden">
+                                <!-- options rendered here by JS -->
+                            </div>
                         </div>
                         <input type="hidden" id="Remark" value="">
-                        <p id="remarkHelp" class="text-[10px] text-slate-400 ml-1">กดเลือกได้หลายรายการ</p>
+                        <p id="remarkHelp" class="text-[10px] text-slate-400 ml-1">แตะเพื่อเปิดรายการ — เลือกได้หลายรายการ</p>
                     </div>
 
                     <div class="space-y-2">
@@ -2657,40 +2704,85 @@ function updateDashboardDateFilterInfo(count) {
 }
 
 // ─────────────────────────────────────────
-//  FIX 4: Remark pill rendering & multi-select
+//  Remark dropdown rendering & multi-select (redesigned)
 // ─────────────────────────────────────────
 let availableRemarks = [];
 
 function renderRemarkPills(remarks) {
     availableRemarks = remarks || [];
-    const container = document.getElementById('remarkPillsContainer');
-    if (!container) return;
-    if (!remarks || !remarks.length) {
-        container.innerHTML = '<span class="text-xs text-slate-400 font-bold italic">ยังไม่มีหมายเหตุ — กด "เพิ่มหมายเหตุ"</span>';
-        return;
-    }
-    container.innerHTML = remarks.map(r => {
-        const isSelected = selectedRemarks.includes(r);
-        return `<span class="remark-pill${isSelected ? ' selected' : ''}" onclick="toggleRemarkPill(this, '${r.replace(/'/g, "\\'")}')">
-            <i class="pill-check fas fa-check${isSelected ? '' : ' opacity-0'}"></i>${r}
-        </span>`;
-    }).join('');
+    renderRemarkOptionsPanel();
+    renderRemarkSelectedDisplay();
     syncRemarkHidden();
 }
 
-function toggleRemarkPill(el, value) {
-    const idx = selectedRemarks.indexOf(value);
-    if (idx === -1) {
-        selectedRemarks.push(value);
-        el.classList.add('selected');
-        el.querySelector('.pill-check').classList.remove('opacity-0');
-    } else {
-        selectedRemarks.splice(idx, 1);
-        el.classList.remove('selected');
-        el.querySelector('.pill-check').classList.add('opacity-0');
+function renderRemarkOptionsPanel() {
+    const panel = document.getElementById('remarkDropdownPanel');
+    if (!panel) return;
+    if (!availableRemarks.length) {
+        panel.innerHTML = '<p class="text-xs text-slate-400 font-bold italic text-center py-4">ยังไม่มีหมายเหตุ — กด "เพิ่มหมายเหตุ"</p>';
+        return;
     }
+    panel.innerHTML = availableRemarks.map(r => {
+        const isSelected = selectedRemarks.includes(r);
+        const safe = r.replace(/'/g, "\\'");
+        return `<div class="remark-option${isSelected ? ' selected' : ''}" onclick="toggleRemarkOption('${safe}')">
+            <span class="remark-option-box"><i class="fas fa-check"></i></span>
+            <span class="remark-option-label">${r}</span>
+        </div>`;
+    }).join('');
+}
+
+function renderRemarkSelectedDisplay() {
+    const display = document.getElementById('remarkSelectedDisplay');
+    if (!display) return;
+    if (!selectedRemarks.length) {
+        display.innerHTML = '<span class="text-slate-400 font-semibold text-sm">-- เลือกหมายเหตุ --</span>';
+        return;
+    }
+    display.innerHTML = selectedRemarks.map(r => {
+        const safe = r.replace(/'/g, "\\'");
+        return `<span class="remark-selected-chip">${r}<i class="fas fa-times" onclick="event.stopPropagation(); toggleRemarkOption('${safe}')"></i></span>`;
+    }).join('');
+}
+
+function toggleRemarkOption(value) {
+    const idx = selectedRemarks.indexOf(value);
+    if (idx === -1) selectedRemarks.push(value);
+    else selectedRemarks.splice(idx, 1);
+    renderRemarkOptionsPanel();
+    renderRemarkSelectedDisplay();
     syncRemarkHidden();
 }
+
+function toggleRemarkDropdownPanel(e) {
+    if (e) e.stopPropagation();
+    const panel = document.getElementById('remarkDropdownPanel');
+    if (!panel) return;
+    if (panel.classList.contains('hidden')) openRemarkDropdown();
+    else closeRemarkDropdown();
+}
+
+function openRemarkDropdown() {
+    const panel   = document.getElementById('remarkDropdownPanel');
+    const trigger = document.getElementById('remarkPillsContainer');
+    if (!panel) return;
+    panel.classList.remove('hidden');
+    if (trigger) trigger.classList.add('open');
+}
+
+function closeRemarkDropdown() {
+    const panel   = document.getElementById('remarkDropdownPanel');
+    const trigger = document.getElementById('remarkPillsContainer');
+    if (!panel) return;
+    panel.classList.add('hidden');
+    if (trigger) trigger.classList.remove('open');
+}
+
+// ปิด dropdown เมื่อคลิกนอกกรอบ
+document.addEventListener('click', (e) => {
+    const wrapper = document.getElementById('remarkDropdownWrapper');
+    if (wrapper && !wrapper.contains(e.target)) closeRemarkDropdown();
+});
 
 function syncRemarkHidden() {
     const hiddenEl = document.getElementById('Remark');
@@ -3713,7 +3805,8 @@ function resetForm() {
     // clear remark multi-select
     selectedRemarks = [];
     document.getElementById('Remark').value = '';
-    renderRemarkPills(availableRemarks);  // re-render pills (all unselected)
+    renderRemarkPills(availableRemarks);  // re-render dropdown (all unselected)
+    closeRemarkDropdown();
 
     // clear radio solution
     document.querySelectorAll('input[name="Solution"]').forEach(r => r.checked = false);
