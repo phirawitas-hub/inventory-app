@@ -1772,7 +1772,11 @@ function initApp() {
     setInterval(updateAppTime, 1000);
     updateAppTime();
     forceExitLoader();
-    loadDataInBackground();
+    // หมายเหตุ: เดิมมีการเรียก loadDataInBackground() ต่อจากนี้ ซึ่งยิง getAppUsers()
+    // ซ้ำซ้อนกับ showLoginAfterUsersLoad() พร้อมกัน ทำให้เกิด race condition —
+    // ถ้า Apps Script ตอบช้า (cold start) แล้ว showLoginAfterUsersLoad() timeout ก่อน
+    // appUsers จะเหลือค่า default (admin/1234, staff/1234) ทำให้ผู้ใช้จริง login ไม่ผ่าน
+    // ทั้งที่รหัสถูกต้อง — ตัดออกเพื่อไม่ให้ยิงซ้ำ และแก้ที่ doLogin() ให้ retry สดแทน
 }
 
 function forceExitLoader() {
@@ -1791,7 +1795,7 @@ async function showLoginAfterUsersLoad() {
     if (loader)    loader.classList.remove('hidden');
     if (loaderTxt) loaderTxt.innerText = 'กำลังโหลดข้อมูลผู้ใช้...';
 
-    const MAX_WAIT = 4000;
+    const MAX_WAIT = 10000;
     const t0 = Date.now();
 
     try {
@@ -2042,7 +2046,7 @@ function handleLogin(event) {
     doLogin(u, p);
 }
 
-function doLogin(u, p) {
+function doLogin(u, p, isRetry) {
     const user = appUsers.find(x => String(x.username || '').toLowerCase() === u && String(x.password || '') === p);
     if (user) {
         try {
@@ -2058,9 +2062,27 @@ function doLogin(u, p) {
             if (adminMenu) { if (user.role === 'admin') adminMenu.classList.remove('hidden'); else adminMenu.classList.add('hidden'); }
             switchView('dashboard');
         } catch(err) { console.error('Login render error:', err); alert('เกิดข้อผิดพลาดหลัง login: ' + err.message); }
-    } else {
-        Swal.fire({ icon: 'error', title: 'Login Failed', text: 'Username หรือ Password ไม่ถูกต้อง', customClass: { popup: 'rounded-[32px]' } });
+        return;
     }
+
+    // ✅ SELF-HEALING RETRY: ไม่เจอ user ที่ตรงกันในข้อมูลที่แคชไว้ในเครื่อง —
+    // ก่อนฟันธงว่า login ผิด ให้ลองดึงรายชื่อ users สดจาก server อีกครั้งหนึ่งก่อน
+    // (กันกรณี appUsers ในเครื่องหลุด/ไม่ทันอัปเดตตอนเปิดแอป ทำให้รหัสถูกแต่ login ไม่ผ่าน)
+    if (!isRetry) {
+        const btn = document.querySelector('#loginScreen button[type=submit]');
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังตรวจสอบ...'; }
+        gasCall('getAppUsers')
+            .then(res => { if (Array.isArray(res) && res.length > 0) appUsers = res; })
+            .catch(() => {})
+            .finally(() => {
+                if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
+                doLogin(u, p, true);   // retry ครั้งเดียวด้วยข้อมูลสด กันวนลูป
+            });
+        return;
+    }
+
+    Swal.fire({ icon: 'error', title: 'Login Failed', text: 'Username หรือ Password ไม่ถูกต้อง', customClass: { popup: 'rounded-[32px]' } });
 }
 
 function handleLogout() {
@@ -3647,13 +3669,51 @@ function filterHistoryLogs() { renderHistoryLogs(); }
 //  USER MANAGEMENT
 // ─────────────────────────────────────────
 function renderUserTable() {
-    document.getElementById('userTableBody').innerHTML = appUsers.map(u => `
+    document.getElementById('userTableBody').innerHTML = appUsers.map(u => {
+        const safeUser = String(u.username || '').replace(/'/g, "\\'");
+        return `
         <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50">
             <td class="py-4 px-4 font-bold text-slate-700">${u.username}</td>
             <td class="py-4 px-4 text-slate-500">${u.name}</td>
             <td class="py-4 px-4"><span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${u.role === 'admin' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}">${u.role}</span></td>
-            <td class="py-4 text-right pr-4">${u.username !== 'admin' ? `<button onclick="deleteUser('${u.username}')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-trash-alt text-[10px]"></i></button>` : '<span class="text-[10px] text-slate-300 font-bold uppercase">Locked</span>'}</td>
-        </tr>`).join('');
+            <td class="py-4 text-right pr-4">
+                <div class="flex items-center justify-end gap-2">
+                    <button onclick="editUserPassword('${safeUser}')" title="แก้ไขรหัสผ่าน"
+                        class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:bg-indigo-500 hover:text-white transition-all flex items-center justify-center">
+                        <i class="fas fa-key text-[10px]"></i>
+                    </button>
+                    ${u.username !== 'admin'
+                        ? `<button onclick="deleteUser('${safeUser}')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"><i class="fas fa-trash-alt text-[10px]"></i></button>`
+                        : '<span class="text-[10px] text-slate-300 font-bold uppercase px-1">Locked</span>'}
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function editUserPassword(username) {
+    const user = appUsers.find(u => u.username === username);
+    if (!user) return;
+    Swal.fire({
+        title: 'แก้ไขรหัสผ่าน',
+        html: `<p class="text-slate-500 text-sm mb-3">ผู้ใช้: <b>${user.name || username}</b> (${username})</p>
+               <input id="edit-pass-new" class="swal2-input" placeholder="รหัสผ่านใหม่" autocomplete="off">
+               <input id="edit-pass-confirm" class="swal2-input" placeholder="ยืนยันรหัสผ่านใหม่" autocomplete="off">`,
+        focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึก', confirmButtonColor: '#4f46e5',
+        customClass: { popup: 'rounded-[32px]' },
+        preConfirm: () => [document.getElementById('edit-pass-new').value, document.getElementById('edit-pass-confirm').value]
+    }).then(result => {
+        if (!result.isConfirmed) return;
+        const [p1, p2] = result.value;
+        if (!p1 || !p1.trim()) { Swal.fire({ icon: 'warning', title: 'กรุณากรอกรหัสผ่านใหม่', customClass: { popup: 'rounded-[32px]' } }); return; }
+        if (p1.trim().length < 4) { Swal.fire({ icon: 'warning', title: 'รหัสผ่านสั้นเกินไป', text: 'อย่างน้อย 4 ตัวอักษร', customClass: { popup: 'rounded-[32px]' } }); return; }
+        if (p1.trim() !== p2.trim()) { Swal.fire({ icon: 'error', title: 'รหัสผ่านไม่ตรงกัน', customClass: { popup: 'rounded-[32px]' } }); return; }
+
+        user.password = p1.trim();
+        gasCall('saveAppUsers', { users: appUsers })
+            .then(() => Swal.fire({ icon: 'success', title: 'เปลี่ยนรหัสผ่านสำเร็จ ✅', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 }))
+            .catch(() => Swal.fire({ icon: 'warning', title: 'บันทึกไม่สำเร็จ กรุณาลองใหม่', customClass: { popup: 'rounded-[32px]' } }));
+    });
 }
 
 function openAddUserModal() {
