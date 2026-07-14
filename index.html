@@ -1683,6 +1683,7 @@ let currentUser         = null;
 let selectedRemarks     = [];     // FIX 4: multi-select state
 let dashDateFrom        = '';     // Dashboard date filter: yyyy-mm-dd หรือ '' = ไม่กรอง
 let dashDateTo          = '';
+let pendingAutoUnknownCode = false;  // true = ให้ backend รันเลข "ไม่ทราบรหัสสินค้า" ให้ตอนบันทึก (กันเลขซ้ำ)
 
 let globalAppLogo = '';
 let globalAppName = 'Vespa Stock';
@@ -3801,7 +3802,8 @@ function changePassword() {
 // ─────────────────────────────────────────
 //  INVENTORY FORM
 // ─────────────────────────────────────────
-function checkItemInfo(code) {
+function checkItemInfo(code, isAutoUnknown) {
+    pendingAutoUnknownCode = !!isAutoUnknown;
     if (!code) return;
     document.getElementById('ItemDesc').value = 'กำลังค้นหา...';
     document.getElementById('ItemType').value = '...';
@@ -3820,7 +3822,10 @@ function checkItemInfo(code) {
     });
 }
 
-// ─── ปุ่ม "ไม่ทราบรหัสสินค้า" — เติมรหัสอัตโนมัติ ไม่ทราบรหัสสินค้า N (รันเลขไม่ซ้ำกับที่มีอยู่ในชีต) ───
+// ─── ปุ่ม "ไม่ทราบรหัสสินค้า" ───
+// เลขที่โชว์ตอนนี้เป็นแค่ตัวอย่างคร่าวๆ จากข้อมูลที่แคชไว้ในเครื่อง (เพื่อ feedback ทันที)
+// เลขจริงที่บันทึกจะถูกรันโดย backend อีกทีตอนกดบันทึก (ภายใต้ LockService)
+// เพื่อกันปัญหาเลขซ้ำเมื่อมีคนกดปุ่มนี้พร้อมกันจากหลายเครื่อง
 function fillUnknownItemCode() {
     const prefix  = 'ไม่ทราบรหัสสินค้า';
     const pattern = new RegExp('^' + prefix + '\\s*(\\d+)$');
@@ -3831,23 +3836,22 @@ function fillUnknownItemCode() {
         })
         .filter(n => n !== null && !isNaN(n));
     const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
-    const newCode = `${prefix} ${nextNumber}`;
+    const newCode = `${prefix} ${nextNumber}`;   // ตัวอย่างคร่าวๆ เท่านั้น
 
     const itemInput = document.getElementById('Item');
     if (!itemInput) return;
     itemInput.value = newCode;
-    itemInput.dispatchEvent(new Event('input',  { bubbles: true }));
-    itemInput.dispatchEvent(new Event('change', { bubbles: true }));
     itemInput.style.transition = 'box-shadow 0.2s';
     itemInput.style.boxShadow  = '0 0 0 3px rgba(16,185,129,0.45)';
     setTimeout(() => { itemInput.style.boxShadow = ''; }, 1000);
 
-    checkItemInfo(newCode);
+    checkItemInfo(newCode, true);   // true = ทำเครื่องหมายว่าให้ backend รันเลขจริงให้ตอนบันทึก
 }
 
 // ─── FIX 1: resetForm — ล้างค่าว่างทั้งหมด ───
 function resetForm() {
     currentItemForEdit = null;
+    pendingAutoUnknownCode = false;
     document.getElementById('stockForm').reset();
 
     // FIX 1: clear ค่าว่างทั้งหมด — ไม่ pre-fill
@@ -4042,7 +4046,8 @@ function handleFormSubmit() {
         Remark          : document.getElementById('Remark').value,
         Name            : document.getElementById('Name').value,
         Photo           : currentPhotoBase64,
-        ActualDate      : new Date().toISOString()
+        ActualDate      : new Date().toISOString(),
+        AutoUnknownCode : pendingAutoUnknownCode
     };
 
     const btn = document.getElementById('submitBtn');
@@ -4056,9 +4061,14 @@ function handleFormSubmit() {
         .then(result => {
             if (result && result.error) throw new Error(result.error);
             if (result && result.success === false) throw new Error(result.error || 'บันทึกไม่สำเร็จ');
-            Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ! ✅', text: 'ข้อมูลถูกบันทึกลงชีต Data แล้ว', timer: 2000, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' } });
-            logTransaction(currentItemForEdit ? 'EDIT' : 'ADD', payload.Item, payload.Location, currentUser ? currentUser.name : 'Unknown', currentItemForEdit ? 'Updated' : 'Added');
-            notifyDiscord(currentItemForEdit ? 'EDIT' : 'ADD', payload);
+            const finalItemCode = (result && result.itemCode) ? result.itemCode : payload.Item;
+            Swal.fire({
+                icon: 'success', title: 'บันทึกสำเร็จ! ✅',
+                text: pendingAutoUnknownCode ? `รหัสที่ระบบรันให้: ${finalItemCode}` : 'ข้อมูลถูกบันทึกลงชีต Data แล้ว',
+                timer: 2500, showConfirmButton: false, customClass: { popup: 'rounded-[32px]' }
+            });
+            logTransaction(currentItemForEdit ? 'EDIT' : 'ADD', finalItemCode, payload.Location, currentUser ? currentUser.name : 'Unknown', currentItemForEdit ? 'Updated' : 'Added');
+            notifyDiscord(currentItemForEdit ? 'EDIT' : 'ADD', Object.assign({}, payload, { Item: finalItemCode }));
             resetForm(); loadRealData();
             window.scrollTo({ top: 0, behavior: 'smooth' });
             btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
