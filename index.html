@@ -955,6 +955,7 @@
                                     <option value="Good">🟢 GOOD</option>
                                     <option value="Damage">🔴 DAMAGE</option>
                                     <option value="QC">🟡 QC CHECK</option>
+                                    <option value="Incomplete">🟠 INCOMPLETE</option>
                                     <option value="Disposal">⚫ DISPOSAL</option>
                                 </select>
                                 <i class="fas fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
@@ -1437,6 +1438,7 @@
                                 <option value="Good">🟢 Good</option>
                                 <option value="Damage">🔴 Damage</option>
                                 <option value="QC">🟡 QC</option>
+                                <option value="Incomplete">🟠 Incomplete</option>
                                 <option value="Disposal">⚫ Disposal</option>
                             </select>
                             <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs"></i>
@@ -2141,7 +2143,7 @@ async function requestCameraAndScan() {
         torchTrack = scannerStream.getVideoTracks()[0];
         const caps = torchTrack.getCapabilities ? torchTrack.getCapabilities() : {};
         document.getElementById('torchBtn').classList.toggle('hidden', !caps.torch);
-        document.getElementById('scannerStatus').innerText = barcodeDetector ? 'หันกล้องไปที่บาร์โค้ด' : 'หันกล้อง — รองรับ QR Code เท่านั้น (jsQR mode)';
+        document.getElementById('scannerStatus').innerText = barcodeDetector ? 'หันกล้องไปที่บาร์โค้ด' : 'หันกล้องไปที่บาร์โค้ด / QR Code';
         showScanState('camera');
         scanLoopBD(video);
     } catch(err) {
@@ -2249,16 +2251,16 @@ function decodeWithQuagga(canvas) {
         try {
             Quagga.decodeSingle({
                 decoder: {
-                    readers: [
-                        'code_128_reader', 'ean_reader', 'ean_8_reader',
-                        'code_39_reader',  'upc_reader', 'codabar_reader', 'i2of5_reader'
-                    ],
+                    // ✅ ลดชนิดบาร์โค้ดที่ต้องเช็คจาก 7 เหลือ 2 (เร็วขึ้นมาก) —
+                    // ข้อมูลจริงในระบบ (Item Code / License Plate) เป็น Code128 ล้วน
+                    // เก็บ ean_reader ไว้เผื่อสแกนบาร์โค้ดสินค้าสำเร็จรูปมาตรฐาน
+                    readers: ['code_128_reader', 'ean_reader'],
                     multiple: false
                 },
                 locate   : true,
                 patchSize: 'medium',   // medium อ่าน Code128 บน iOS ดีกว่า large
                 halfSample: false,
-                src: canvas.toDataURL('image/png')
+                src: canvas.toDataURL('image/jpeg', 0.85)   // ✅ JPEG เร็วกว่า PNG มาก (แทบไม่กระทบความชัดของบาร์โค้ด)
             }, result => {
                 if (result && result.codeResult && result.codeResult.code) {
                     resolve(result.codeResult.code.trim());
@@ -2305,6 +2307,57 @@ async function decodeWithQuaggaMultiAngle(srcCanvas) {
     return null;
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  ✅ LIVE SCAN LOOP FIX — ชุดฟังก์ชันใหม่สำหรับลูปสแกนสด (เบากว่า decodeWithQuaggaMultiAngle มาก)
+//  เดิม: ทุกเฟรมที่ประมวลผลจะลอง Quagga ครบ 6 มุม/crop รวดเดียว (หนักมาก ทำให้ภาพค้าง สแกนไม่ทัน)
+//  ใหม่: ลองแค่ "1 มุมต่อเฟรม" แล้วสลับมุมไปเรื่อยๆ ในเฟรมถัดไป กระจายงานหนักออกจากกัน
+// ═══════════════════════════════════════════════════════════════
+
+// หมุน canvas ทีละมุมตามที่ระบุ (คำนวณเฉพาะมุมที่ต้องใช้ ไม่เสียเวลาสร้างครบ 4 ทิศ)
+function getRotatedCanvas(srcCanvas, angle) {
+    const w = srcCanvas.width, h = srcCanvas.height;
+    const swap = (angle === 90 || angle === 270);
+    const c = document.createElement('canvas');
+    c.width  = swap ? h : w;
+    c.height = swap ? w : h;
+    const ctx = c.getContext('2d');
+    ctx.translate(c.width / 2, c.height / 2);
+    ctx.rotate(angle * Math.PI / 180);
+    ctx.drawImage(srcCanvas, -w / 2, -h / 2);
+    return c;
+}
+
+// สร้าง canvas ที่ต้องใช้ตาม phase ปัจจุบัน (0=ตรงๆ, 1-3=หมุน 90/180/270, 4-5=crop กลาง+หมุน)
+const SCAN_PHASE_COUNT = 6;
+function getCanvasForPhase(baseCanvas, phase) {
+    if (phase === 0) return baseCanvas;
+    if (phase === 1) return getRotatedCanvas(baseCanvas, 90);
+    if (phase === 2) return getRotatedCanvas(baseCanvas, 180);
+    if (phase === 3) return getRotatedCanvas(baseCanvas, 270);
+
+    // phase 4, 5: crop กลางภาพ (บาร์โค้ดมักอยู่ตรงกลาง ช่วยกรณีขอบภาพรก)
+    const cw = Math.floor(baseCanvas.width  * 0.7);
+    const ch = Math.floor(baseCanvas.height * 0.7);
+    const cx = Math.floor((baseCanvas.width  - cw) / 2);
+    const cy = Math.floor((baseCanvas.height - ch) / 2);
+    const cropped = document.createElement('canvas');
+    cropped.width = cw; cropped.height = ch;
+    cropped.getContext('2d').drawImage(baseCanvas, cx, cy, cw, ch, 0, 0, cw, ch);
+    return phase === 4 ? cropped : getRotatedCanvas(cropped, 90);
+}
+
+// สร้าง canvas จาก video สำหรับลูปสแกนสด — จำกัดความกว้างสูงสุด (เร็วขึ้น ไม่กระทบการอ่านบาร์โค้ด)
+function buildScanCanvas(video) {
+    const MAX_W = 800;
+    let w = video.videoWidth  || 640;
+    let h = video.videoHeight || 480;
+    if (w > MAX_W) { h = Math.round(h * (MAX_W / w)); w = MAX_W; }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(video, 0, 0, w, h);
+    return canvas;
+}
+
 // ── Confidence gate: ต้องได้ผลเดิม 2 ครั้งติดกันก่อน confirm (ป้องกันเด้งผิด) ──
 let lastCandidateText = '';
 let lastCandidateTime = 0;
@@ -2343,6 +2396,7 @@ function tryConfirmCandidate(text) {
 
 let quaggaProcessing = false;
 let frameSkip        = 0;   // iOS: ข้าม frame เพื่อประหยัด CPU
+let scanPhase        = 0;   // หมุนเวียนลองแต่ละมุม/crop คนละเฟรมกัน (กระจายงานหนักออก ไม่ให้ค้าง)
 
 async function scanLoopBD(video) {
     if (!scannerActive) return;
@@ -2356,39 +2410,37 @@ async function scanLoopBD(video) {
                 tryConfirmCandidate(barcodes[0].rawValue);
             }
         } else {
-            // ── iOS / Safari path: Quagga2 + jsQR ──
-            // ข้าม frame เพื่อไม่ให้ Quagga รัน 60fps (ทำให้ผลพลิกไปมา)
+            // ── iOS / Safari path: jsQR ก่อนเสมอ (เร็ว เช็คได้ทุกทิศทางในทีเดียว) แล้วค่อย Quagga ──
             frameSkip++;
-            if (frameSkip % 4 !== 0) {          // ประมวลผล ~15fps แทน 60fps
+            if (frameSkip % 2 !== 0) {          // ประมวลผล ~30fps (เบาลงมากแล้ว รับได้สบาย)
                 scannerRAF = requestAnimationFrame(() => scanLoopBD(video));
                 return;
             }
 
-            const canvas = document.createElement('canvas');
-            canvas.width  = video.videoWidth  || 640;
-            canvas.height = video.videoHeight || 480;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const baseCanvas = buildScanCanvas(video);
 
-            // 1) Quagga2 — หลายมุมหมุน (iOS FIX หลัก)
-            if (!quaggaProcessing && typeof Quagga !== 'undefined') {
-                quaggaProcessing = true;
-                const qResult = await decodeWithQuaggaMultiAngle(canvas);
-                quaggaProcessing = false;
-                if (qResult) {
-                    tryConfirmCandidate(qResult);
+            // 1) jsQR ก่อนเสมอ (เร็วมาก) — กัน QR Code ต้องรอคิว Quagga ที่หนักกว่าจนช้า/พลาดจังหวะ
+            if (typeof jsQR !== 'undefined') {
+                const ctx = baseCanvas.getContext('2d');
+                const imageData = ctx.getImageData(0, 0, baseCanvas.width, baseCanvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height,
+                                  { inversionAttempts: 'attemptBoth' });
+                if (code && code.data) {
+                    tryConfirmCandidate(code.data);
                     scannerRAF = requestAnimationFrame(() => scanLoopBD(video));
                     return;
                 }
             }
 
-            // 2) jsQR fallback (QR Code)
-            if (typeof jsQR !== 'undefined') {
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height,
-                                  { inversionAttempts: 'attemptBoth' });
-                if (code && code.data) {
-                    tryConfirmCandidate(code.data);
+            // 2) Quagga2 (บาร์โค้ดเส้น) — ลองแค่ 1 มุมต่อเฟรม สลับมุมไปเรื่อยๆ ในเฟรมถัดไป
+            if (!quaggaProcessing && typeof Quagga !== 'undefined') {
+                quaggaProcessing = true;
+                const tryCanvas = getCanvasForPhase(baseCanvas, scanPhase);
+                scanPhase = (scanPhase + 1) % SCAN_PHASE_COUNT;
+                const qResult = await decodeWithQuagga(tryCanvas);
+                quaggaProcessing = false;
+                if (qResult) {
+                    tryConfirmCandidate(qResult);
                     scannerRAF = requestAnimationFrame(() => scanLoopBD(video));
                     return;
                 }
@@ -2822,7 +2874,7 @@ function renderData(data) {
         return;
     }
     container.innerHTML = data.map((item, index) => {
-        const sCls = item.InventoryStatus === 'Good' ? 'bg-green-100 text-green-600' : item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600' : item.InventoryStatus === 'Disposal' ? 'bg-gray-200 text-gray-700' : 'bg-yellow-100 text-yellow-600';
+        const sCls = item.InventoryStatus === 'Good' ? 'bg-green-100 text-green-600' : item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600' : item.InventoryStatus === 'Incomplete' ? 'bg-orange-100 text-orange-600' : item.InventoryStatus === 'Disposal' ? 'bg-gray-200 text-gray-700' : 'bg-yellow-100 text-yellow-600';
         const hasPhoto = item.Photo && item.Photo !== '';
         const deleteBtn = (currentUser && currentUser.role === 'admin') ? `<button onclick="confirmDeleteItem(${index}, event)" class="mt-3 w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-trash-alt text-[10px]"></i></button>` : '';
         return `<div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center gap-5 cursor-pointer hover:shadow-xl transition-all active:scale-[0.98]">
@@ -2872,12 +2924,12 @@ function updateActionList(data) {
     const container = document.getElementById('actionList'); if (!container) return;
     const filterVal = document.getElementById('actionFilter') ? document.getElementById('actionFilter').value : 'Issue';
     let filtered;
-    if (filterVal === 'Issue') filtered = data.filter(i => i.InventoryStatus === 'Damage' || i.InventoryStatus === 'QC' || i.InventoryStatus === 'Disposal');
+    if (filterVal === 'Issue') filtered = data.filter(i => i.InventoryStatus === 'Damage' || i.InventoryStatus === 'QC' || i.InventoryStatus === 'Incomplete' || i.InventoryStatus === 'Disposal');
     else if (filterVal === 'All') filtered = [...data];
     else filtered = data.filter(i => i.InventoryStatus === filterVal);
     if (!filtered.length) { container.innerHTML = `<tr><td colspan="5" class="py-16 text-center opacity-30 font-black uppercase tracking-[0.2em]">ไม่พบข้อมูลในสถานะที่เลือก</td></tr>`; return; }
     container.innerHTML = filtered.slice(0, 50).map(item => {
-        const badge = item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600' : item.InventoryStatus === 'QC' ? 'bg-yellow-100 text-yellow-600' : item.InventoryStatus === 'Disposal' ? 'bg-gray-200 text-gray-700' : 'bg-green-100 text-green-600';
+        const badge = item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600' : item.InventoryStatus === 'QC' ? 'bg-yellow-100 text-yellow-600' : item.InventoryStatus === 'Incomplete' ? 'bg-orange-100 text-orange-600' : item.InventoryStatus === 'Disposal' ? 'bg-gray-200 text-gray-700' : 'bg-green-100 text-green-600';
         return `<tr class="hover:bg-slate-50 transition-colors">
             <td class="py-4 text-center">${item.Photo ? `<img src="${item.Photo}" class="w-12 h-12 rounded-xl object-cover border mx-auto shadow-sm">` : `<div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-300 mx-auto"><i class="fas fa-camera"></i></div>`}</td>
             <td class="py-4 px-4"><div class="font-black text-slate-700">${item.Item}</div><div class="text-[10px] text-slate-400 font-bold">${item.LicensePlate || '-'}</div></td>
@@ -2898,18 +2950,18 @@ function updateCharts(data) {
     // Status chart — นับ unique Item ต่อแต่ละ InventoryStatus
     const ctxStatus = document.getElementById('statusChart');
     if (ctxStatus) {
-        const s = { Good: new Set(), Damage: new Set(), QC: new Set(), Disposal: new Set() };
+        const s = { Good: new Set(), Damage: new Set(), QC: new Set(), Incomplete: new Set(), Disposal: new Set() };
         data.forEach(d => {
             if (s[d.InventoryStatus] !== undefined && d.Item)
                 s[d.InventoryStatus].add(d.Item);
         });
-        const counts = [s.Good.size, s.Damage.size, s.QC.size, s.Disposal.size];
+        const counts = [s.Good.size, s.Damage.size, s.QC.size, s.Incomplete.size, s.Disposal.size];
         if (statusChart) statusChart.destroy();
         statusChart = new Chart(ctxStatus, {
             type: 'doughnut',
             data: {
-                labels: ['GOOD','DAMAGE','QC','DISPOSAL'],
-                datasets: [{ data: counts, backgroundColor: ['#10b981','#ef4444','#f59e0b','#6b7280'], borderWidth: 4, borderColor: '#ffffff' }]
+                labels: ['GOOD','DAMAGE','QC','INCOMPLETE','DISPOSAL'],
+                datasets: [{ data: counts, backgroundColor: ['#10b981','#ef4444','#f59e0b','#f97316','#6b7280'], borderWidth: 4, borderColor: '#ffffff' }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false, cutout: '72%',
@@ -3212,7 +3264,7 @@ function renderStatusListView() {
     let filtered = [...inventoryData];
 
     // Status filter
-    if      (fStatus === 'Issue')   filtered = filtered.filter(i => ['Damage','QC','Disposal'].includes(i.InventoryStatus));
+    if      (fStatus === 'Issue')   filtered = filtered.filter(i => ['Damage','QC','Incomplete','Disposal'].includes(i.InventoryStatus));
     else if (fStatus !== 'All')     filtered = filtered.filter(i => i.InventoryStatus === fStatus);
 
     // Remark filter (multi-value aware)
@@ -3233,17 +3285,19 @@ function renderStatusListView() {
     // Badge counts
     const badgesEl = document.getElementById('statusListBadges');
     if (badgesEl) {
-        const total   = filtered.length;
-        const damage  = filtered.filter(i => i.InventoryStatus === 'Damage').length;
-        const qc      = filtered.filter(i => i.InventoryStatus === 'QC').length;
-        const disposal= filtered.filter(i => i.InventoryStatus === 'Disposal').length;
-        const good    = filtered.filter(i => i.InventoryStatus === 'Good').length;
+        const total     = filtered.length;
+        const damage    = filtered.filter(i => i.InventoryStatus === 'Damage').length;
+        const qc        = filtered.filter(i => i.InventoryStatus === 'QC').length;
+        const incomplete= filtered.filter(i => i.InventoryStatus === 'Incomplete').length;
+        const disposal  = filtered.filter(i => i.InventoryStatus === 'Disposal').length;
+        const good      = filtered.filter(i => i.InventoryStatus === 'Good').length;
         badgesEl.innerHTML = [
-            total   ? `<span class="text-[10px] font-black px-3 py-1 bg-slate-800 text-white rounded-full">${total} รายการ</span>` : '',
-            damage  ? `<span class="text-[10px] font-black px-3 py-1 bg-red-100    text-red-700    rounded-full">🔴 Damage ${damage}</span>`   : '',
-            qc      ? `<span class="text-[10px] font-black px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full">🟡 QC ${qc}</span>`            : '',
-            disposal? `<span class="text-[10px] font-black px-3 py-1 bg-gray-200   text-gray-700   rounded-full">⚫ Disposal ${disposal}</span>` : '',
-            good    ? `<span class="text-[10px] font-black px-3 py-1 bg-green-100  text-green-700  rounded-full">🟢 Good ${good}</span>`         : '',
+            total     ? `<span class="text-[10px] font-black px-3 py-1 bg-slate-800 text-white rounded-full">${total} รายการ</span>` : '',
+            damage    ? `<span class="text-[10px] font-black px-3 py-1 bg-red-100    text-red-700    rounded-full">🔴 Damage ${damage}</span>`       : '',
+            qc        ? `<span class="text-[10px] font-black px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full">🟡 QC ${qc}</span>`                : '',
+            incomplete? `<span class="text-[10px] font-black px-3 py-1 bg-orange-100 text-orange-700 rounded-full">🟠 Incomplete ${incomplete}</span>` : '',
+            disposal  ? `<span class="text-[10px] font-black px-3 py-1 bg-gray-200   text-gray-700   rounded-full">⚫ Disposal ${disposal}</span>`     : '',
+            good      ? `<span class="text-[10px] font-black px-3 py-1 bg-green-100  text-green-700  rounded-full">🟢 Good ${good}</span>`             : '',
         ].filter(Boolean).join('');
     }
 
@@ -3258,10 +3312,11 @@ function renderStatusListView() {
 
     const statusBadge = (s) => {
         const map = {
-            Good    : 'bg-green-100 text-green-700',
-            Damage  : 'bg-red-100 text-red-700',
-            QC      : 'bg-yellow-100 text-yellow-700',
-            Disposal: 'bg-gray-200 text-gray-700'
+            Good      : 'bg-green-100 text-green-700',
+            Damage    : 'bg-red-100 text-red-700',
+            QC        : 'bg-yellow-100 text-yellow-700',
+            Incomplete: 'bg-orange-100 text-orange-700',
+            Disposal  : 'bg-gray-200 text-gray-700'
         };
         return `<span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${map[s] || 'bg-slate-100 text-slate-500'}">${s}</span>`;
     };
@@ -4206,8 +4261,8 @@ function generatePDF(mode, singleData) {
             <h2 style="font-size:22px;font-weight:800;color:#334155;margin:0;">TOTAL: <span style="color:#e63946;">${dataToPrint.length}</span> Items</h2>
         </div>`;
     dataToPrint.forEach(item => {
-        const statusBg = item.InventoryStatus === 'Good' ? '#dcfce7' : item.InventoryStatus === 'Damage' ? '#fee2e2' : '#fef3c7';
-        const statusColor = item.InventoryStatus === 'Good' ? '#166534' : item.InventoryStatus === 'Damage' ? '#991b1b' : '#b45309';
+        const statusBg = item.InventoryStatus === 'Good' ? '#dcfce7' : item.InventoryStatus === 'Damage' ? '#fee2e2' : item.InventoryStatus === 'Incomplete' ? '#ffedd5' : '#fef3c7';
+        const statusColor = item.InventoryStatus === 'Good' ? '#166534' : item.InventoryStatus === 'Damage' ? '#991b1b' : item.InventoryStatus === 'Incomplete' ? '#c2410c' : '#b45309';
         const badge = `<span style="background:${statusBg};color:${statusColor};padding:6px 12px;border-radius:6px;font-weight:900;font-size:14px;text-transform:uppercase;">${item.OH <= 0 ? 'OUT OF STOCK' : item.InventoryStatus}</span>`;
         const photoHtml = item.Photo && item.Photo.length > 50 ? `<div style="width:370px;height:320px;overflow:hidden;border-radius:10px;border:1px solid #f1f5f9;"><img src="${item.Photo}" style="width:100%;height:100%;object-fit:contain;background:#fff;"></div>` : `<div style="width:370px;height:320px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:40px;font-weight:bold;">NO IMAGE</div>`;
         html += `<div style="display:flex;gap:20px;margin-bottom:25px;background:#f8fafc;border:2px solid #e2e8f0;border-radius:18px;overflow:hidden;page-break-inside:avoid;">
