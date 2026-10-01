@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" data-inventory-release="2026-10-01-required-info-drive-links">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -544,7 +544,7 @@
                 <span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>
             </button>
         </form>
-        <p class="mt-8 text-center text-xs text-slate-400">Default: admin / 1234 &nbsp;|&nbsp; staff / 1234</p>
+        <p class="mt-8 text-center text-xs text-slate-400">ใช้บัญชีที่ผู้ดูแลระบบจัดให้</p>
     </div>
 </div>
 
@@ -930,6 +930,10 @@
                         </div>
                     </div>
 
+                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                        <button type="button" onclick="checkItemInfo(document.getElementById('Item').value, pendingAutoUnknownCode)" class="font-bold text-red-500">ค้นหา Auto Info อีกครั้ง</button>
+                        <span id="itemInfoError" aria-live="polite"></span>
+                    </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                         <div class="space-y-2">
                             <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">QUANTITY (จำนวน) <span class="text-red-500">*</span></label>
@@ -1052,7 +1056,7 @@
                     </div>
 
                     <div class="space-y-2">
-                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">รูปถ่ายสินค้า (Photo)</label>
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">รูปถ่ายสินค้า (Photo) <span class="text-red-500">*</span></label>
                         <input type="file" id="PhotoInput" accept="image/*" capture="environment" class="hidden" onchange="previewImage(event)">
                         <div onclick="document.getElementById('PhotoInput').click()"
                             class="w-full h-44 border-2 border-dashed border-slate-200 rounded-[32px] flex flex-col items-center justify-center text-slate-300 cursor-pointer overflow-hidden relative group hover:border-red-300 transition-all">
@@ -1072,9 +1076,10 @@
 
                     <div class="space-y-4 pt-6">
                         <button type="submit" id="submitBtn"
-                            class="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-5 rounded-[28px] font-black text-xl shadow-2xl shadow-red-200 active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+                            disabled class="disabled:opacity-50 disabled:cursor-not-allowed w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-5 rounded-[28px] font-black text-xl shadow-2xl shadow-red-200 active:scale-[0.98] transition-all flex items-center justify-center gap-3">
                             <i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>
                         </button>
+                        <p id="formReadinessHint" class="text-sm text-slate-500 text-center" aria-live="polite">กรุณากรอกข้อมูลทุกช่อง</p>
                         <button type="button" onclick="resetForm()"
                             class="w-full py-4 text-slate-400 font-bold hover:text-slate-600 text-sm hover:bg-slate-100 rounded-2xl transition-all uppercase tracking-widest">
                             ล้างฟอร์ม / ยกเลิกรายการ
@@ -1685,6 +1690,76 @@ let currentUser         = null;
 let selectedRemarks     = [];     // FIX 4: multi-select state
 let dashDateFrom        = '';     // Dashboard date filter: yyyy-mm-dd หรือ '' = ไม่กรอง
 let dashDateTo          = '';
+
+// Readiness follows the current Item, not whichever lookup finishes last.
+let itemInfoState = { code: '', status: 'idle' };
+let itemInfoRequestId = 0;
+let itemInfoTimer = null;
+let formIsSaving = false;
+let photoIsProcessing = false;
+let photoRequestId = 0;
+function selectedItemType() {
+    const select = document.getElementById('ItemTypeSelect');
+    return String(select && !select.classList.contains('hidden') ? select.value : document.getElementById('ItemType')?.value || '').trim();
+}
+function inventoryMissingFields() {
+    const missing = [];
+    const value = id => String(document.getElementById(id)?.value || '').trim();
+    for (const [id, label] of [['Location','Location'],['Item','Item Code'],['InventoryStatus','Inventory Status'],
+        ['OnOffStatus','Status ON/OFF'],['LicensePlate','License Plate'],['Remark','หมายเหตุ'],['Name','ผู้บันทึก']]) {
+        if (!value(id)) missing.push(label);
+    }
+    const quantity = Number(value('OH'));
+    if (!value('OH') || !Number.isInteger(quantity) || quantity < 1) missing.push('จำนวนเต็มมากกว่า 0');
+    if (value('LicensePlate') && value('LicensePlate').length !== 13) missing.push('License Plate 13 หลัก');
+    if (!document.querySelector('input[name="Solution"]:checked')) missing.push('Solution');
+    const infoReady = itemInfoState.code === value('Item') && ['ready','manual'].includes(itemInfoState.status);
+    if (!infoReady) missing.push(itemInfoState.status === 'loading' ? 'รอ Auto Info โหลดเสร็จ' : 'ค้นหา Auto Info ของ Item ปัจจุบัน');
+    const validInfo = text => text && !/^(?:-|\.\.\.|กำลังค้นหา.*|ไม่พบรหัสนี้ในระบบ.*)$/.test(text);
+    if (!validInfo(value('ItemDesc'))) missing.push('Description');
+    if (!validInfo(selectedItemType())) missing.push('Type');
+    if (photoIsProcessing) missing.push('รอรูปถ่ายประมวลผล');
+    else if (!currentPhotoBase64) missing.push('รูปถ่ายสินค้า');
+    return [...new Set(missing)];
+}
+function updateSubmitReadiness() {
+    const button = document.getElementById('submitBtn');
+    if (!button) return;
+    const missing = inventoryMissingFields();
+    button.disabled = formIsSaving || missing.length > 0;
+    button.title = missing.length ? 'กรุณาเติม: ' + missing.join(', ') : 'ข้อมูลครบ พร้อมบันทึก';
+    const hint = document.getElementById('formReadinessHint');
+    if (hint) hint.textContent = formIsSaving ? 'กำลังบันทึก กรุณารอสักครู่' :
+        missing.length ? 'ยังบันทึกไม่ได้: ' + missing.join(', ') : 'ข้อมูลครบ พร้อมบันทึก';
+}
+function invalidateItemInfo() {
+    itemInfoRequestId++;
+    clearTimeout(itemInfoTimer);
+    itemInfoState = {code: '', status: 'idle'};
+    for (const id of ['ItemDesc','ItemType','ItemTypeSelect']) {
+        const input = document.getElementById(id); if (input) input.value = '';
+    }
+    document.getElementById('ItemDesc').readOnly = true;
+    document.getElementById('ItemType').classList.remove('hidden');
+    document.getElementById('ItemTypeSelect').classList.add('hidden');
+    updateSubmitReadiness();
+}
+function initializeInventoryValidation() {
+    const form = document.getElementById('stockForm');
+    if (!form) return;
+    form.addEventListener('input', event => {
+        if (event.target.id === 'Item') {
+            pendingAutoUnknownCode = false;
+            invalidateItemInfo();
+            const code = event.target.value.trim();
+            if (code) itemInfoTimer = setTimeout(() => checkItemInfo(code), 400);
+        }
+        updateSubmitReadiness();
+    });
+    form.addEventListener('change', updateSubmitReadiness);
+    updateSubmitReadiness();
+}
+
 let pendingAutoUnknownCode = false;  // true = ให้ backend รันเลข "ไม่ทราบรหัสสินค้า" ให้ตอนบันทึก (กันเลขซ้ำ)
 
 let globalAppLogo = '';
@@ -1701,10 +1776,7 @@ let discordNotifyAdd     = true;
 let discordNotifyEdit    = true;
 let discordNotifyDelete  = true;
 
-let appUsers = [
-    { username: 'admin', password: '1234', name: 'Admin', role: 'admin', empId: 'EMP8855', email: 'admin@vespa.co.th', phone: '081-123-4567', position: 'System Administrator', avatar: '' },
-    { username: 'staff', password: '1234', name: 'Staff A', role: 'user', empId: 'EMP9901', email: 'staff.a@vespa.co.th', phone: '089-987-6543', position: 'Inventory Staff', avatar: '' }
-];
+let appUsers = [];
 
 // ─────────────────────────────────────────
 //  GAS API CONFIG
@@ -1712,24 +1784,33 @@ let appUsers = [
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxAur8Y2RLdxjJ1KllnxN1lUAkz6MEYDurJfs0NhrIjweXkgV2DNVOLPjl_q9ud4jihZA/exec';
 
 async function gasCall(action, params) {
-    const body       = Object.assign({ action }, params || {});
     const controller = new AbortController();
-    const timeoutId  = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const writeActions = new Set(['recordInventory', 'updateInventoryItem', 'deleteInventoryItem',
+        'saveAppUsers', 'saveAppSettings', 'saveTransactionLog', 'addRemarkOption', 'addRecorderName', 'sendDiscordNotification']);
     try {
         const res = await fetch(GAS_URL, {
-            method : 'POST',
-            headers: { 'Content-Type': 'text/plain' },
-            body   : JSON.stringify(body),
-            signal : controller.signal
+            method: 'POST', headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(Object.assign({}, params || {}, { action })), signal: controller.signal
         });
-        clearTimeout(timeoutId);
-        const text = await res.text();
-        try { return JSON.parse(text); } catch(e) { return text; }
-    } catch(err) {
-        clearTimeout(timeoutId);
-        if (err.name === 'AbortError') throw new Error('Request timeout — กรุณาลองใหม่');
+        if (!res.ok) throw new Error('เซิร์ฟเวอร์ตอบ HTTP ' + res.status);
+        const responseText = await res.text();
+        let result;
+        try { result = JSON.parse(responseText); }
+        catch (_) { throw new Error('API ไม่ได้ตอบ JSON กรุณาตรวจ URL /exec, สิทธิ์ และเวอร์ชัน Deployment'); }
+        if (result === null || typeof result !== 'object') throw new Error('รูปแบบคำตอบจาก API ไม่ถูกต้อง');
+        if (result.error || result.success === false) throw new Error(String(result.error || 'เซิร์ฟเวอร์ทำรายการไม่สำเร็จ'));
+        if (writeActions.has(action) && result.success !== true) throw new Error('API ไม่ได้ยืนยันว่าบันทึกสำเร็จ');
+        if (['getAppUsers', 'getInventoryData', 'getRemarkOptions', 'getRecorderOptions', 'getTransactionLogs'].includes(action) && !Array.isArray(result)) {
+            throw new Error('รูปแบบข้อมูลจาก API ไม่ถูกต้อง: ' + action);
+        }
+        return result;
+    } catch (err) {
+        if (err.name === 'AbortError') throw new Error(writeActions.has(action)
+            ? 'เซิร์ฟเวอร์ตอบช้า ยังยืนยันผลไม่ได้ กรุณารีเฟรชตรวจรายการก่อนบันทึกซ้ำ'
+            : 'เซิร์ฟเวอร์ตอบช้า กรุณาลองโหลดใหม่');
         throw err;
-    }
+    } finally { clearTimeout(timeoutId); }
 }
 
 window.onload = initApp;
@@ -1762,7 +1843,9 @@ function initTheme() {
     let saved = 'light';
     try { saved = localStorage.getItem('vespaTheme') || 'light'; } catch(e) {}
     // Also detect system preference if no saved setting
-    if (!localStorage.getItem('vespaTheme') && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    let hasSavedTheme = false;
+    try { hasSavedTheme = Boolean(localStorage.getItem('vespaTheme')); } catch (_) {}
+    if (!hasSavedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         saved = 'dark';
     }
     setTheme(saved);
@@ -1774,6 +1857,7 @@ function initApp() {
     updateBrandUI();
     setInterval(updateAppTime, 1000);
     updateAppTime();
+    initializeInventoryValidation();
     forceExitLoader();
     // หมายเหตุ: เดิมมีการเรียก loadDataInBackground() ต่อจากนี้ ซึ่งยิง getAppUsers()
     // ซ้ำซ้อนกับ showLoginAfterUsersLoad() พร้อมกัน ทำให้เกิด race condition —
@@ -1789,38 +1873,10 @@ function forceExitLoader() {
 }
 
 async function showLoginAfterUsersLoad() {
-    // แสดง loader spinner เบาๆ ระหว่างรอ (max 3 วิ)
-    const loader    = document.getElementById('loader');
-    const loaderTxt = document.getElementById('loaderText');
-    const loginScr  = document.getElementById('loginScreen');
-
-    // แสดง loader พร้อมข้อความ
-    if (loader)    loader.classList.remove('hidden');
-    if (loaderTxt) loaderTxt.innerText = 'กำลังโหลดข้อมูลผู้ใช้...';
-
-    const MAX_WAIT = 10000;
-    const t0 = Date.now();
-
-    try {
-        // โหลด users ก่อน login เสมอ — ป้องกัน race condition
-        const usersResult = await Promise.race([
-            gasCall('getAppUsers'),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), MAX_WAIT))
-        ]);
-        if (Array.isArray(usersResult) && usersResult.length > 0) {
-            appUsers = usersResult;
-        }
-    } catch(e) {
-        // timeout หรือ network error → ใช้ default appUsers ต่อไป
-        console.log('Users load timeout/error — using defaults');
-    }
-
-    // โหลด settings (non-blocking)
+    // Load current users only when submitting login; never authenticate from defaults/cache.
     loadAppSettings();
-
-    // แสดง login form
-    if (loader)   loader.classList.add('hidden');
-    if (loginScr) loginScr.classList.remove('hidden');
+    document.getElementById('loader')?.classList.add('hidden');
+    document.getElementById('loginScreen')?.classList.remove('hidden');
 }
 
 async function loadAppSettings() {
@@ -1927,7 +1983,7 @@ function saveAllSettings() {
         discordNotifyDelete : discordNotifyDelete ? 'true' : 'false'
     } })
         .then(() => { Swal.fire({ icon: 'success', title: 'บันทึกการตั้งค่าเรียบร้อย', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 }); btn.innerHTML = origHtml; btn.disabled = false; })
-        .catch(() => { Swal.fire({ icon: 'success', title: 'บันทึกแล้ว (Local)', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 }); btn.innerHTML = origHtml; btn.disabled = false; });
+        .catch(err => { Swal.fire({ icon: 'error', title: 'ยังไม่ได้บันทึกลงเซิร์ฟเวอร์', text: err.message, toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 }); btn.innerHTML = origHtml; btn.disabled = false; });
 }
 
 // ─────────────────────────────────────────
@@ -2036,56 +2092,40 @@ function notifyDiscord(action, item) {
 // ─────────────────────────────────────────
 //  AUTHENTICATION
 // ─────────────────────────────────────────
-function handleLogin(event) {
+async function handleLogin(event) {
     event.preventDefault();
-    const u = document.getElementById('loginUser').value.trim().toLowerCase();
-    const p = document.getElementById('loginPass').value.trim();
-    if (appUsers.length === 0) {
-        const btn = event.target.querySelector('button[type=submit]');
-        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังโหลด...'; }
-        gasCall('getAppUsers').then(res => { if (btn) { btn.disabled = false; btn.innerHTML = '<span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>'; } if (Array.isArray(res) && res.length > 0) appUsers = res; doLogin(u, p); }).catch(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<span>เข้าสู่ระบบ</span> <i class="fas fa-arrow-right"></i>'; } doLogin(u, p); });
-        return;
-    }
-    doLogin(u, p);
+    const btn = event.target.querySelector('button[type=submit]');
+    if (btn?.disabled) return;
+    const username = document.getElementById('loginUser').value.trim().toLowerCase();
+    const password = document.getElementById('loginPass').value.trim();
+    const originalHtml = btn?.innerHTML;
+    if (btn) { btn.disabled = true; btn.textContent = 'กำลังตรวจสอบ...'; }
+    try {
+        appUsers = await gasCall('getAppUsers');
+        if (!appUsers.length) throw new Error('ไม่พบผู้ใช้งานใน UsersDB กรุณาติดต่อผู้ดูแล');
+        const user = appUsers.find(u => String(u.username || '').trim().toLowerCase() === username && String(u.password || '').trim() === password);
+        if (!user) {
+            Swal.fire({icon: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', text: 'Username หรือ Password ไม่ถูกต้อง'});
+            return;
+        }
+        doLogin(user);
+    } catch (err) {
+        appUsers = [];
+        Swal.fire({icon: 'error', title: 'ตรวจสอบบัญชีไม่ได้', text: err.message});
+    } finally { if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; } }
 }
 
-function doLogin(u, p, isRetry) {
-    const user = appUsers.find(x => String(x.username || '').toLowerCase() === u && String(x.password || '') === p);
-    if (user) {
-        try {
-            currentUser = user;
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            document.getElementById('dashNameDisplay').innerText   = user.name || '';
-            document.getElementById('sideUserName').innerText      = user.name || '';
-            document.getElementById('mobileWelcomeName').innerText = user.name || '';
-            document.getElementById('roleBadge').innerText         = (user.role || 'user').toUpperCase();
-            updateAvatarDisplays();
-            const adminMenu = document.getElementById('side-users');
-            if (adminMenu) { if (user.role === 'admin') adminMenu.classList.remove('hidden'); else adminMenu.classList.add('hidden'); }
-            switchView('dashboard');
-        } catch(err) { console.error('Login render error:', err); alert('เกิดข้อผิดพลาดหลัง login: ' + err.message); }
-        return;
-    }
-
-    // ✅ SELF-HEALING RETRY: ไม่เจอ user ที่ตรงกันในข้อมูลที่แคชไว้ในเครื่อง —
-    // ก่อนฟันธงว่า login ผิด ให้ลองดึงรายชื่อ users สดจาก server อีกครั้งหนึ่งก่อน
-    // (กันกรณี appUsers ในเครื่องหลุด/ไม่ทันอัปเดตตอนเปิดแอป ทำให้รหัสถูกแต่ login ไม่ผ่าน)
-    if (!isRetry) {
-        const btn = document.querySelector('#loginScreen button[type=submit]');
-        const origHtml = btn ? btn.innerHTML : '';
-        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังตรวจสอบ...'; }
-        gasCall('getAppUsers')
-            .then(res => { if (Array.isArray(res) && res.length > 0) appUsers = res; })
-            .catch(() => {})
-            .finally(() => {
-                if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
-                doLogin(u, p, true);   // retry ครั้งเดียวด้วยข้อมูลสด กันวนลูป
-            });
-        return;
-    }
-
-    Swal.fire({ icon: 'error', title: 'Login Failed', text: 'Username หรือ Password ไม่ถูกต้อง', customClass: { popup: 'rounded-[32px]' } });
+function doLogin(user) {
+    currentUser = user;
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    ['dashNameDisplay', 'sideUserName', 'mobileWelcomeName'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.textContent = user.name || '';
+    });
+    document.getElementById('roleBadge').textContent = (user.role || 'user').toUpperCase();
+    updateAvatarDisplays();
+    document.getElementById('side-users')?.classList.toggle('hidden', user.role !== 'admin');
+    switchView('dashboard');
 }
 
 function handleLogout() {
@@ -2196,6 +2236,7 @@ async function scanFromPhoto(event) {
             const elem = document.getElementById(currentScanTarget);
             if (elem) { elem.value = scannedText; elem.dispatchEvent(new Event('input', { bubbles: true })); elem.dispatchEvent(new Event('change', { bubbles: true })); elem.style.transition = 'box-shadow 0.2s'; elem.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.45)'; setTimeout(() => { elem.style.boxShadow = ''; }, 1200); }
             if (currentScanTarget === 'Item') checkItemInfo(scannedText);
+        updateSubmitReadiness();
             if (currentScanTarget === 'LicensePlate') document.getElementById('charCount').innerText = scannedText.length;
             if (currentScanTarget === 'searchInput') filterItems();
             if (currentScanTarget === 'histFilterItem' || currentScanTarget === 'histFilterLoc') filterHistoryLogs();
@@ -2481,6 +2522,7 @@ function onScanSuccess(text) {
             setTimeout(() => { elem.style.boxShadow = ''; }, 1200);
         }
         if (currentScanTarget === 'Item')          checkItemInfo(val);
+        updateSubmitReadiness();
         if (currentScanTarget === 'LicensePlate')  document.getElementById('charCount').innerText = val.length;
         if (currentScanTarget === 'searchInput')   filterItems();
         if (currentScanTarget === 'histFilterItem' || currentScanTarget === 'histFilterLoc') filterHistoryLogs();
@@ -2633,17 +2675,18 @@ function loadDropdownOptions() {
         sel.innerHTML = names.map(n => '<option value="' + n + '">' + n + '</option>').join('');
         if (currentUser) { if (!names.includes(currentUser.name)) sel.add(new Option(currentUser.name, currentUser.name)); sel.value = currentUser.name; }
         const nameEl = document.getElementById('Name'); if (nameEl) nameEl.value = sel.value;
+        updateSubmitReadiness();
     }).catch(() => {});
 }
 
 function loadRealData() {
     gasCall('getInventoryData').then(data => {
-        try { inventoryData = typeof data === 'string' ? JSON.parse(data) : data; if (!Array.isArray(inventoryData)) throw new Error('not array'); } catch(e) { inventoryData = []; }
+        inventoryData = data;
         renderData(inventoryData); updateActionList(inventoryData);
         refreshDashboardView();
     // refresh statuslist if that view is currently active
     if (!document.getElementById('view-statuslist').classList.contains('hidden')) loadStatusListView();
-    }).catch(() => loadMockData());
+    }).catch(err => Swal.fire({icon: 'error', title: 'โหลดข้อมูลสต็อกไม่สำเร็จ', text: err.message}));
 
     gasCall('getRemarkOptions').then(remarks => {
         if (!Array.isArray(remarks)) return;
@@ -2656,7 +2699,9 @@ function loadRealData() {
         sel.innerHTML = names.map(n => '<option value="' + n + '">' + n + '</option>').join('');
         if (currentUser) { if (!names.includes(currentUser.name)) sel.add(new Option(currentUser.name, currentUser.name)); sel.value = currentUser.name; }
         const nameEl = document.getElementById('Name'); if (nameEl) nameEl.value = sel.value;
+        updateSubmitReadiness();
         updateUserFilterDropdown(names);
+        updateSubmitReadiness();
     }).catch(() => {});
 }
 
@@ -2862,6 +2907,7 @@ document.addEventListener('click', (e) => {
 function syncRemarkHidden() {
     const hiddenEl = document.getElementById('Remark');
     if (hiddenEl) hiddenEl.value = selectedRemarks.join(', ');
+    updateSubmitReadiness();
 }
 
 // ─────────────────────────────────────────
@@ -2873,7 +2919,8 @@ function renderData(data) {
         container.innerHTML = `<div class="col-span-full py-20 text-center opacity-30"><i class="fas fa-box-open text-6xl mb-4"></i><p class="font-bold uppercase tracking-widest">ยังไม่พบข้อมูล</p></div>`;
         return;
     }
-    container.innerHTML = data.map((item, index) => {
+    container.innerHTML = data.map(item => {
+        const index = inventoryData.indexOf(item);
         const sCls = item.InventoryStatus === 'Good' ? 'bg-green-100 text-green-600' : item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600' : item.InventoryStatus === 'Incomplete' ? 'bg-orange-100 text-orange-600' : item.InventoryStatus === 'Disposal' ? 'bg-gray-200 text-gray-700' : 'bg-yellow-100 text-yellow-600';
         const hasPhoto = item.Photo && item.Photo !== '';
         const deleteBtn = (currentUser && currentUser.role === 'admin') ? `<button onclick="confirmDeleteItem(${index}, event)" class="mt-3 w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-trash-alt text-[10px]"></i></button>` : '';
@@ -3857,24 +3904,49 @@ function changePassword() {
 // ─────────────────────────────────────────
 //  INVENTORY FORM
 // ─────────────────────────────────────────
-function checkItemInfo(code, isAutoUnknown) {
+async function checkItemInfo(code, isAutoUnknown) {
+    clearTimeout(itemInfoTimer);
+    code = String(code || '').trim();
+    if (code !== document.getElementById('Item').value.trim()) return;
+    const requestId = ++itemInfoRequestId;
     pendingAutoUnknownCode = !!isAutoUnknown;
-    if (!code) return;
-    document.getElementById('ItemDesc').value = 'กำลังค้นหา...';
-    document.getElementById('ItemType').value = '...';
-    document.getElementById('ItemTypeSelect').classList.add('hidden');
-    gasCall('getItemDetails', { itemCode: code }).then(res => {
-        if (res && res.found) {
-            document.getElementById('ItemDesc').value = res.description || '-'; document.getElementById('ItemType').value = res.type || '-';
-            document.getElementById('ItemType').classList.remove('hidden'); document.getElementById('ItemTypeSelect').classList.add('hidden');
+    if (!code) { invalidateItemInfo(); return; }
+    itemInfoState = {code, status:'loading'};
+    const errorHint = document.getElementById('itemInfoError'); if (errorHint) errorHint.textContent = '';
+    const description = document.getElementById('ItemDesc');
+    const type = document.getElementById('ItemType');
+    const select = document.getElementById('ItemTypeSelect');
+    // Keep complete saved manual details when editing an existing record.
+    const saved = currentItemForEdit && String(currentItemForEdit.Item).trim() === code ? currentItemForEdit : null;
+    description.value = ''; type.value = ''; select.value = '';
+    description.placeholder = 'กำลังค้นหา...'; description.readOnly = true;
+    type.classList.remove('hidden'); select.classList.add('hidden');
+    updateSubmitReadiness();
+    try {
+        const result = await gasCall('getItemDetails', {itemCode:code});
+        if (requestId !== itemInfoRequestId || code !== document.getElementById('Item').value.trim()) return;
+        if (result.found && String(result.description || '').trim() && String(result.type || '').trim()) {
+            description.value = result.description.trim(); type.value = result.type.trim();
+            itemInfoState = {code,status:'ready'};
         } else {
-            document.getElementById('ItemDesc').value = 'ไม่พบรหัสนี้ในระบบ — กรุณากรอกข้อมูลเอง'; document.getElementById('ItemType').value = '';
-            document.getElementById('ItemType').classList.add('hidden'); document.getElementById('ItemTypeSelect').classList.remove('hidden'); document.getElementById('ItemTypeSelect').value = '';
+            description.readOnly = false;
+            description.placeholder = 'กรอกชื่อสินค้า';
+            description.value = saved ? saved.Description || '' : '';
+            type.classList.add('hidden'); select.classList.remove('hidden');
+            if (saved?.Type) {
+                if (!Array.from(select.options).some(option => option.value === saved.Type)) select.add(new Option(saved.Type,saved.Type));
+                select.value = saved.Type;
+            }
+            type.value = select.value;
+            itemInfoState = {code,status:'manual'};
         }
-    }).catch(() => {
-        document.getElementById('ItemDesc').value = '-'; document.getElementById('ItemType').value = '-';
-        document.getElementById('ItemType').classList.remove('hidden'); document.getElementById('ItemTypeSelect').classList.add('hidden');
-    });
+    } catch (error) {
+        if (requestId !== itemInfoRequestId || code !== document.getElementById('Item').value.trim()) return;
+        description.placeholder = 'โหลดไม่สำเร็จ กดค้นหาอีกครั้ง';
+        itemInfoState = {code,status:'error'};
+        const hint = document.getElementById('itemInfoError');
+        if (hint) hint.textContent = error.message;
+    } finally { if (requestId === itemInfoRequestId) updateSubmitReadiness(); }
 }
 
 // ─── ปุ่ม "ไม่ทราบรหัสสินค้า" ───
@@ -3907,6 +3979,7 @@ function fillUnknownItemCode() {
 function resetForm() {
     currentItemForEdit = null;
     pendingAutoUnknownCode = false;
+    invalidateItemInfo();
     document.getElementById('stockForm').reset();
 
     // FIX 1: clear ค่าว่างทั้งหมด — ไม่ pre-fill
@@ -3955,6 +4028,7 @@ function resetForm() {
             document.getElementById('Name').value = currentUser.name;
         }
     }
+    updateSubmitReadiness();
 }
 
 function editItem() {
@@ -3999,8 +4073,16 @@ function editItem() {
 
 // ─── FIX 2: handleFormSubmit — validate ทุก field ───
 function handleFormSubmit() {
+    if (formIsSaving) return;
+    const incomplete = inventoryMissingFields();
+    if (incomplete.length) {
+        updateSubmitReadiness();
+        Swal.fire({icon:'warning', title:'ข้อมูลยังไม่ครบ', text:incomplete.join(', ')});
+        return;
+    }
     // helper: highlight + scroll to first error
     function markError(el, scrollTo) {
+        if (!el) return;
         el.classList.add('field-error');
         el.addEventListener('input', () => el.classList.remove('field-error'), { once: true });
         el.addEventListener('change', () => el.classList.remove('field-error'), { once: true });
@@ -4029,8 +4111,8 @@ function handleFormSubmit() {
 
     // Quantity check
     const ohEl = document.getElementById('OH');
-    const ohVal = parseInt(ohEl.value);
-    if (!ohEl.value.trim() || isNaN(ohVal) || ohVal < 1) {
+    const ohVal = Number(ohEl.value);
+    if (!ohEl.value.trim() || !Number.isInteger(ohVal) || ohVal < 1) {
         missing.push('Quantity (จำนวน)');
         markError(ohEl, !firstErrorEl);
         if (!firstErrorEl) firstErrorEl = ohEl;
@@ -4082,8 +4164,8 @@ function handleFormSubmit() {
     }
 
     // Check duplicate LPN
-    const dup = inventoryData.find(i => i.LicensePlate === sn);
-    if (dup && (!currentItemForEdit || currentItemForEdit.Timestamp !== dup.Timestamp)) {
+    const dup = inventoryData.find(i => i !== currentItemForEdit && i.LicensePlate === sn);
+    if (dup && (!currentItemForEdit || currentItemForEdit.LicensePlate !== sn)) {
         Swal.fire({ icon: 'warning', title: 'พบข้อมูลซ้ำ!', text: `เลขตัวถัง ${sn} ถูกบันทึกไปแล้วที่ ${dup.Location} โดย ${dup.Name}`, customClass: { popup: 'rounded-[32px]' } });
         return;
     }
@@ -4093,7 +4175,7 @@ function handleFormSubmit() {
         Item            : document.getElementById('Item').value,
         Description     : document.getElementById('ItemDesc').value,
         Type            : (function(){ const sel = document.getElementById('ItemTypeSelect'); if (sel && !sel.classList.contains('hidden')) return sel.value || ''; return document.getElementById('ItemType').value || ''; })(),
-        OH              : parseInt(document.getElementById('OH').value),
+        OH              : Number(document.getElementById('OH').value),
         InventoryStatus : document.getElementById('InventoryStatus').value,
         OnOffStatus     : document.getElementById('OnOffStatus').value,
         Solution        : solutionChecked.value,
@@ -4106,11 +4188,17 @@ function handleFormSubmit() {
     };
 
     const btn = document.getElementById('submitBtn');
-    btn.disabled  = true;
+    formIsSaving = true;
+    updateSubmitReadiness();
     btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> กำลัง${currentItemForEdit ? 'บันทึกการแก้ไข' : 'บันทึกข้อมูล'}...`;
 
     const action = currentItemForEdit ? 'updateInventoryItem' : 'recordInventory';
-    if (currentItemForEdit) payload.oldLicensePlate = currentItemForEdit.LicensePlate;
+    if (currentItemForEdit) {
+        payload.oldLicensePlate = currentItemForEdit.LicensePlate;
+        payload.original = {Item: currentItemForEdit.Item, Location: currentItemForEdit.Location,
+            LicensePlate: currentItemForEdit.LicensePlate, Timestamp: currentItemForEdit.Timestamp};
+        payload.RemovePhoto = !currentPhotoBase64;
+    }
 
     gasCall(action, { data: payload })
         .then(result => {
@@ -4126,13 +4214,13 @@ function handleFormSubmit() {
             notifyDiscord(currentItemForEdit ? 'EDIT' : 'ADD', Object.assign({}, payload, { Item: finalItemCode }));
             resetForm(); loadRealData();
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
+            btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
         })
         .catch(err => {
             console.error('Save error:', err);
-            Swal.fire({ icon: 'error', title: 'บันทึกไม่สำเร็จ ❌', html: `<p class="text-sm text-slate-600">${err.message || 'กรุณาตรวจสอบการเชื่อมต่อและ Deploy GAS ใหม่'}</p>`, confirmButtonColor: '#e63946', customClass: { popup: 'rounded-[32px]' } });
-            btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
-        });
+            Swal.fire({ icon: 'error', title: 'บันทึกไม่สำเร็จ ❌', text: err.message || 'กรุณาตรวจสอบการเชื่อมต่อและ Deploy GAS ใหม่', confirmButtonColor: '#e63946', customClass: { popup: 'rounded-[32px]' } });
+            btn.innerHTML = '<i class="fas fa-save"></i> <span>บันทึกข้อมูล</span>';
+        }).finally(() => { formIsSaving = false; updateSubmitReadiness(); });
 }
 
 // ─────────────────────────────────────────
@@ -4143,9 +4231,9 @@ function confirmDeleteItem(index, e) {
     const item = inventoryData[index];
     Swal.fire({ title: 'ยืนยันการลบ?', text: `ลบ ${item.Item} (${item.LicensePlate})?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#e63946', customClass: { popup: 'rounded-[32px]' } }).then(r => {
         if (!r.isConfirmed) return;
-        logTransaction('DELETE', item.Item, item.Location, currentUser.name, 'Deleted S/N: ' + item.LicensePlate);
         gasCall('deleteInventoryItem', { data: item }).then(result => {
             if (result && result.error) throw new Error(result.error);
+            logTransaction('DELETE', item.Item, item.Location, currentUser.name, 'Deleted S/N: ' + item.LicensePlate);
             Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', timer: 1000, showConfirmButton: false });
             notifyDiscord('DELETE', item);
             loadRealData(); closeModal('detailModal');
@@ -4163,6 +4251,7 @@ function adjustQty(n) {
     let v = parseInt(i.value);
     if (isNaN(v)) v = 0;
     i.value = Math.max(1, v + n);
+    updateSubmitReadiness();
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }
@@ -4174,19 +4263,34 @@ function filterItems() {
 
 function previewImage(event) {
     const file = event.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-        const img = new Image();
+    const requestId = ++photoRequestId;
+    photoIsProcessing = true; updateSubmitReadiness();
+    const fail = () => {
+        if (requestId !== photoRequestId) return;
+        photoIsProcessing = false; currentPhotoBase64 = '';
+        updateSubmitReadiness();
+        Swal.fire({icon:'error',title:'อ่านรูปถ่ายไม่สำเร็จ',text:'กรุณาเลือกรูปภาพใหม่'});
+    };
+    const reader = new FileReader(); reader.onerror = fail;
+    reader.onload = event => {
+        const img = new Image(); img.onerror = fail;
         img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let w = img.width, h = img.height; const MAX = 400;
-            if (w > MAX) { h *= MAX / w; w = MAX; }
-            canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-            currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.5);
-            document.getElementById('imgPreview').src = currentPhotoBase64; document.getElementById('imgPreview').classList.remove('hidden');
-            document.getElementById('photoPlaceholder').classList.add('hidden'); document.getElementById('removePhotoBtn').classList.remove('hidden');
+            if (requestId !== photoRequestId) return;
+            try {
+                const canvas = document.createElement('canvas');
+                const ratio = Math.min(1, 800 / Math.max(img.width,img.height));
+                canvas.width = Math.max(1, Math.round(img.width * ratio));
+                canvas.height = Math.max(1, Math.round(img.height * ratio));
+                canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+                currentPhotoBase64 = canvas.toDataURL('image/jpeg',0.7);
+                document.getElementById('imgPreview').src = currentPhotoBase64;
+                document.getElementById('imgPreview').classList.remove('hidden');
+                document.getElementById('photoPlaceholder').classList.add('hidden');
+                document.getElementById('removePhotoBtn').classList.remove('hidden');
+                photoIsProcessing = false; updateSubmitReadiness();
+            } catch (_) { fail(); }
         };
-        img.src = e.target.result;
+        img.src = event.target.result;
     };
     reader.readAsDataURL(file);
 }
@@ -4194,8 +4298,10 @@ function previewImage(event) {
 function removePhoto(e) { if (e) e.stopPropagation(); resetPhotoUI(); }
 
 function resetPhotoUI() {
+    photoRequestId++; photoIsProcessing = false;
     currentPhotoBase64 = ''; document.getElementById('PhotoInput').value = '';
     document.getElementById('imgPreview').classList.add('hidden'); document.getElementById('photoPlaceholder').classList.remove('hidden'); document.getElementById('removePhotoBtn').classList.add('hidden');
+    updateSubmitReadiness();
 }
 
 function addNewRemark() {
@@ -4219,7 +4325,7 @@ function addNewRecorder() {
         const newVal = r.value.trim();
         const sel = document.getElementById('NameSelect');
         if (!Array.from(sel.options).some(o => o.value === newVal)) sel.add(new Option(newVal, newVal));
-        sel.value = newVal; document.getElementById('Name').value = newVal;
+        sel.value = newVal; document.getElementById('Name').value = newVal; updateSubmitReadiness();
         gasCall('addRecorderName', { name: newVal }).then(res => {
             const msg = (res && res.duplicate) ? 'มีชื่อนี้อยู่แล้ว' : 'เพิ่มผู้บันทึกสำเร็จ ✅';
             Swal.fire({ icon: 'success', title: msg, toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
