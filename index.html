@@ -1698,6 +1698,7 @@ let itemInfoTimer = null;
 let formIsSaving = false;
 let photoIsProcessing = false;
 let photoRequestId = 0;
+const UNKNOWN_ITEM_DESCRIPTION = 'ไม่พบรหัสนี้ในระบบ — กรุณากรอกข้อมูลเอง';
 function selectedItemType() {
     const select = document.getElementById('ItemTypeSelect');
     return String(select && !select.classList.contains('hidden') ? select.value : document.getElementById('ItemType')?.value || '').trim();
@@ -1715,7 +1716,7 @@ function inventoryMissingFields() {
     if (!document.querySelector('input[name="Solution"]:checked')) missing.push('Solution');
     const infoReady = itemInfoState.code === value('Item') && ['ready','manual'].includes(itemInfoState.status);
     if (!infoReady) missing.push(itemInfoState.status === 'loading' ? 'รอ Auto Info โหลดเสร็จ' : 'ค้นหา Auto Info ของ Item ปัจจุบัน');
-    const validInfo = text => text && !/^(?:-|\.\.\.|กำลังค้นหา.*|ไม่พบรหัสนี้ในระบบ.*)$/.test(text);
+    const validInfo = text => text && !/^(?:-|\.\.\.|กำลังค้นหา.*)$/.test(text);
     if (!validInfo(value('ItemDesc'))) missing.push('Description');
     if (!validInfo(selectedItemType())) missing.push('Type');
     if (photoIsProcessing) missing.push('รอรูปถ่ายประมวลผล');
@@ -3904,6 +3905,23 @@ function changePassword() {
 // ─────────────────────────────────────────
 //  INVENTORY FORM
 // ─────────────────────────────────────────
+function showManualItemInfo(code, details) {
+    const description = document.getElementById('ItemDesc');
+    const type = document.getElementById('ItemType');
+    const select = document.getElementById('ItemTypeSelect');
+    description.readOnly = false;
+    description.placeholder = 'กรอกชื่อสินค้า';
+    description.value = String(details?.Description || '').trim() || UNKNOWN_ITEM_DESCRIPTION;
+    type.classList.add('hidden'); select.classList.remove('hidden');
+    if (details?.Type) {
+        if (!Array.from(select.options).some(option => option.value === details.Type)) select.add(new Option(details.Type, details.Type));
+        select.value = details.Type;
+    }
+    type.value = select.value;
+    itemInfoState = {code, status:'manual'};
+    updateSubmitReadiness();
+}
+
 async function checkItemInfo(code, isAutoUnknown) {
     clearTimeout(itemInfoTimer);
     code = String(code || '').trim();
@@ -3911,14 +3929,21 @@ async function checkItemInfo(code, isAutoUnknown) {
     const requestId = ++itemInfoRequestId;
     pendingAutoUnknownCode = !!isAutoUnknown;
     if (!code) { invalidateItemInfo(); return; }
-    itemInfoState = {code, status:'loading'};
     const errorHint = document.getElementById('itemInfoError'); if (errorHint) errorHint.textContent = '';
     const description = document.getElementById('ItemDesc');
     const type = document.getElementById('ItemType');
     const select = document.getElementById('ItemTypeSelect');
-    // Keep complete saved manual details when editing an existing record.
-    const saved = currentItemForEdit && String(currentItemForEdit.Item).trim() === code ? currentItemForEdit : null;
+    // Keep manual edits on retry, and saved details when editing an existing record.
+    const saved = itemInfoState.code === code && itemInfoState.status === 'manual'
+        ? {Description: description.value, Type: selectedItemType()}
+        : currentItemForEdit && String(currentItemForEdit.Item).trim() === code ? currentItemForEdit : null;
     description.value = ''; type.value = ''; select.value = '';
+    // Generated unknown codes have no catalog entry; show their default immediately.
+    if (isAutoUnknown || /^ไม่ทราบรหัสสินค้า\s*\d+$/.test(code)) {
+        showManualItemInfo(code, saved);
+        return;
+    }
+    itemInfoState = {code, status:'loading'};
     description.placeholder = 'กำลังค้นหา...'; description.readOnly = true;
     type.classList.remove('hidden'); select.classList.add('hidden');
     updateSubmitReadiness();
@@ -3929,16 +3954,7 @@ async function checkItemInfo(code, isAutoUnknown) {
             description.value = result.description.trim(); type.value = result.type.trim();
             itemInfoState = {code,status:'ready'};
         } else {
-            description.readOnly = false;
-            description.placeholder = 'กรอกชื่อสินค้า';
-            description.value = saved ? saved.Description || '' : '';
-            type.classList.add('hidden'); select.classList.remove('hidden');
-            if (saved?.Type) {
-                if (!Array.from(select.options).some(option => option.value === saved.Type)) select.add(new Option(saved.Type,saved.Type));
-                select.value = saved.Type;
-            }
-            type.value = select.value;
-            itemInfoState = {code,status:'manual'};
+            showManualItemInfo(code, saved);
         }
     } catch (error) {
         if (requestId !== itemInfoRequestId || code !== document.getElementById('Item').value.trim()) return;
