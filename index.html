@@ -1229,31 +1229,7 @@
                             </div>
                             <div class="md:col-span-2 flex justify-end mt-4">
                                 <button type="submit"
-                                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center gap-2">
-                                    <i class="fas fa-save"></i> บันทึกการเปลี่ยนแปลง
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div class="glass-card p-8 border border-slate-200">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-500 flex items-center justify-center"><i class="fas fa-lock"></i></div>
-                    <div>
-                        <h3 class="text-lg font-black text-slate-800">เปลี่ยนรหัสผ่าน</h3>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wide">จัดการความปลอดภัยบัญชีของคุณ</p>
-                    </div>
-                </div>
-                <form onsubmit="event.preventDefault(); changePassword();" class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-                    <div><label class="profile-label">รหัสผ่านปัจจุบัน</label><input type="password" id="passCurrent" class="profile-input rounded-xl" required></div>
-                    <div><label class="profile-label">รหัสผ่านใหม่</label><input type="password" id="passNew" class="profile-input rounded-xl" required></div>
-                    <div><label class="profile-label">ยืนยันรหัสผ่านใหม่</label><input type="password" id="passConfirm" class="profile-input rounded-xl" required></div>
-                    <div class="md:col-span-3 flex justify-end">
-                        <button type="submit" class="bg-white border border-slate-200 text-slate-600 hover:text-orange-600 hover:border-orange-200 font-bold py-3 px-6 rounded-xl transition-all active:scale-95 shadow-sm">
-                            เปลี่ยนรหัสผ่าน
-                        </button>
-                    </div>
+                     v>
                 </form>
             </div>
         </div>
@@ -1262,10 +1238,7 @@
         <div id="view-users" class="hidden space-y-8 animate-view">
             <div class="glass-card p-8 border border-slate-200">
                 <h3 class="font-black text-slate-800 text-xl mb-6 flex items-center gap-3">
-                    <div class="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
-                    ตั้งค่าระบบ (System Settings)
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                    <div class="w-1cols-2 lg:grid-cols-3 gap-6 mb-6">
                     <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col">
                         <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 block border-l-4 border-indigo-500 pl-2">ชื่อระบบ (System Name)</label>
                         <p class="text-xs text-slate-400 mb-4">เปลี่ยนชื่อแบรนด์ที่จะแสดงบนหน้า Login, เมนู และหัวรายงาน PDF</p>
@@ -1298,11 +1271,7 @@
                     </div>
                 </div>
                 <!-- Theme toggle card -->
-                <div class="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
-                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 block border-l-4 border-violet-500 pl-2">
-                        ธีมสี (Theme)
-                    </label>
-                    <p class="text-xs text-slate-400 mb-5">เลือกธีมสว่างหรือมืดตามความชอบ</p>
+                <div class="bg-white p-6 rounded-[24px] border border-slate��อบ</p>
                     <div class="flex gap-3">
                         <!-- Light -->
                         <button id="themeLight" onclick="setTheme('light')"
@@ -1327,11 +1296,7 @@
                     class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 active:scale-[0.98] flex items-center justify-center gap-2 md:col-span-2">
                     <i class="fas fa-save text-xl"></i> บันทึกการตั้งค่าระบบทั้งหมด
                 </button>
-            </div>
-
-            <!-- Discord Notification Settings -->
-            <div class="glass-card p-8 border border-slate-200">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+w sm:items-center justify-between gap-4 mb-6">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-[#5865F2]/10 text-[#5865F2] flex items-center justify-center">
                             <i class="fab fa-discord text-xl"></i>
@@ -1343,19 +1308,13 @@
                     </div>
                     <button type="button" id="discordEnabledToggle" onclick="toggleDiscordEnabled()"
                         class="relative w-14 h-8 rounded-full bg-slate-300 transition-colors duration-300 flex-shrink-0">
-                        <span id="discordToggleDot" class="absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 translate-x-0"></span>
-                    </button>
-                </div>
+                        <span id="discord   </div>
 
                 <div id="discordConfigPanel" class="space-y-5 transition-opacity duration-300">
                     <div>
                         <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Webhook URL</label>
                         <div class="relative">
-                            <input type="password" id="discordWebhookUrl" placeholder="https://discord.com/api/webhooks/..."
-                                class="w-full p-4 pr-14 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 font-mono text-sm text-slate-700 transition-all">
-                            <button type="button" onclick="toggleDiscordUrlVisibility()"
-                                class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-all">
-                                <i id="discordUrlEyeIcon" class="fas fa-eye"></i>
+                            <input type="password" id="discordWe        <i id="discordUrlEyeIcon" class="fas fa-eye"></i>
                             </button>
                         </div>
                         <p class="text-[10px] text-slate-400 mt-2">สร้าง Webhook ได้จาก Discord: Server Settings → Integrations → Webhooks</p>
@@ -1373,14 +1332,7 @@
                                 <span class="text-xs font-bold text-slate-600">แก้ไขรายการ</span>
                             </label>
                             <label class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:border-indigo-300 transition-all">
-                                <input type="checkbox" id="discordNotifyDelete" class="w-4 h-4 accent-indigo-600" checked>
-                                <span class="text-xs font-bold text-slate-600">ลบรายการ</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <button type="button" onclick="testDiscordWebhook()"
-                        class="w-full py-3.5 bg-[#5865F2] hover:bg-[#4752c4] text-white rounded-2xl font-black text-sm shadow-lg shadow-indigo-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                                                  class="w-full py-3.5 bg-[#5865F2] hover:bg-[#4752c4] text-white rounded-2xl font-black text-sm shadow-lg shadow-indigo-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                         <i class="fab fa-discord"></i> ทดสอบส่งข้อความ
                     </button>
                     <p class="text-[9px] text-slate-400 text-center">กดปุ่ม "บันทึกการตั้งค่าระบบทั้งหมด" ด้านบนเพื่อบันทึก Webhook URL และตัวเลือกแจ้งเตือน</p>
@@ -1388,10 +1340,7 @@
             </div>
 
             <div class="glass-card p-8">
-                <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h3 class="font-black text-slate-800 text-2xl flex items-center gap-2">
-                            <i class="fas fa-users-cog text-blue-500"></i> จัดการผู้ใช้งาน
+                <div          <i class="fas fa-users-cog text-blue-500"></i> จัดการผู้ใช้งาน
                         </h3>
                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">User Management System</p>
                     </div>
@@ -1489,10 +1438,7 @@
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="text-[10px] text-slate-400 border-b border-slate-100 uppercase font-black tracking-widest bg-slate-50/60">
-                                <th class="py-4 pl-4 w-20 text-center">Image</th>
-                                <th class="py-4 px-4">Item Details</th>
-                                <th class="py-4 px-3">Status</th>
-                                <th class="py-4 px-3">Location</th>
+                                <th class="py-4 pl-4 w         <th class="py-4 px-3">Location</th>
                                 <th class="py-4 px-3">Remark</th>
                                 <th class="py-4 px-3">Solution</th>
                                 <th class="py-4 text-right pr-4">Action</th>
@@ -1509,9 +1455,7 @@
 
     <!-- Mobile Bottom Nav -->
     <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 py-4 flex justify-around items-center z-50 rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.08)]">
-        <button onclick="switchView('dashboard')" id="nav-dashboard"
-            class="nav-bottom-item active flex flex-col items-center gap-1.5 w-14 transition-all">
-            <i class="fas fa-chart-pie text-lg"></i>
+        <buttpie text-lg"></i>
             <span class="text-[8px] font-black uppercase tracking-widest">Dash</span>
         </button>
         <button onclick="switchView('inventory')" id="nav-inventory"
@@ -1550,18 +1494,7 @@
 
 <!-- SCANNER MODAL -->
 <div id="scannerModal" class="modal-overlay">
-    <div class="bg-white w-full max-w-md mx-auto h-full md:h-auto md:rounded-[40px] flex flex-col overflow-hidden shadow-2xl" style="max-height:92vh;">
-        <div class="p-5 flex justify-between items-center border-b border-slate-100 bg-white flex-shrink-0 z-10">
-            <div>
-                <h3 class="font-black text-slate-800 flex items-center gap-2"><i class="fas fa-qrcode text-red-500"></i> สแกนบาร์โค้ด / QR Code</h3>
-                <p id="scanTargetLabel" class="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">กำลังโหลด...</p>
-            </div>
-            <button onclick="stopScanner()" class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 active:scale-90 transition-all flex-shrink-0">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div id="scanStatePermission" class="hidden flex-1 flex flex-col items-center justify-center gap-6 p-8 text-center bg-slate-50">
-            <div class="w-24 h-24 rounded-full bg-red-50 flex items-center justify-center shadow-inner">
+    <div class="bg-white w-full max-w-md mx-auto h-full md:h-auto md:rounded-[40px] flex flex-col overflow-hidden shadow-2xl" style="max- flex items-center justify-center shadow-inner">
                 <i class="fas fa-camera text-4xl text-red-500"></i>
             </div>
             <div>
@@ -1570,12 +1503,7 @@
             </div>
             <button onclick="requestCameraAndScan()"
                 class="w-full py-4 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-2xl font-black text-lg shadow-xl shadow-red-200 active:scale-[0.97] transition-all flex items-center justify-center gap-3">
-                <i class="fas fa-camera text-xl"></i> เปิดกล้องสแกน
-            </button>
-            <p class="text-[10px] text-slate-300 font-bold uppercase tracking-wider">รองรับ QR · Code128 · EAN · DataMatrix</p>
-        </div>
-        <div id="scanStateLoading" class="hidden flex-1 flex flex-col items-center justify-center gap-4 p-8 bg-black">
-            <div class="relative w-16 h-16">
+                <i class="fas fa-camera text-xl"><6 h-16">
                 <div class="absolute inset-0 rounded-full border-4 border-white/20"></div>
                 <div class="absolute inset-0 rounded-full border-4 border-white border-t-transparent animate-spin"></div>
             </div>
@@ -1588,11 +1516,7 @@
                 <rect width="100" height="100" fill="rgba(0,0,0,0.52)" mask="url(#holeMask)"/>
             </svg>
             <div class="scan-frame"><span class="corner-br"></span><span class="corner-bl"></span><div class="scan-line"></div></div>
-            <div id="scanFlash"></div>
-            <div id="scannerStatus" class="scanner-status">หันกล้องไปที่บาร์โค้ด</div>
-            <button id="torchBtn" class="torch-btn hidden" onclick="toggleTorch()"><i class="fas fa-bolt"></i></button>
-            <button class="flip-btn" onclick="flipCamera()"><i class="fas fa-sync-alt"></i></button>
-        </div>
+                 </div>
         <div id="scanStateError" class="hidden flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center bg-slate-50">
             <div class="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center"><i class="fas fa-video-slash text-2xl text-orange-400"></i></div>
             <div>
@@ -1698,6 +1622,7 @@ let itemInfoTimer = null;
 let formIsSaving = false;
 let photoIsProcessing = false;
 let photoRequestId = 0;
+const UNKNOWN_ITEM_DESCRIPTION = 'ไม่พบรหัสนี้ในระบบ — กรุณากรอกข้อมูลเอง';
 function selectedItemType() {
     const select = document.getElementById('ItemTypeSelect');
     return String(select && !select.classList.contains('hidden') ? select.value : document.getElementById('ItemType')?.value || '').trim();
@@ -1712,457 +1637,10 @@ function inventoryMissingFields() {
     const quantity = Number(value('OH'));
     if (!value('OH') || !Number.isInteger(quantity) || quantity < 1) missing.push('จำนวนเต็มมากกว่า 0');
     if (value('LicensePlate') && value('LicensePlate').length !== 13) missing.push('License Plate 13 หลัก');
-    if (!document.querySelector('input[name="Solution"]:checked')) missing.push('Solution');
-    const infoReady = itemInfoState.code === value('Item') && ['ready','manual'].includes(itemInfoState.status);
-    if (!infoReady) missing.push(itemInfoState.status === 'loading' ? 'รอ Auto Info โหลดเสร็จ' : 'ค้นหา Auto Info ของ Item ปัจจุบัน');
-    const validInfo = text => text && !/^(?:-|\.\.\.|กำลังค้นหา.*|ไม่พบรหัสนี้ในระบบ.*)$/.test(text);
-    if (!validInfo(value('ItemDesc'))) missing.push('Description');
-    if (!validInfo(selectedItemType())) missing.push('Type');
-    if (photoIsProcessing) missing.push('รอรูปถ่ายประมวลผล');
-    else if (!currentPhotoBase64) missing.push('รูปถ่ายสินค้า');
-    return [...new Set(missing)];
-}
-function updateSubmitReadiness() {
-    const button = document.getElementById('submitBtn');
-    if (!button) return;
-    const missing = inventoryMissingFields();
-    button.disabled = formIsSaving || missing.length > 0;
-    button.title = missing.length ? 'กรุณาเติม: ' + missing.join(', ') : 'ข้อมูลครบ พร้อมบันทึก';
-    const hint = document.getElementById('formReadinessHint');
-    if (hint) hint.textContent = formIsSaving ? 'กำลังบันทึก กรุณารอสักครู่' :
-        missing.length ? 'ยังบันทึกไม่ได้: ' + missing.join(', ') : 'ข้อมูลครบ พร้อมบันทึก';
-}
-function invalidateItemInfo() {
-    itemInfoRequestId++;
-    clearTimeout(itemInfoTimer);
-    itemInfoState = {code: '', status: 'idle'};
-    for (const id of ['ItemDesc','ItemType','ItemTypeSelect']) {
-        const input = document.getElementById(id); if (input) input.value = '';
-    }
-    document.getElementById('ItemDesc').readOnly = true;
-    document.getElementById('ItemType').classList.remove('hidden');
-    document.getElementById('ItemTypeSelect').classList.add('hidden');
-    updateSubmitReadiness();
-}
-function initializeInventoryValidation() {
-    const form = document.getElementById('stockForm');
-    if (!form) return;
-    form.addEventListener('input', event => {
-        if (event.target.id === 'Item') {
-            pendingAutoUnknownCode = false;
-            invalidateItemInfo();
-            const code = event.target.value.trim();
-            if (code) itemInfoTimer = setTimeout(() => checkItemInfo(code), 400);
-        }
-        updateSubmitReadiness();
-    });
-    form.addEventListener('change', updateSubmitReadiness);
-    updateSubmitReadiness();
-}
-
-let pendingAutoUnknownCode = false;  // true = ให้ backend รันเลข "ไม่ทราบรหัสสินค้า" ให้ตอนบันทึก (กันเลขซ้ำ)
-
-let globalAppLogo = '';
-let globalAppName = 'Vespa Stock';
-try {
-    globalAppLogo = localStorage.getItem('vespaAppLogo') || '';
-    globalAppName = localStorage.getItem('vespaAppName') || 'Vespa Stock';
-} catch(e) {}
-
-// ─── Discord Webhook Notification settings ───
-let discordWebhookUrl    = '';
-let discordEnabled       = false;
-let discordNotifyAdd     = true;
-let discordNotifyEdit    = true;
-let discordNotifyDelete  = true;
-
-let appUsers = [];
-
-// ─────────────────────────────────────────
-//  GAS API CONFIG
-// ─────────────────────────────────────────
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxAur8Y2RLdxjJ1KllnxN1lUAkz6MEYDurJfs0NhrIjweXkgV2DNVOLPjl_q9ud4jihZA/exec';
-
-async function gasCall(action, params) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
-    const writeActions = new Set(['recordInventory', 'updateInventoryItem', 'deleteInventoryItem',
-        'saveAppUsers', 'saveAppSettings', 'saveTransactionLog', 'addRemarkOption', 'addRecorderName', 'sendDiscordNotification']);
-    try {
-        const res = await fetch(GAS_URL, {
-            method: 'POST', headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify(Object.assign({}, params || {}, { action })), signal: controller.signal
-        });
-        if (!res.ok) throw new Error('เซิร์ฟเวอร์ตอบ HTTP ' + res.status);
-        const responseText = await res.text();
-        let result;
-        try { result = JSON.parse(responseText); }
-        catch (_) { throw new Error('API ไม่ได้ตอบ JSON กรุณาตรวจ URL /exec, สิทธิ์ และเวอร์ชัน Deployment'); }
-        if (result === null || typeof result !== 'object') throw new Error('รูปแบบคำตอบจาก API ไม่ถูกต้อง');
-        if (result.error || result.success === false) throw new Error(String(result.error || 'เซิร์ฟเวอร์ทำรายการไม่สำเร็จ'));
-        if (writeActions.has(action) && result.success !== true) throw new Error('API ไม่ได้ยืนยันว่าบันทึกสำเร็จ');
-        if (['getAppUsers', 'getInventoryData', 'getRemarkOptions', 'getRecorderOptions', 'getTransactionLogs'].includes(action) && !Array.isArray(result)) {
-            throw new Error('รูปแบบข้อมูลจาก API ไม่ถูกต้อง: ' + action);
-        }
-        return result;
-    } catch (err) {
-        if (err.name === 'AbortError') throw new Error(writeActions.has(action)
-            ? 'เซิร์ฟเวอร์ตอบช้า ยังยืนยันผลไม่ได้ กรุณารีเฟรชตรวจรายการก่อนบันทึกซ้ำ'
-            : 'เซิร์ฟเวอร์ตอบช้า กรุณาลองโหลดใหม่');
-        throw err;
-    } finally { clearTimeout(timeoutId); }
-}
-
-window.onload = initApp;
-
-// ─── Theme Management ───
-function setTheme(mode) {
-    const body = document.body;
-    if (mode === 'dark') {
-        body.classList.add('dark-mode');
-        try { localStorage.setItem('vespaTheme', 'dark'); } catch(e) {}
-    } else {
-        body.classList.remove('dark-mode');
-        try { localStorage.setItem('vespaTheme', 'light'); } catch(e) {}
-    }
-    // Update toggle button states
-    const lightBtn = document.getElementById('themeLight');
-    const darkBtn  = document.getElementById('themeDark');
-    if (lightBtn && darkBtn) {
-        if (mode === 'dark') {
-            lightBtn.className = lightBtn.className.replace('border-indigo-500 bg-indigo-50','border-slate-200 bg-slate-50');
-            darkBtn.className  = darkBtn.className.replace('border-slate-200 bg-slate-50','border-violet-500 bg-violet-50');
-        } else {
-            darkBtn.className  = darkBtn.className.replace('border-violet-500 bg-violet-50','border-slate-200 bg-slate-50');
-            lightBtn.className = lightBtn.className.replace('border-slate-200 bg-slate-50','border-indigo-500 bg-indigo-50');
-        }
-    }
-}
-
-function initTheme() {
-    let saved = 'light';
-    try { saved = localStorage.getItem('vespaTheme') || 'light'; } catch(e) {}
-    // Also detect system preference if no saved setting
-    let hasSavedTheme = false;
-    try { hasSavedTheme = Boolean(localStorage.getItem('vespaTheme')); } catch (_) {}
-    if (!hasSavedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        saved = 'dark';
-    }
-    setTheme(saved);
-}
-
-function initApp() {
-    if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
-    initTheme();
-    updateBrandUI();
-    setInterval(updateAppTime, 1000);
-    updateAppTime();
-    initializeInventoryValidation();
-    forceExitLoader();
-    // หมายเหตุ: เดิมมีการเรียก loadDataInBackground() ต่อจากนี้ ซึ่งยิง getAppUsers()
-    // ซ้ำซ้อนกับ showLoginAfterUsersLoad() พร้อมกัน ทำให้เกิด race condition —
-    // ถ้า Apps Script ตอบช้า (cold start) แล้ว showLoginAfterUsersLoad() timeout ก่อน
-    // appUsers จะเหลือค่า default (admin/1234, staff/1234) ทำให้ผู้ใช้จริง login ไม่ผ่าน
-    // ทั้งที่รหัสถูกต้อง — ตัดออกเพื่อไม่ให้ยิงซ้ำ และแก้ที่ doLogin() ให้ retry สดแทน
-}
-
-function forceExitLoader() {
-    document.getElementById('loader').classList.add('hidden');
-    // ยังไม่แสดง loginScreen ทันที — รอ users โหลดก่อน (แก้ race condition)
-    showLoginAfterUsersLoad();
-}
-
-async function showLoginAfterUsersLoad() {
-    // Load current users only when submitting login; never authenticate from defaults/cache.
-    loadAppSettings();
-    document.getElementById('loader')?.classList.add('hidden');
-    document.getElementById('loginScreen')?.classList.remove('hidden');
-}
-
-async function loadAppSettings() {
-    try {
-        const settings = await gasCall('getAppSettings');
-        if (settings && typeof settings === 'object') {
-            if (settings.logoBase64 !== undefined) { globalAppLogo = settings.logoBase64; try { localStorage.setItem('vespaAppLogo', globalAppLogo); } catch(e) {} }
-            if (settings.appName) { globalAppName = settings.appName; try { localStorage.setItem('vespaAppName', globalAppName); } catch(e) {} }
-            // Discord webhook settings
-            discordWebhookUrl   = settings.discordWebhookUrl || '';
-            discordEnabled      = settings.discordEnabled === 'true' || settings.discordEnabled === true;
-            discordNotifyAdd    = settings.discordNotifyAdd    !== 'false';
-            discordNotifyEdit   = settings.discordNotifyEdit   !== 'false';
-            discordNotifyDelete = settings.discordNotifyDelete !== 'false';
-            updateBrandUI();
-        }
-    } catch(e) {}
-}
-
-async function loadDataInBackground() {
-    // ฟังก์ชันนี้ถูกเรียกหลัง login แล้ว — reload users ถ้าจำเป็น
-    try {
-        const users = await gasCall('getAppUsers');
-        if (Array.isArray(users) && users.length > 0) appUsers = users;
-    } catch(e) {}
-}
-
-// ─────────────────────────────────────────
-//  BRAND / SETTINGS
-// ─────────────────────────────────────────
-function updateBrandUI() {
-    const name    = globalAppName || 'Vespa Stock';
-    const hasLogo = globalAppLogo && globalAppLogo.length > 0;
-    document.querySelectorAll('.brand-name-text').forEach(el => { if (el.tagName !== 'INPUT') el.innerText = name; });
-    const nameInput = document.getElementById('settingAppName');
-    if (nameInput) nameInput.value = name;
-    document.querySelectorAll('.brand-logo-img').forEach(el => {
-        if (el.id === 'adminLogoPreview') return;
-        if (hasLogo) { el.src = globalAppLogo; el.classList.remove('hidden'); }
-        else { el.src = ''; el.classList.add('hidden'); }
-    });
-    document.querySelectorAll('.brand-default-icon').forEach(el => {
-        if (hasLogo) el.classList.add('hidden'); else el.classList.remove('hidden');
-    });
-    const adminPrev  = document.getElementById('adminLogoPreview');
-    const adminPlace = document.getElementById('adminLogoPlaceholder');
-    const removeBtn  = document.getElementById('removeLogoBtn');
-    if (adminPrev) {
-        if (hasLogo) { adminPrev.src = globalAppLogo; adminPrev.classList.remove('hidden'); if (adminPlace) adminPlace.classList.add('hidden'); if (removeBtn) removeBtn.classList.remove('hidden'); }
-        else { adminPrev.src = ''; adminPrev.classList.add('hidden'); if (adminPlace) adminPlace.classList.remove('hidden'); if (removeBtn) removeBtn.classList.add('hidden'); }
-    }
-}
-
-function handleAppLogoChange(event) {
-    const file = event.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let w = img.width, h = img.height; const MAX = 300;
-            if (w > MAX) { h *= MAX / w; w = MAX; }
-            canvas.width = w; canvas.height = h;
-            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-            globalAppLogo = canvas.toDataURL('image/jpeg', 0.6);
-            updateBrandUI();
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-function removeAppLogo() {
-    globalAppLogo = '';
-    document.getElementById('appLogoInput').value = '';
-    updateBrandUI();
-}
-
-function saveAllSettings() {
-    const newName = document.getElementById('settingAppName').value.trim();
-    if (!newName) { Swal.fire({ icon: 'warning', title: 'กรุณาระบุชื่อระบบ', customClass: { popup: 'rounded-[32px]' } }); return; }
-    globalAppName = newName; updateBrandUI();
-    try { localStorage.setItem('vespaAppLogo', globalAppLogo); localStorage.setItem('vespaAppName', globalAppName); } catch(e) {}
-
-    // เก็บค่า Discord settings จากฟอร์ม
-    discordWebhookUrl   = (document.getElementById('discordWebhookUrl')?.value || '').trim();
-    discordNotifyAdd    = document.getElementById('discordNotifyAdd')?.checked    ?? true;
-    discordNotifyEdit   = document.getElementById('discordNotifyEdit')?.checked   ?? true;
-    discordNotifyDelete = document.getElementById('discordNotifyDelete')?.checked ?? true;
-    if (discordEnabled && !discordWebhookUrl) {
-        Swal.fire({ icon: 'warning', title: 'กรุณากรอก Discord Webhook URL', text: 'หรือปิดสวิตช์แจ้งเตือนก่อนบันทึก', customClass: { popup: 'rounded-[32px]' } });
-        return;
-    }
-
-    const btn = document.querySelector('button[onclick="saveAllSettings()"]');
-    const origHtml = btn.innerHTML; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin text-xl"></i> กำลังบันทึก...'; btn.disabled = true;
-    gasCall('saveAppSettings', { settings: {
-        logoBase64          : globalAppLogo,
-        appName             : globalAppName,
-        discordWebhookUrl   : discordWebhookUrl,
-        discordEnabled      : discordEnabled      ? 'true' : 'false',
-        discordNotifyAdd    : discordNotifyAdd    ? 'true' : 'false',
-        discordNotifyEdit   : discordNotifyEdit   ? 'true' : 'false',
-        discordNotifyDelete : discordNotifyDelete ? 'true' : 'false'
-    } })
-        .then(() => { Swal.fire({ icon: 'success', title: 'บันทึกการตั้งค่าเรียบร้อย', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 }); btn.innerHTML = origHtml; btn.disabled = false; })
-        .catch(err => { Swal.fire({ icon: 'error', title: 'ยังไม่ได้บันทึกลงเซิร์ฟเวอร์', text: err.message, toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 }); btn.innerHTML = origHtml; btn.disabled = false; });
-}
-
-// ─────────────────────────────────────────
-//  DISCORD WEBHOOK NOTIFICATIONS
-// ─────────────────────────────────────────
-function loadDiscordSettingsUI() {
-    const urlEl  = document.getElementById('discordWebhookUrl');
-    const addEl  = document.getElementById('discordNotifyAdd');
-    const editEl = document.getElementById('discordNotifyEdit');
-    const delEl  = document.getElementById('discordNotifyDelete');
-    if (urlEl)  urlEl.value = discordWebhookUrl;
-    if (addEl)  addEl.checked  = discordNotifyAdd;
-    if (editEl) editEl.checked = discordNotifyEdit;
-    if (delEl)  delEl.checked  = discordNotifyDelete;
-    setDiscordToggleUI(discordEnabled);
-}
-
-function setDiscordToggleUI(enabled) {
-    discordEnabled = enabled;
-    const toggle = document.getElementById('discordEnabledToggle');
-    const dot    = document.getElementById('discordToggleDot');
-    const panel  = document.getElementById('discordConfigPanel');
-    if (toggle) { toggle.classList.toggle('bg-[#5865F2]', enabled); toggle.classList.toggle('bg-slate-300', !enabled); }
-    if (dot)    { dot.classList.toggle('translate-x-6', enabled); dot.classList.toggle('translate-x-0', !enabled); }
-    if (panel)  { panel.classList.toggle('opacity-40', !enabled); panel.classList.toggle('pointer-events-none', !enabled); }
-}
-
-function toggleDiscordEnabled() { setDiscordToggleUI(!discordEnabled); }
-
-function toggleDiscordUrlVisibility() {
-    const input = document.getElementById('discordWebhookUrl');
-    const icon  = document.getElementById('discordUrlEyeIcon');
-    if (!input || !icon) return;
-    if (input.type === 'password') { input.type = 'text'; icon.className = 'fas fa-eye-slash'; }
-    else { input.type = 'password'; icon.className = 'fas fa-eye'; }
-}
-
-function testDiscordWebhook() {
-    const url = (document.getElementById('discordWebhookUrl')?.value || '').trim();
-    if (!url) { Swal.fire({ icon: 'warning', title: 'กรุณากรอก Webhook URL ก่อนทดสอบ', customClass: { popup: 'rounded-[32px]' } }); return; }
-
-    const btn = document.querySelector('button[onclick="testDiscordWebhook()"]');
-    const origHtml = btn ? btn.innerHTML : '';
-    if (btn) { btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> กำลังส่ง...'; btn.disabled = true; }
-
-    const payload = {
-        username: globalAppName || 'Vespa Stock',
-        embeds: [{
-            title: '🔔 ทดสอบการแจ้งเตือน',
-            description: `เชื่อมต่อ Discord Webhook จาก **${globalAppName || 'Vespa Stock'}** สำเร็จแล้ว!`,
-            color: 5793266,
-            timestamp: new Date().toISOString(),
-            footer: { text: 'Inventory Pro — Discord Integration' }
-        }]
-    };
-
-    gasCall('sendDiscordNotification', { webhookUrl: url, payload })
-        .then(res => {
-            if (res && res.success) {
-                Swal.fire({ icon: 'success', title: 'ส่งข้อความทดสอบสำเร็จ ✅', text: 'กรุณาตรวจสอบช่อง Discord ของคุณ', customClass: { popup: 'rounded-[32px]' } });
-            } else {
-                throw new Error((res && res.error) || 'ไม่ทราบสาเหตุ');
-            }
-        })
-        .catch(err => {
-            Swal.fire({ icon: 'error', title: 'ส่งข้อความไม่สำเร็จ ❌', text: err.message || 'กรุณาตรวจสอบ Webhook URL', customClass: { popup: 'rounded-[32px]' } });
-        })
-        .finally(() => { if (btn) { btn.innerHTML = origHtml; btn.disabled = false; } });
-}
-
-function notifyDiscord(action, item) {
-    try {
-        if (!discordEnabled || !discordWebhookUrl) return;
-        if (action === 'ADD'    && !discordNotifyAdd)    return;
-        if (action === 'EDIT'   && !discordNotifyEdit)   return;
-        if (action === 'DELETE' && !discordNotifyDelete) return;
-
-        const meta = {
-            ADD   : { label: '✅ เพิ่มรายการใหม่', color: 3066993  },
-            EDIT  : { label: '✏️ แก้ไขรายการ',     color: 3447003  },
-            DELETE: { label: '🗑️ ลบรายการ',        color: 15158332 }
-        }[action] || { label: action, color: 9807270 };
-
-        const payload = {
-            username: globalAppName || 'Vespa Stock',
-            embeds: [{
-                title: meta.label,
+    if (!document.querySelector('input[name="Solution"]:chemeta.label,
                 color: meta.color,
                 fields: [
-                    { name: 'Item Code',     value: item.Item || '-',                                          inline: true },
-                    { name: 'Location',      value: item.Location || '-',                                      inline: true },
-                    { name: 'Status',        value: item.InventoryStatus || '-',                                inline: true },
-                    { name: 'Quantity',      value: String(item.OH !== undefined ? item.OH : '-'),               inline: true },
-                    { name: 'Recorder',      value: (currentUser && currentUser.name) || item.Name || '-',      inline: true },
-                    { name: 'License Plate', value: item.LicensePlate || '-',                                   inline: true }
-                ],
-                timestamp: new Date().toISOString(),
-                footer: { text: globalAppName || 'Vespa Stock' }
-            }]
-        };
-
-        gasCall('sendDiscordNotification', { webhookUrl: discordWebhookUrl, payload }).catch(() => {});
-    } catch(e) { /* silent — ไม่ให้กระทบ flow หลัก */ }
-}
-
-// ─────────────────────────────────────────
-//  AUTHENTICATION
-// ─────────────────────────────────────────
-async function handleLogin(event) {
-    event.preventDefault();
-    const btn = event.target.querySelector('button[type=submit]');
-    if (btn?.disabled) return;
-    const username = document.getElementById('loginUser').value.trim().toLowerCase();
-    const password = document.getElementById('loginPass').value.trim();
-    const originalHtml = btn?.innerHTML;
-    if (btn) { btn.disabled = true; btn.textContent = 'กำลังตรวจสอบ...'; }
-    try {
-        appUsers = await gasCall('getAppUsers');
-        if (!appUsers.length) throw new Error('ไม่พบผู้ใช้งานใน UsersDB กรุณาติดต่อผู้ดูแล');
-        const user = appUsers.find(u => String(u.username || '').trim().toLowerCase() === username && String(u.password || '').trim() === password);
-        if (!user) {
-            Swal.fire({icon: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', text: 'Username หรือ Password ไม่ถูกต้อง'});
-            return;
-        }
-        doLogin(user);
-    } catch (err) {
-        appUsers = [];
-        Swal.fire({icon: 'error', title: 'ตรวจสอบบัญชีไม่ได้', text: err.message});
-    } finally { if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; } }
-}
-
-function doLogin(user) {
-    currentUser = user;
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('mainApp').classList.remove('hidden');
-    ['dashNameDisplay', 'sideUserName', 'mobileWelcomeName'].forEach(id => {
-        const el = document.getElementById(id); if (el) el.textContent = user.name || '';
-    });
-    document.getElementById('roleBadge').textContent = (user.role || 'user').toUpperCase();
-    updateAvatarDisplays();
-    document.getElementById('side-users')?.classList.toggle('hidden', user.role !== 'admin');
-    switchView('dashboard');
-}
-
-function handleLogout() {
-    currentUser = null;
-    document.getElementById('mainApp').classList.add('hidden');
-    document.getElementById('loginScreen').classList.remove('hidden');
-    document.getElementById('loginPass').value = '';
-    switchView('dashboard');
-}
-
-// ─────────────────────────────────────────
-//  SCANNER
-// ─────────────────────────────────────────
-let scannerStream    = null;
-let scannerRAF       = null;
-let scannerActive    = false;
-let currentScanTarget = '';
-let torchTrack       = null;
-let torchOn          = false;
-let useFrontCamera   = false;
-let barcodeDetector  = null;
-let lastDetectedTime = 0;
-
-function showScanState(state) {
-    ['permission','loading','camera','error'].forEach(s => {
-        const el = document.getElementById('scanState' + s.charAt(0).toUpperCase() + s.slice(1));
-        if (!el) return;
-        if (s === state) { el.classList.remove('hidden'); el.classList.add('flex'); }
-        else { el.classList.add('hidden'); el.classList.remove('flex'); }
-    });
-}
-
-function startScanner(target) {
-    currentScanTarget = target;
-    const labelMap = { Location: 'Location (ที่เก็บ)', Item: 'Item Code (รหัสสินค้า)', LicensePlate: 'License Plate (เลขตัวถัง)', searchInput: 'ค้นหาสินค้า', histFilterItem: 'Item / LPN', histFilterLoc: 'Location' };
-    document.getElementById('scanTargetLabel').innerText = labelMap[target] || target;
-    document.getElementById('scannerModal').classList.add('active');
+                    { name: 'Item Code',     value: item.Item || '-',                                          inlindd('active');
     showScanState('loading');
     // reset iOS confidence gate state
     lastCandidateText = ''; lastCandidateTime = 0; candidateCount = 0; frameSkip = 0;
@@ -2473,71 +1951,7 @@ async function scanLoopBD(video) {
                 }
             }
 
-            // 2) Quagga2 (บาร์โค้ดเส้น) — ลองแค่ 1 มุมต่อเฟรม สลับมุมไปเรื่อยๆ ในเฟรมถัดไป
-            if (!quaggaProcessing && typeof Quagga !== 'undefined') {
-                quaggaProcessing = true;
-                const tryCanvas = getCanvasForPhase(baseCanvas, scanPhase);
-                scanPhase = (scanPhase + 1) % SCAN_PHASE_COUNT;
-                const qResult = await decodeWithQuagga(tryCanvas);
-                quaggaProcessing = false;
-                if (qResult) {
-                    tryConfirmCandidate(qResult);
-                    scannerRAF = requestAnimationFrame(() => scanLoopBD(video));
-                    return;
-                }
-            }
-        }
-    } catch(e) { /* silent */ }
-
-    scannerRAF = requestAnimationFrame(() => scanLoopBD(video));
-}
-
-function onScanSuccess(text) {
-    if (!scannerActive) return;   // guard ป้องกัน double-fire
-    const flash = document.getElementById('scanFlash');
-    if (flash) { flash.classList.add('scan-success-flash'); setTimeout(() => flash.classList.remove('scan-success-flash'), 500); }
-    try {
-        const actx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = actx.createOscillator(), gain = actx.createGain();
-        osc.connect(gain); gain.connect(actx.destination);
-        osc.frequency.value = 1200; osc.type = 'sine';
-        gain.gain.setValueAtTime(0.3, actx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.15);
-        osc.start(); osc.stop(actx.currentTime + 0.15);
-    } catch(e) {}
-
-    document.getElementById('scannerStatus').innerText = '✅ สแกนสำเร็จ!';
-    frameSkip = 0;   // reset frame counter
-
-    setTimeout(() => {
-        stopScanner();
-        const val = text.trim();
-        const elem = document.getElementById(currentScanTarget);
-        if (elem) {
-            elem.value = val;
-            elem.dispatchEvent(new Event('input',  { bubbles: true }));
-            elem.dispatchEvent(new Event('change', { bubbles: true }));
-            elem.style.transition = 'box-shadow 0.2s';
-            elem.style.boxShadow  = '0 0 0 3px rgba(16,185,129,0.45)';
-            setTimeout(() => { elem.style.boxShadow = ''; }, 1200);
-        }
-        if (currentScanTarget === 'Item')          checkItemInfo(val);
-        updateSubmitReadiness();
-        if (currentScanTarget === 'LicensePlate')  document.getElementById('charCount').innerText = val.length;
-        if (currentScanTarget === 'searchInput')   filterItems();
-        if (currentScanTarget === 'histFilterItem' || currentScanTarget === 'histFilterLoc') filterHistoryLogs();
-    }, 350);
-}
-
-async function stopScannerStream() {
-    scannerActive = false;
-    if (scannerRAF) { cancelAnimationFrame(scannerRAF); scannerRAF = null; }
-    if (torchOn && torchTrack) { try { await torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch(e) {} torchOn = false; const tb = document.getElementById('torchBtn'); if (tb) tb.classList.remove('on'); }
-    if (scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream = null; }
-    const video = document.getElementById('scannerVideo'); if (video) video.srcObject = null;
-}
-
-function stopScanner() { document.getElementById('scannerModal').classList.remove('active'); stopScannerStream(); }
+            // 2) Quagga2 (บาร์โค้ดเส้น) — ลองแค่ 1 มุมต่อเฟรม สลับมุมไปเner() { document.getElementById('scannerModal').classList.remove('active'); stopScannerStream(); }
 async function toggleTorch() { if (!torchTrack) return; try { torchOn = !torchOn; await torchTrack.applyConstraints({ advanced: [{ torch: torchOn }] }); document.getElementById('torchBtn').classList.toggle('on', torchOn); } catch(e) {} }
 async function flipCamera() { useFrontCamera = !useFrontCamera; if (scannerActive) { await stopScannerStream(); await requestCameraAndScan(); } }
 
@@ -2648,43 +2062,7 @@ function toggleDesktopSidebar() {
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
-    const isOpen  = !sidebar.classList.contains('-translate-x-full');
-    if (isOpen) {
-        sidebar.classList.add('-translate-x-full');
-        overlay.classList.add('hidden');
-        setTimeout(() => overlay.classList.add('opacity-0'), 10);
-    } else {
-        sidebar.classList.remove('-translate-x-full');
-        overlay.classList.remove('hidden');
-        setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-    }
-}
-
-// ─────────────────────────────────────────
-//  DATA LOADING
-// ─────────────────────────────────────────
-function loadDropdownOptions() {
-    gasCall('getRemarkOptions').then(remarks => {
-        if (!Array.isArray(remarks)) return;
-        renderRemarkPills(remarks);
-    }).catch(() => {});
-
-    gasCall('getRecorderOptions').then(names => {
-        if (!Array.isArray(names)) return;
-        const sel = document.getElementById('NameSelect'); if (!sel) return;
-        sel.innerHTML = names.map(n => '<option value="' + n + '">' + n + '</option>').join('');
-        if (currentUser) { if (!names.includes(currentUser.name)) sel.add(new Option(currentUser.name, currentUser.name)); sel.value = currentUser.name; }
-        const nameEl = document.getElementById('Name'); if (nameEl) nameEl.value = sel.value;
-        updateSubmitReadiness();
-    }).catch(() => {});
-}
-
-function loadRealData() {
-    gasCall('getInventoryData').then(data => {
-        inventoryData = data;
-        renderData(inventoryData); updateActionList(inventoryData);
-        refreshDashboardView();
-    // refresh statuslist if that view is currently active
+    const isOpen  = !side currently active
     if (!document.getElementById('view-statuslist').classList.contains('hidden')) loadStatusListView();
     }).catch(err => Swal.fire({icon: 'error', title: 'โหลดข้อมูลสต็อกไม่สำเร็จ', text: err.message}));
 
@@ -2746,13 +2124,7 @@ function updateDashboardStats(data) {
 
 // ─────────────────────────────────────────
 //  DASHBOARD DATE RANGE FILTER
-// ─────────────────────────────────────────
-function getDashboardFilteredData() {
-    if (!dashDateFrom && !dashDateTo) return inventoryData;
-    const fromDate = dashDateFrom ? new Date(dashDateFrom + 'T00:00:00') : null;
-    const toDate   = dashDateTo   ? new Date(dashDateTo   + 'T23:59:59') : null;
-    return inventoryData.filter(item => {
-        const d = new Date(item.ActualDate);
+// ──────────────────  const d = new Date(item.ActualDate);
         if (isNaN(d.getTime())) return false;
         if (fromDate && d < fromDate) return false;
         if (toDate   && d > toDate)   return false;
@@ -2793,18 +2165,7 @@ function setDashboardDatePreset(preset) {
     } else if (preset === '30d') {
         const d = new Date(now); d.setDate(d.getDate() - 29); from = fmt(d);
     } else if (preset === 'month') {
-        from = fmt(new Date(now.getFullYear(), now.getMonth(), 1));
-    }
-    // preset === 'today' ใช้ from = to = วันนี้ (ค่าเริ่มต้นด้านบน)
-
-    dashDateFrom = from;
-    dashDateTo   = to;
-    document.getElementById('dashDateFrom').value = dashDateFrom;
-    document.getElementById('dashDateTo').value   = dashDateTo;
-    refreshDashboardView();
-}
-
-function clearDashboardDateFilter() {
+        from = fmt(new Date(now.getFullY clearDashboardDateFilter() {
     dashDateFrom = ''; dashDateTo = '';
     const fEl = document.getElementById('dashDateFrom'), tEl = document.getElementById('dashDateTo');
     if (fEl) fEl.value = ''; if (tEl) tEl.value = '';
@@ -2842,26 +2203,7 @@ function renderRemarkOptionsPanel() {
         panel.innerHTML = '<p class="text-xs text-slate-400 font-bold italic text-center py-4">ยังไม่มีหมายเหตุ — กด "เพิ่มหมายเหตุ"</p>';
         return;
     }
-    panel.innerHTML = availableRemarks.map(r => {
-        const isSelected = selectedRemarks.includes(r);
-        const safe = r.replace(/'/g, "\\'");
-        return `<div class="remark-option${isSelected ? ' selected' : ''}" onclick="toggleRemarkOption('${safe}')">
-            <span class="remark-option-box"><i class="fas fa-check"></i></span>
-            <span class="remark-option-label">${r}</span>
-        </div>`;
-    }).join('');
-}
-
-function renderRemarkSelectedDisplay() {
-    const display = document.getElementById('remarkSelectedDisplay');
-    if (!display) return;
-    if (!selectedRemarks.length) {
-        display.innerHTML = '<span class="text-slate-400 font-semibold text-sm">-- เลือกหมายเหตุ --</span>';
-        return;
-    }
-    display.innerHTML = selectedRemarks.map(r => {
-        const safe = r.replace(/'/g, "\\'");
-        return `<span class="remark-selected-chip">${r}<i class="fas fa-times" onclick="event.stopPropagation(); toggleRemarkOption('${safe}')"></i></span>`;
+    panel.innerHTML = availableRemarks.map(r =emarkOption('${safe}')"></i></span>`;
     }).join('');
 }
 
@@ -2900,30 +2242,11 @@ function closeRemarkDropdown() {
 
 // ปิด dropdown เมื่อคลิกนอกกรอบ
 document.addEventListener('click', (e) => {
-    const wrapper = document.getElementById('remarkDropdownWrapper');
-    if (wrapper && !wrapper.contains(e.target)) closeRemarkDropdown();
-});
-
-function syncRemarkHidden() {
-    const hiddenEl = document.getElementById('Remark');
-    if (hiddenEl) hiddenEl.value = selectedRemarks.join(', ');
-    updateSubmitReadiness();
-}
-
-// ─────────────────────────────────────────
-//  RENDER FUNCTIONS
-// ─────────────────────────────────────────
+    const wrapper = document.getEle��
 function renderData(data) {
     const container = document.getElementById('itemsContainer');
     if (!data || !data.length) {
-        container.innerHTML = `<div class="col-span-full py-20 text-center opacity-30"><i class="fas fa-box-open text-6xl mb-4"></i><p class="font-bold uppercase tracking-widest">ยังไม่พบข้อมูล</p></div>`;
-        return;
-    }
-    container.innerHTML = data.map(item => {
-        const index = inventoryData.indexOf(item);
-        const sCls = item.InventoryStatus === 'Good' ? 'bg-green-100 text-green-600' : item.InventoryStatus === 'Damage' ? 'bg-red-100 text-red-600' : item.InventoryStatus === 'Incomplete' ? 'bg-orange-100 text-orange-600' : item.InventoryStatus === 'Disposal' ? 'bg-gray-200 text-gray-700' : 'bg-yellow-100 text-yellow-600';
-        const hasPhoto = item.Photo && item.Photo !== '';
-        const deleteBtn = (currentUser && currentUser.role === 'admin') ? `<button onclick="confirmDeleteItem(${index}, event)" class="mt-3 w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-trash-alt text-[10px]"></i></button>` : '';
+        container.innerHTML = `<div class="col-span-full py"fas fa-trash-alt text-[10px]"></i></button>` : '';
         return `<div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center gap-5 cursor-pointer hover:shadow-xl transition-all active:scale-[0.98]">
             <div onclick="showDetail(${index})" class="w-20 h-20 rounded-2xl bg-slate-50 overflow-hidden flex-shrink-0 border border-slate-100">
                 ${hasPhoto ? `<img src="${item.Photo}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-slate-200"><i class="fas fa-camera text-2xl"></i></div>`}
@@ -2931,23 +2254,7 @@ function renderData(data) {
             <div onclick="showDetail(${index})" class="flex-1 min-w-0">
                 <div class="flex gap-2 mb-1.5 flex-wrap">
                     <span class="text-[9px] font-black bg-slate-100 px-2 py-0.5 rounded text-slate-500 uppercase tracking-widest">${item.Location}</span>
-                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full ${sCls} uppercase tracking-widest">${item.InventoryStatus}</span>
-                </div>
-                <h4 class="font-black text-slate-800 truncate text-lg tracking-tight">${item.Item}</h4>
-                <p class="text-[11px] text-slate-400 font-mono font-bold truncate">${item.LicensePlate || '-'}</p>
-            </div>
-            <div class="text-right flex-shrink-0">
-                <div class="text-3xl font-black text-slate-700 leading-none">${item.OH}</div>
-                <p class="text-[8px] font-black text-slate-300 uppercase mt-1">Pcs</p>
-                ${deleteBtn}
-            </div>
-        </div>`;
-    }).join('');
-}
-
-function showDetail(index) {
-    currentItemForEdit = inventoryData[index];
-    const item = currentItemForEdit; if (!item) return;
+                    <span class="text-[9px] font-blaconst item = currentItemForEdit; if (!item) return;
     document.getElementById('mItemCode').innerText = item.Item || '-';
     document.getElementById('mLoc').innerText      = item.Location || '-';
     document.getElementById('mLP').innerText       = item.LicensePlate || '-';
@@ -2987,49 +2294,9 @@ function updateActionList(data) {
     }).join('');
 }
 
-// ─────────────────────────────────────────
-// ─────────────────────────────────────────
-//  CHARTS
-// ─────────────────────────────────────────
-function updateCharts(data) {
-
-    // ── FIX 3: นับ unique Item Code per group (ไม่นับซ้ำ) ──
-    // Status chart — นับ unique Item ต่อแต่ละ InventoryStatus
-    const ctxStatus = document.getElementById('statusChart');
-    if (ctxStatus) {
-        const s = { Good: new Set(), Damage: new Set(), QC: new Set(), Incomplete: new Set(), Disposal: new Set() };
-        data.forEach(d => {
-            if (s[d.InventoryStatus] !== undefined && d.Item)
-                s[d.InventoryStatus].add(d.Item);
-        });
-        const counts = [s.Good.size, s.Damage.size, s.QC.size, s.Incomplete.size, s.Disposal.size];
-        if (statusChart) statusChart.destroy();
-        statusChart = new Chart(ctxStatus, {
-            type: 'doughnut',
-            data: {
-                labels: ['GOOD','DAMAGE','QC','INCOMPLETE','DISPOSAL'],
-                datasets: [{ data: counts, backgroundColor: ['#10b981','#ef4444','#f59e0b','#f97316','#6b7280'], borderWidth: 4, borderColor: '#ffffff' }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, cutout: '72%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } } },
+// ─────────────────────────────osition: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } } },
                     datalabels: {
-                        color: '#fff', font: { weight: 'black', size: 10 }, textAlign: 'center',
-                        formatter: (v, ctx) => {
-                            const sum = ctx.chart.data.datasets[0].data.reduce((a,b) => a+b, 0);
-                            return v > 0 ? `${v}\n(${((v*100)/sum).toFixed(0)}%)` : '';
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // Type chart — นับ unique Item ต่อแต่ละ Type
-    const ctxType = document.getElementById('typeChart');
-    if (ctxType) {
-        const typeMap = {};   // type -> Set of Item codes
+                        color: '#fff', font: { weight: 'black', si Item codes
         data.forEach(d => {
             const t = d.Type || 'อื่นๆ';
             if (!typeMap[t]) typeMap[t] = new Set();
@@ -3042,20 +2309,7 @@ function updateCharts(data) {
             type: 'doughnut',
             data: {
                 labels,
-                datasets: [{ data: counts, backgroundColor: ['#3b82f6','#8b5cf6','#ec4899','#f97316','#6366f1','#14b8a6'], borderWidth: 4, borderColor: '#ffffff' }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, cutout: '72%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 9 } } },
-                    datalabels: {
-                        color: '#fff', font: { weight: 'black', size: 10 }, textAlign: 'center',
-                        formatter: (v, ctx) => {
-                            const sum = ctx.chart.data.datasets[0].data.reduce((a,b) => a+b, 0);
-                            return v > 0 ? `${v}\n(${((v*100)/sum).toFixed(0)}%)` : '';
-                        }
-                    }
-                }
+                datasets: [{ data: counts, backgroundColor: ['#3b82f6','#8b5cf6','#ec4899','#f97     }
             }
         });
     }
@@ -3099,12 +2353,7 @@ function updateCharts(data) {
                         borderSkipped: false,
                         barThickness: Math.max(14, Math.min(28, Math.floor(200 / labels.length)))
                     }]
-                },
-                options: {
-                    indexAxis: 'y',   // horizontal bar
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
+                     plugins: {
                         legend: { display: false },
                         datalabels: {
                             anchor: 'end',
@@ -3112,12 +2361,7 @@ function updateCharts(data) {
                             color: '#475569',
                             font: { weight: 'black', size: 11 },
                             formatter: v => v
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { color: 'rgba(0,0,0,0.04)' },
-                            ticks: {
+              ticks: {
                                 font: { weight: 'bold', size: 10 },
                                 color: '#94a3b8',
                                 stepSize: 1,
@@ -3266,12 +2510,7 @@ function logTransaction(action, itemCode, location, user, details) {
 }
 
 function renderHistoryLogs() {
-    const container = document.getElementById('historyTableBody'); if (!container) return;
-    const fUser = document.getElementById('histFilterUser') ? document.getElementById('histFilterUser').value : 'All';
-    const fItem = document.getElementById('histFilterItem') ? document.getElementById('histFilterItem').value.toLowerCase() : '';
-    const fLoc  = document.getElementById('histFilterLoc')  ? document.getElementById('histFilterLoc').value.toLowerCase()  : '';
-    const filtered = transactionLogs.filter(log => (fUser === 'All' || log.User === fUser) && (!fItem || log.Item.toLowerCase().includes(fItem)) && (!fLoc || log.Location.toLowerCase().includes(fLoc)));
-    if (!filtered.length) { container.innerHTML = `<tr><td colspan="5" class="py-10 text-center opacity-40 font-bold">ไม่พบประวัติการทำรายการ</td></tr>`; return; }
+    const containernt-bold">ไม่พบประวัติการทำรายการ</td></tr>`; return; }
     container.innerHTML = filtered.map(log => {
         const badge = log.Action === 'ADD' ? 'badge-add' : log.Action === 'EDIT' ? 'badge-edit' : log.Action === 'DELETE' ? 'badge-delete' : 'bg-slate-100 text-slate-500';
         const parts = log.Timestamp.split(' ');
@@ -3289,101 +2528,25 @@ function renderHistoryLogs() {
 // ─────────────────────────────────────────
 function loadStatusListView() {
     // populate remark dropdown from live data
-    const remarkSel = document.getElementById('slFilterRemark');
-    if (remarkSel) {
-        const allRemarks = new Set();
-        inventoryData.forEach(d => {
-            if (!d.Remark) return;
-            d.Remark.split(',').map(r => r.trim()).filter(Boolean).forEach(r => allRemarks.add(r));
-        });
-        remarkSel.innerHTML = '<option value="All">— ทั้งหมด —</option>' +
-            Array.from(allRemarks).sort().map(r => `<option value="${r}">${r}</option>`).join('');
-    }
-    renderStatusListView();
-}
-
-function renderStatusListView() {
-    const fStatus = document.getElementById('slFilterStatus')?.value || 'Issue';
-    const fRemark = document.getElementById('slFilterRemark')?.value || 'All';
-    const fLoc    = (document.getElementById('slFilterLoc')?.value || '').toLowerCase();
-    const fItem   = (document.getElementById('slFilterItem')?.value || '').toLowerCase();
-
-    let filtered = [...inventoryData];
-
-    // Status filter
-    if      (fStatus === 'Issue')   filtered = filtered.filter(i => ['Damage','QC','Incomplete','Disposal'].includes(i.InventoryStatus));
-    else if (fStatus !== 'All')     filtered = filtered.filter(i => i.InventoryStatus === fStatus);
+    const remarkSel = document.getElementByIi => i.InventoryStatus === fStatus);
 
     // Remark filter (multi-value aware)
     if (fRemark !== 'All') {
         filtered = filtered.filter(i => {
-            if (!i.Remark) return false;
-            return i.Remark.split(',').map(r => r.trim()).includes(fRemark);
-        });
-    }
-
-    // Location & item text search
-    if (fLoc)  filtered = filtered.filter(i => (i.Location || '').toLowerCase().includes(fLoc));
+            if (!i.Remark) return falocation || '').toLowerCase().includes(fLoc));
     if (fItem) filtered = filtered.filter(i =>
         (i.Item || '').toLowerCase().includes(fItem) ||
-        (i.LicensePlate || '').toLowerCase().includes(fItem)
-    );
-
-    // Badge counts
-    const badgesEl = document.getElementById('statusListBadges');
-    if (badgesEl) {
-        const total     = filtered.length;
-        const damage    = filtered.filter(i => i.InventoryStatus === 'Damage').length;
+        (i.LicensePlate || '').toLowerCa const damage    = filtered.filter(i => i.InventoryStatus === 'Damage').length;
         const qc        = filtered.filter(i => i.InventoryStatus === 'QC').length;
         const incomplete= filtered.filter(i => i.InventoryStatus === 'Incomplete').length;
         const disposal  = filtered.filter(i => i.InventoryStatus === 'Disposal').length;
         const good      = filtered.filter(i => i.InventoryStatus === 'Good').length;
         badgesEl.innerHTML = [
-            total     ? `<span class="text-[10px] font-black px-3 py-1 bg-slate-800 text-white rounded-full">${total} รายการ</span>` : '',
-            damage    ? `<span class="text-[10px] font-black px-3 py-1 bg-red-100    text-red-700    rounded-full">🔴 Damage ${damage}</span>`       : '',
-            qc        ? `<span class="text-[10px] font-black px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full">🟡 QC ${qc}</span>`                : '',
-            incomplete? `<span class="text-[10px] font-black px-3 py-1 bg-orange-100 text-orange-700 rounded-full">🟠 Incomplete ${incomplete}</span>` : '',
-            disposal  ? `<span class="text-[10px] font-black px-3 py-1 bg-gray-200   text-gray-700   rounded-full">⚫ Disposal ${disposal}</span>`     : '',
-            good      ? `<span class="text-[10px] font-black px-3 py-1 bg-green-100  text-green-700  rounded-full">🟢 Good ${good}</span>`             : '',
-        ].filter(Boolean).join('');
-    }
-
-    const body = document.getElementById('statusListBody');
-    if (!body) return;
-
-    if (!filtered.length) {
-        body.innerHTML = `<tr><td colspan="7" class="py-16 text-center opacity-30 font-black uppercase tracking-[0.2em]">ไม่พบข้อมูลที่ตรงกับเงื่อนไข</td></tr>`;
-        document.getElementById('statusListFooter').innerText = '';
-        return;
-    }
-
-    const statusBadge = (s) => {
-        const map = {
-            Good      : 'bg-green-100 text-green-700',
-            Damage    : 'bg-red-100 text-red-700',
-            QC        : 'bg-yellow-100 text-yellow-700',
-            Incomplete: 'bg-orange-100 text-orange-700',
-            Disposal  : 'bg-gray-200 text-gray-700'
-        };
-        return `<span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${map[s] || 'bg-slate-100 text-slate-500'}">${s}</span>`;
-    };
-
-    const solutionBadge = (sol) => {
-        const isIn = (sol || '').includes('มีในระบบ') && !(sol || '').includes('ไม่มี');
+            total     ? `<span class="text-[10px] font-black px-3 py-1 bg-slate-800 text-white rounded-full">${��ระบบ') && !(sol || '').includes('ไม่มี');
         return isIn
             ? `<span class="px-2.5 py-1 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700">✔ มีในระบบ</span>`
             : `<span class="px-2.5 py-1 rounded-full text-[9px] font-black bg-rose-100 text-rose-700">✘ ไม่มีในระบบ</span>`;
-    };
-
-    body.innerHTML = filtered.map(item => {
-        const idx = inventoryData.indexOf(item);
-        const remarkTags = (item.Remark || '-').split(',').map(r => r.trim()).filter(Boolean)
-            .map(r => `<span class="inline-block text-[9px] font-bold bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full mr-1 mb-0.5">${r}</span>`).join('');
-        return `<tr class="hover:bg-slate-50/80 transition-colors">
-            <td class="py-3 pl-4 text-center">
-                ${item.Photo
-                    ? `<img src="${item.Photo}" class="w-12 h-12 rounded-xl object-cover border border-slate-100 mx-auto shadow-sm">`
-                    : `<div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-300 mx-auto"><i class="fas fa-camera text-sm"></i></div>`}
+     class="fas fa-camera text-sm"></i></div>`}
             </td>
             <td class="py-3 px-4">
                 <div class="font-black text-slate-800 text-sm">${item.Item || '-'}</div>
@@ -3457,39 +2620,18 @@ function buildDashboardHTML(W, H) {
             display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
             <div style="display:flex;align-items:center;gap:0;">
                 ${logoHtml}
-                <div>
-                    <div style="font-size:${Math.round(W*0.013)}px;font-weight:900;color:#fff;font-family:'Pacifico',cursive;line-height:1;">${appN}</div>
-                    <div style="font-size:9px;color:rgba(255,255,255,0.5);font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-top:3px;">DASHBOARD REPORT</div>
-                </div>
-            </div>
-            <div style="text-align:right;">
-                <div style="font-size:9px;color:rgba(255,255,255,0.4);font-weight:700;margin-bottom:2px;">Generated</div>
-                <div style="font-size:11px;color:rgba(255,255,255,0.8);font-weight:700;">${dateStr}</div>
-                <div style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.3);border-radius:20px;padding:3px 10px;">
-                    <span style="width:6px;height:6px;background:#4ade80;border-radius:50%;display:inline-block;"></span>
+            :inline-block;"></span>
                     <span style="font-size:9px;font-weight:900;color:#4ade80;text-transform:uppercase;letter-spacing:1px;">ACTIVE</span>
                 </div>
-            </div>
-        </div>
-
-        <!-- Stats row -->
-        <div style="display:flex;gap:${Math.round(W*0.008)}px;flex-shrink:0;">
-            <div style="flex:1;background:rgba(59,130,246,0.12);border-radius:14px;padding:${Math.round(H*0.016)}px ${Math.round(W*0.012)}px;border:1px solid rgba(59,130,246,0.25);">
+     30,246,0.12);border-radius:14px;padding:${Math.round(H*0.016)}px ${Math.round(W*0.012)}px;border:1px solid rgba(59,130,246,0.25);">
                 <div style="font-size:9px;font-weight:900;color:#60a5fa;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">📍 LOCATION</div>
                 <div style="font-size:${Math.round(H*0.055)}px;font-weight:900;color:#fff;line-height:1;">${loc}</div>
             </div>
-            <div style="flex:1;background:rgba(249,115,22,0.12);border-radius:14px;padding:${Math.round(H*0.016)}px ${Math.round(W*0.012)}px;border:1px solid rgba(249,115,22,0.25);">
-                <div style="font-size:9px;font-weight:900;color:#fb923c;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">📦 ITEM CODE</div>
-                <div style="font-size:${Math.round(H*0.055)}px;font-weight:900;color:#fff;line-height:1;">${items}</div>
-            </div>
-            <div style="flex:2;background:linear-gradient(135deg,rgba(230,57,70,0.85),rgba(220,38,38,0.85));border-radius:14px;padding:${Math.round(H*0.016)}px ${Math.round(W*0.012)}px;border:1px solid rgba(230,57,70,0.4);">
-                <div style="font-size:9px;font-weight:900;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">📊 QUANTITY</div>
+            <div style="flex:1;background:rgba(249,115,22,0.12);border-radius:14px;padding:${Math.round(H*0.016)}px ${Math.round(W*0.012)}px;borde    <div style="font-size:9px;font-weight:900;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">📊 QUANTITY</div>
                 <div style="font-size:${Math.round(H*0.055)}px;font-weight:900;color:#fff;line-height:1;">${qty}</div>
             </div>
             <div style="flex:2.2;background:rgba(255,255,255,0.04);border-radius:14px;padding:${Math.round(H*0.014)}px ${Math.round(W*0.012)}px;border:1px solid rgba(255,255,255,0.08);">
-                <div style="font-size:9px;font-weight:900;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">✔ SOLUTION</div>
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                    <div style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:6px 12px;display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:9px;font-weight:900;color:rgba(255,255,255,0.5);texground:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:6px 12px;display:flex;align-items:center;justify-content:space-between;">
                         <span style="font-size:11px;font-weight:900;color:#34d399;">✔ มีในระบบ</span>
                         <span style="font-size:14px;font-weight:900;color:#fff;">${inTxt}</span>
                     </div>
@@ -3637,29 +2779,11 @@ async function exportDashboardPDF() {
 
     // Build a dedicated print-ready div for the dashboard summary
     const loc    = document.getElementById('statLoc')?.innerText   || '0';
-    const items  = document.getElementById('statItem')?.innerText  || '0';
-    const qty    = document.getElementById('statWork')?.innerText  || '0';
-    const inTxt  = document.getElementById('solutionInCount')?.innerText  || '0';
-    const outTxt = document.getElementById('solutionOutCount')?.innerText || '0';
-    const logoHtml = globalAppLogo ? `<img src="${globalAppLogo}" style="max-height:48px;border-radius:8px;object-fit:contain;margin-right:14px;">` : '';
-
-    // Capture charts as images
-    let statusImg = '', typeImg = '', remarkImg = '', solutionImg = '';
-    try {
-        const sc = document.getElementById('statusChart');
-        if (sc) statusImg = sc.toDataURL('image/png');
-        const tc = document.getElementById('typeChart');
-        if (tc) typeImg   = tc.toDataURL('image/png');
-        const rc = document.getElementById('remarkChart');
-        if (rc) remarkImg = rc.toDataURL('image/png');
-        const sol = document.getElementById('solutionChart');
-        if (sol) solutionImg = sol.toDataURL('image/png');
+    const items  = document.getElementById('statItem')?.innerText  || = sol.toDataURL('image/png');
     } catch(e) {}
 
     const chartCard = (title, imgSrc, icon, color) => `
-        <div style="background:#fff;border-radius:16px;padding:20px;border:1px solid #e2e8f0;flex:1;min-width:200px;">
-            <div style="font-size:11px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
-                <span style="width:28px;height:28px;border-radius:8px;background:${color}20;color:${color};display:inline-flex;align-items:center;justify-content:center;font-size:12px;">
+        <div style="background:#fff;border-radius:16px;padding:20px;border:1px solont-size:12px;">
                     <i class="${icon}"></i>
                 </span>${title}
             </div>
@@ -3904,6 +3028,23 @@ function changePassword() {
 // ─────────────────────────────────────────
 //  INVENTORY FORM
 // ─────────────────────────────────────────
+function showManualItemInfo(code, details) {
+    const description = document.getElementById('ItemDesc');
+    const type = document.getElementById('ItemType');
+    const select = document.getElementById('ItemTypeSelect');
+    description.readOnly = false;
+    description.placeholder = 'กรอกชื่อสินค้า';
+    description.value = String(details?.Description || '').trim() || UNKNOWN_ITEM_DESCRIPTION;
+    type.classList.add('hidden'); select.classList.remove('hidden');
+    if (details?.Type) {
+        if (!Array.from(select.options).some(option => option.value === details.Type)) select.add(new Option(details.Type, details.Type));
+        select.value = details.Type;
+    }
+    type.value = select.value;
+    itemInfoState = {code, status:'manual'};
+    updateSubmitReadiness();
+}
+
 async function checkItemInfo(code, isAutoUnknown) {
     clearTimeout(itemInfoTimer);
     code = String(code || '').trim();
@@ -3911,14 +3052,21 @@ async function checkItemInfo(code, isAutoUnknown) {
     const requestId = ++itemInfoRequestId;
     pendingAutoUnknownCode = !!isAutoUnknown;
     if (!code) { invalidateItemInfo(); return; }
-    itemInfoState = {code, status:'loading'};
     const errorHint = document.getElementById('itemInfoError'); if (errorHint) errorHint.textContent = '';
     const description = document.getElementById('ItemDesc');
     const type = document.getElementById('ItemType');
     const select = document.getElementById('ItemTypeSelect');
-    // Keep complete saved manual details when editing an existing record.
-    const saved = currentItemForEdit && String(currentItemForEdit.Item).trim() === code ? currentItemForEdit : null;
+    // Keep manual edits on retry, and saved details when editing an existing record.
+    const saved = itemInfoState.code === code && itemInfoState.status === 'manual'
+        ? {Description: description.value, Type: selectedItemType()}
+        : currentItemForEdit && String(currentItemForEdit.Item).trim() === code ? currentItemForEdit : null;
     description.value = ''; type.value = ''; select.value = '';
+    // Generated unknown codes have no catalog entry; show their default immediately.
+    if (isAutoUnknown || /^ไม่ทราบรหัสสินค้า\s*\d+$/.test(code)) {
+        showManualItemInfo(code, saved);
+        return;
+    }
+    itemInfoState = {code, status:'loading'};
     description.placeholder = 'กำลังค้นหา...'; description.readOnly = true;
     type.classList.remove('hidden'); select.classList.add('hidden');
     updateSubmitReadiness();
@@ -3929,16 +3077,7 @@ async function checkItemInfo(code, isAutoUnknown) {
             description.value = result.description.trim(); type.value = result.type.trim();
             itemInfoState = {code,status:'ready'};
         } else {
-            description.readOnly = false;
-            description.placeholder = 'กรอกชื่อสินค้า';
-            description.value = saved ? saved.Description || '' : '';
-            type.classList.add('hidden'); select.classList.remove('hidden');
-            if (saved?.Type) {
-                if (!Array.from(select.options).some(option => option.value === saved.Type)) select.add(new Option(saved.Type,saved.Type));
-                select.value = saved.Type;
-            }
-            type.value = select.value;
-            itemInfoState = {code,status:'manual'};
+            showManualItemInfo(code, saved);
         }
     } catch (error) {
         if (requestId !== itemInfoRequestId || code !== document.getElementById('Item').value.trim()) return;
